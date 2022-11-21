@@ -176,24 +176,54 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <goals><goal>repackage</goal></goals>
+                        <configuration>
+                            <classifier>exec</classifier>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>jib-deploy</id>
+                        <phase>deploy</phase>
+                        <goals><goal>build</goal></goals>
+                        <configuration>
+                            <from>
+                                <platforms>
+                                    <platform>
+                                        <architecture>amd64</architecture>
+                                        <os>linux</os>
+                                    </platform>
+                                    <platform>
+                                        <architecture>arm64</architecture>
+                                        <os>linux</os>
+                                    </platform>
+                                </platforms>
+                            </from>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>jib-install</id>
+                        <phase>install</phase>
+                        <goals><goal>dockerBuild</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>jib-package</id>
+                        <phase>package</phase>
+                        <goals><goal>buildTar</goal></goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <from>
                         <image>eclipse-temurin:${java.version}-jre</image>
-                        <platforms>
-                            <platform>
-                                <architecture>amd64</architecture>
-                                <os>linux</os>
-                            </platform>
-                            <platform>
-                                <architecture>arm64</architecture>
-                                <os>linux</os>
-                            </platform>
-                        </platforms>
                     </from>
                     <to>
                         <image>${docker.namespace}/more-data-gateway:${project.version}</image>
@@ -217,6 +247,10 @@
                             <ELASTIC_HOST>elastic</ELASTIC_HOST>
                         </environment>
                     </container>
+                    <outputPaths>
+                        <tar>${project.build.directory}/${project.artifactId}-${project.version}.docker.tar</tar>
+                        <imageJson>${project.build.directory}/${project.artifactId}-${project.version}.json</imageJson>
+                    </outputPaths>
                 </configuration>
             </plugin>
             <plugin>
