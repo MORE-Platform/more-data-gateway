@@ -205,7 +205,7 @@ components:
           type: string
         observationType:
           type: string
-        title:
+        observationTitle:
           type: string
         participantInfo:
           type: string
@@ -230,8 +230,9 @@ components:
           default: false
       required:
         - observationId
-        - factoryId
+        - observationType
         - observationTitle
+        - participantInfo
         - schedule
         - required
 
