@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: more
+      POSTGRES_USER: more-dsb
+      POSTGRES_PASSWORD: more-dsb
+
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.3.2
+    restart: always
+    ports:
+      - "9200:9200"
+    deploy:
+      resources:
+        limits:
+          memory: 640M
+        reservations:
+          memory: 512M
+    environment:
+      discovery.type: "single-node"
+      cluster.name: "more-cluster"
+      bootstrap.memory_lock: true
+      ES_JAVA_OPTS: "-Xms256m -Xmx512m"
+      xpack.security.enabled: "false"
+      #ELASTIC_PASSWORD: elastic-more
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.3.2
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elastic:9200

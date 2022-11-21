@@ -1,0 +1,79 @@
+name: Test and Compile
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  Compile-and-Test:
+    name: Compile and Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_DB: more
+          POSTGRES_USER: more-dsb
+          POSTGRES_PASSWORD: more-dsb
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+      - name: Compile and test project
+        run: ./mvnw -B -U
+          --no-transfer-progress
+          compile test
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: Test Results
+          path: "**/TEST-*.xml"
+      - name: Upload Licenses List
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: Licenses List
+          path: "./target/generated-sources/license/THIRD-PARTY.txt"
+
+  Build-and-Deploy:
+    name: "Build and Push Docker Image"
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'main'
+    needs:
+      - Compile-and-Test
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+      - name: Build JIB container and publish to GitHub Packages
+        run: ./mvnw -B -U
+          --no-transfer-progress
+          clean verify jib:build
+          -Drevision=${{github.run_number}}
+          -Dchangelist=
+          -Dsha1=.${GITHUB_SHA:0:7}
+          -Dquick
+          -Ddocker.namespace=${DOCKER_NAMESPACE,,}
+          -Djib.to.tags=latest
+          -Djib.to.auth.username=${{ github.actor }}
+          -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }}
+        env:
+          DOCKER_NAMESPACE: ghcr.io/${{ github.repository_owner }}
+
+  event_file:
+    name: "Event File"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: Event File
+          path: ${{ github.event_path }}

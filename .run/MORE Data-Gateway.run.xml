@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="MORE Data-Gateway" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="ACTIVE_PROFILES" />
+    <envs>
+      <env name="POSTGRES_USER" value="more-mmb" />
+      <env name="POSTGRES_PASSWORD" value="more-mmb" />
+      <env name="POSTGRES_DBNAME" value="more" />
+      <env name="SERVER_PORT" value="8081" />
+    </envs>
+    <module name="more-data-gateway" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="io.redlink.more.data.MoreDataGatewayApplication" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

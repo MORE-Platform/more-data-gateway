@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    assignees:
+      - ja-fra
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: daily
+    ignore:
+      - # We want to stay on the v5 of the openapi-generator
+        dependency-name: "org.openapitools:openapi-generator-maven-plugin"
+        update-types: ["version-update:semver-major"]

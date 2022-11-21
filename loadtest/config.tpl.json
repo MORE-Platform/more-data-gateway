@@ -1,0 +1,16 @@
+{
+  "system": {
+    "baseUrl": "http://localhost:8080",
+    "endPoint" : "bulk",
+    "apiId": "2c938088835f068d0183601d64b50012",
+    "apiKey": "d6950f4d-b26d-4e9f-bb63-0136582251a5"
+  },
+  "files": {
+    "input": "./data/unpacked.csv"    
+  },
+  "options": {
+    "bulkSize": 1000,
+    "parallelWorkers": 300,
+    "maxDataPoints": 34000000
+  }
+}

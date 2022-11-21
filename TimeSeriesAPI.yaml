@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: TimeSeries API
+  description: |
+    This describes the datastructures of the TimeSeries stored in ElasticSearch
+  version: v1
+
+servers: []
+paths: {}
+
+components:
+  schemas:
+    DataPoint:
+      type: object
+      description: A datapoint represents a single measurement for a study participation within an time-instant or timeframe
+      properties:
+        datapointId:
+          description: "local ID of this datapoint"
+          type: string
+          format: uuid
+        participantId:
+          $ref: '#/components/schemas/Id'
+        studyId:
+          $ref: '#/components/schemas/Id'
+        moduleId:
+          $ref: '#/components/schemas/Id'
+        moduleType:
+          type: string
+        dataType:
+          type: string
+        storageDate:
+          description: The timestamp when the measurement was stored/received server-side.
+          type: string
+          format: date-time
+        effectiveTimeFrame:
+          $ref: '#/components/schemas/TimeFrame'
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/Acceleration'
+            - $ref: '#/components/schemas/Geoposition'
+      required:
+        - datapointId
+        - participantId
+        - studyId
+        - moduleId
+        - moduleType
+        - dataType
+        - storageDate
+        - effectiveTimeFrame
+        - data
+
+    Acceleration:
+      description: A single measurement for acceleration
+      externalDocs:
+        url: https://www.openmhealth.org/documentation/#/schema-docs/schema-library/schemas/omh_acceleration
+      type: object
+      properties:
+        acceleration_x:
+          $ref: '#/components/schemas/MeterPerSecondSquared'
+        acceleration_y:
+          $ref: '#/components/schemas/MeterPerSecondSquared'
+        acceleration_z:
+          $ref: '#/components/schemas/MeterPerSecondSquared'
+      required:
+        - acceleration_x
+        - acceleration_y
+
+    MeterPerSecondSquared:
+      description: An acceleration value, in `m/s^2`.
+      type: number
+      format: double
+
+    Geoposition:
+      description: A geographic position measurement
+      externalDocs:
+        url: https://www.openmhealth.org/documentation/#/schema-docs/schema-library/schemas/omh_geoposition
+      type: object
+      properties:
+        latitude:
+          description: geographical latitude in `degrees`. Negative values indicate `South`.
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+        longitude:
+          description:
+            geographical longitude east or west of Greenwich, England, in `degrees`. 
+            Negative values indicate `West`.
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+        elevation:
+          description: |
+            The height above or below the Earth's sea level as an equipotential gravitational surface in `meters`.
+          type: number
+      required:
+        - latitude
+        - longitude
+
+    TimeFrame:
+      oneOf:
+        - $ref: '#/components/schemas/Instant'
+      externalDocs:
+        url: https://www.openmhealth.org/documentation/#/schema-docs/schema-library/schemas/omh_time-frame
+
+    Instant:
+      description: |
+        A point in time (ISO8601). The time SHALL specified at least to the millisecond and SHALL include a time zone.
+      type: object
+      properties:
+        datetime:
+          type: string
+          format: date-time
+      required: [ datetime ]
+      externalDocs:
+        url: https://www.openmhealth.org/documentation/#/schema-docs/schema-library/schemas/omh_date-time
+
+    Id:
+      type: string
