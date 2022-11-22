@@ -1,7 +1,7 @@
 _id: spc_132a6174bd934e238194d960b37c0bfd
 type: ApiSpec
 parentId: wrk_3c875888846a45988c061a9d86c4a4b4
-modified: 1669124043504
+modified: 1669126650140
 created: 1669123894336
 fileName: More App Gateway API
 contents: >
@@ -23,7 +23,7 @@ contents: >
       description: Endpoints to retrieve **configuration settings** for the current participation
     - name: Data
       description: |
-        Endpoints to **send** obervation-data
+        Endpoints to **send** observation-data
 
   externalDocs:
     url: https://github.com/MORE-Platform
