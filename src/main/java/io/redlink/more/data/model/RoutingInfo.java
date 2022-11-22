@@ -1,4 +1,6 @@
 package io.redlink.more.data.model;
 
-public record RoutingInfo(String studyId, String participantId) {
+import java.util.OptionalInt;
+
+public record RoutingInfo(long studyId, int participantId, OptionalInt studyGroupId) {
 }

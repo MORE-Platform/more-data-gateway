@@ -32,8 +32,8 @@ public class SecurityConfig {
         http.csrf().disable()
                 .authenticationProvider(authenticationProvider)
                 .authorizeRequests()
-                .antMatchers("/api/v1/**")
-                .authenticated()
+                .antMatchers("/api/v1/registration").permitAll()
+                .antMatchers("/api/v1/**").authenticated()
                 .and()
                 .httpBasic();
 
