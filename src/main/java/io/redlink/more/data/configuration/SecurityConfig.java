@@ -31,11 +31,23 @@ public class SecurityConfig {
 
         http.csrf().disable()
                 .authenticationProvider(authenticationProvider)
-                .authorizeRequests()
-                .antMatchers("/api/v1/registration").permitAll()
-                .antMatchers("/api/v1/**").authenticated()
-                .and()
-                .httpBasic();
+                .authorizeRequests(req -> {
+                    // root for smoke-tests is allowed
+                    req.antMatchers("/")
+                            .permitAll();
+                    // registration-endpoints needs to be open
+                    req.antMatchers("/api/v1/registration")
+                            .permitAll();
+                    // all other apis require credentials
+                    req.antMatchers("/api/v1/**")
+                            .authenticated();
+                    // actuator only from localhost
+                    req.antMatchers("/actuator/**")
+                            .hasIpAddress("127.0.0.1/8");
+                    // everything else is denied
+                    req.anyRequest().denyAll();
+                })
+                .httpBasic().realmName("MORE");
 
         return http.build();
     }
