@@ -1,0 +1,14 @@
+_id: env_6fd51faa2039474d80e11504fa0d9e85
+type: Environment
+parentId: env_56011b9f0d2b061eb773c66ef6bb9c0c902ea920
+modified: 1669125241879
+created: 1669125207799
+name: Platform-Test
+data:
+  base_url: https://data.platform-test.more.redlink.io
+dataPropertyOrder:
+  "&":
+    - base_url
+color: "#ffa200"
+isPrivate: false
+metaSortKey: 1669124232888

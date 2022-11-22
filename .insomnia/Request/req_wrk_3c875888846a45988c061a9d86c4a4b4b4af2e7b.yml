@@ -1,0 +1,42 @@
+_id: req_wrk_3c875888846a45988c061a9d86c4a4b4b4af2e7b
+type: Request
+parentId: fld_wrk_3c875888846a45988c061a9d86c4a4b4b233e775
+modified: 1669126357697
+created: 1669124043489
+url: "{{ api_base }}/registration"
+name: Create API Credentials
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "consent": true,
+      "deviceId": "{% uuid 'v1' %}",
+      "consentInfoMD5": "{% hash 'md5', 'hex', _.base_url %}",
+      "observations": [
+        {
+          "observationId": "1"
+        }
+      ]
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+    id: pair_b698e0ff653947139a2c4dbcc2ae8036
+  - id: pair_6eb710d0e9bc49d499bee2fcd11f3c39
+    name: More-Registration-Token
+    value: "{% response 'header',
+      'req_wrk_3c875888846a45988c061a9d86c4a4b4478a4079',
+      'b64::TW9yZS1SZWdpc3RyYXRpb24tVG9rZW4=::46b', 'never', 60 %}"
+    description: ""
+authentication: {}
+metaSortKey: -1669124043489
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

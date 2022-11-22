@@ -1,0 +1,10 @@
+_id: fld_wrk_3c875888846a45988c061a9d86c4a4b475416485
+type: RequestGroup
+parentId: wrk_3c875888846a45988c061a9d86c4a4b4
+modified: 1669124043495
+created: 1669124043495
+name: Configuration
+description: Endpoints to retrieve **configuration settings** for the current participation
+environment: {}
+environmentPropertyOrder: null
+metaSortKey: -1669124043495

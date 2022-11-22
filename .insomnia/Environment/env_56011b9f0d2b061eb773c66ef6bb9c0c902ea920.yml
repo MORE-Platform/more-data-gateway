@@ -1,0 +1,16 @@
+_id: env_56011b9f0d2b061eb773c66ef6bb9c0c902ea920
+type: Environment
+parentId: wrk_3c875888846a45988c061a9d86c4a4b4
+modified: 1669126067030
+created: 1669123894340
+name: Base Environment
+data:
+  base_url: http://localhost:8080
+  api_base: "{{ _.base_url }}/api/v1"
+dataPropertyOrder:
+  "&":
+    - base_url
+    - api_base
+color: null
+isPrivate: false
+metaSortKey: 1669123894340

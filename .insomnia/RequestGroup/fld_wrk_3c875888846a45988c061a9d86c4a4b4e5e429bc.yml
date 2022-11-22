@@ -1,0 +1,11 @@
+_id: fld_wrk_3c875888846a45988c061a9d86c4a4b4e5e429bc
+type: RequestGroup
+parentId: wrk_3c875888846a45988c061a9d86c4a4b4
+modified: 1669124043493
+created: 1669124043493
+name: Data
+description: |
+  Endpoints to **send** obervation-data
+environment: {}
+environmentPropertyOrder: null
+metaSortKey: -1669124043493
