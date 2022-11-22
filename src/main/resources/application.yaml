@@ -7,14 +7,14 @@ spring:
     # No flyway! (only required in standalone-mode)
     enabled: false
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DBNAME:more}?readOnly=true
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DBNAME:more}
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD:123}
     name: ${POSTGRES_DBNAME:more}
 
-  jpa:
-    hibernate:
-      ddl-auto: validate
+more:
+  gateway:
+    baseUrl: ${BASE_URL:}
 
 elastic:
   host: ${ELASTIC_HOST:localhost}

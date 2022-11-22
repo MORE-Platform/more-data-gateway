@@ -27,7 +27,7 @@ public class ElasticService implements StorageService {
     }
 
     private String getElasticIndexName(RoutingInfo routingInfo) {
-        return routingInfo.studyId().toLowerCase();
+        return "study_" + routingInfo.studyId();
     }
 
 

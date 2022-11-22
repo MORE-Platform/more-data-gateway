@@ -2,6 +2,7 @@ package io.redlink.more.data.repository;
 
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.model.GatewayUserDetails;
+import java.util.OptionalInt;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -26,8 +27,9 @@ public class GatewayUserRepository {
                             rs.getString("api_key"),
                             roles,
                             new RoutingInfo(
-                                    rs.getString("study_id"),
-                                    rs.getString("participant_id")
+                                    rs.getLong("study_id"),
+                                    rs.getInt("participant_id"),
+                                    OptionalInt.empty()
                             ));
                     return Optional.of(userDetails);
                 },

@@ -169,9 +169,7 @@ components:
         information to configure and initialize the APP
       type: object
       properties:
-        studyId:
-          type: string
-        title:
+        studyTitle:
           type: string
         participantInfo:
           type: string
@@ -189,8 +187,7 @@ components:
             $ref: '#/components/schemas/Observation'
           minItems: 1
       required:
-        - studyId
-        - title
+        - studyTitle
         - participantInfo
         - consentInfo
         - start

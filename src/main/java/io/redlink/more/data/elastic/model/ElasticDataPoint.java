@@ -56,8 +56,8 @@ public record ElasticDataPoint(
     public static ElasticDataPoint toElastic(DataPoint dataPoint, RoutingInfo elasticInfo) {
         return new ElasticDataPoint(
                 dataPoint.datapointId(),
-                elasticInfo.participantId(),
-                elasticInfo.studyId(),
+                "participant_" + elasticInfo.participantId(),
+                "study_" + elasticInfo.studyId(),
                 dataPoint.moduleId(),
                 dataPoint.moduleType(),
                 dataPoint.dataType(),
