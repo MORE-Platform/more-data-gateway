@@ -1,7 +1,7 @@
 _id: req_wrk_3c875888846a45988c061a9d86c4a4b47d72dabe
 type: Request
 parentId: fld_wrk_3c875888846a45988c061a9d86c4a4b4e5e429bc
-modified: 1669126569169
+modified: 1669127783210
 created: 1669124043483
 url: "{{ api_base }}/data/bulk"
 name: Upload Data
@@ -11,17 +11,21 @@ body:
   mimeType: application/json
   text: |-
     {
-      "bulkId": "string",
+      "bulkId": "0f81b9fb-a457-4ca8-9017-275d4ab77d73",
       "dataPoints": [
         {
-          "dataId": "string",
+          "dataId": "7fe5217e-aa5b-4b4d-9bed-1ebac1f1f6be",
           "observationId": "1",
-          "observationType": "string",
-          "dataValue": {},
-          "timestamp": "2022-11-22T13:34:03.480Z"
+          "observationType": "acc-mobile-observation",
+          "dataValue": {
+            "x": -0.7507481,
+            "y": 6.8204417,
+            "z": 7.475477
+          },
+          "timestamp": "{% now 'iso-8601', '' %}"
         }
       ]
-    }  
+    }
 parameters: []
 headers:
   - name: Content-Type
