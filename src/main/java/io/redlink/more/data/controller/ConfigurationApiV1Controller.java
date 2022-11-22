@@ -9,6 +9,7 @@ import io.redlink.more.data.api.app.v1.model.PushNotificationTokenDTO;
 import io.redlink.more.data.api.app.v1.model.StudyDTO;
 import io.redlink.more.data.api.app.v1.webservices.ConfigurationApi;
 import io.redlink.more.data.configuration.AuthenticationFacade;
+import io.redlink.more.data.controller.transformer.StudyTransformer;
 import io.redlink.more.data.model.GatewayUserDetails;
 import io.redlink.more.data.service.GatewayUserDetailService;
 import io.redlink.more.data.service.RegistrationService;
@@ -29,12 +30,9 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
 
     private final RegistrationService registrationService;
 
-    private final StudyTransformer studyTransformer;
-
-    public ConfigurationApiV1Controller(AuthenticationFacade authenticationFacade, RegistrationService registrationService, StudyTransformer studyTransformer) {
+    public ConfigurationApiV1Controller(AuthenticationFacade authenticationFacade, RegistrationService registrationService) {
         this.authenticationFacade = authenticationFacade;
         this.registrationService = registrationService;
-        this.studyTransformer = studyTransformer;
     }
 
     @Override
@@ -49,7 +47,7 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
 
         return ResponseEntity.of(
                 registrationService.loadStudyByRoutingInfo(userDetails.getRoutingInfo())
-                        .map(studyTransformer::toDTO)
+                        .map(StudyTransformer::toDTO)
         );
     }
 

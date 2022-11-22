@@ -2,16 +2,13 @@ package io.redlink.more.data.controller;
 
 import io.redlink.more.data.api.StorageService;
 import io.redlink.more.data.api.app.v1.model.DataBulkDTO;
-import io.redlink.more.data.api.app.v1.model.ObservationDataDTO;
 import io.redlink.more.data.api.app.v1.webservices.DataApi;
 import io.redlink.more.data.configuration.AuthenticationFacade;
-import io.redlink.more.data.model.DataPoint;
+import io.redlink.more.data.controller.transformer.DataTransformer;
 import io.redlink.more.data.model.GatewayUserDetails;
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.service.ElasticService;
 import io.redlink.more.data.service.GatewayUserDetailService;
-import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DataApiV1Controller implements DataApi {
 
     private final AuthenticationFacade authenticationFacade;
+
     private final StorageService elasticService;
 
 
@@ -45,31 +43,8 @@ public class DataApiV1Controller implements DataApi {
 
         final RoutingInfo routingInfo = userDetails.getRoutingInfo();
         final List<String> storedIDs = elasticService.storeDataPoints(
-                createDataPoints(dataBulkDTO), routingInfo);
+                DataTransformer.createDataPoints(dataBulkDTO), routingInfo);
         return ResponseEntity.status(HttpStatus.OK).body(storedIDs);
     }
 
-    private List<DataPoint> createDataPoints(DataBulkDTO bulk) {
-        final Instant recordingTime = Instant.now();
-        return bulk.getDataPoints().stream()
-                .map(dp -> createDataPoint(dp, recordingTime))
-                .toList();
-    }
-
-    private DataPoint createDataPoint(ObservationDataDTO dataPoint, Instant recordingTime) {
-        return new DataPoint(
-                dataPoint.getDataId(),
-                dataPoint.getObservationId(),
-                dataPoint.getObservationType(),
-                dataPoint.getObservationType(),
-                recordingTime,
-                toInstant(dataPoint.getTimestamp()),
-                dataPoint.getDataValue());
-    }
-
-    private Instant toInstant(OffsetDateTime dateTime) {
-        if (dateTime == null)
-            return null;
-        return dateTime.toInstant();
-    }
 }

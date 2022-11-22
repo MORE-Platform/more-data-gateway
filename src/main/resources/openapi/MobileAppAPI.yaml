@@ -15,7 +15,7 @@ tags:
     description: Endpoints to retrieve **configuration settings** for the current participation
   - name: Data
     description: |
-      Endpoints to **send** obervation-data
+      Endpoints to **send** observation-data
 
 externalDocs:
   url: https://github.com/MORE-Platform
@@ -34,11 +34,11 @@ paths:
         - Registration
       security: [ ]
       responses:
-        200:
+        '200':
           $ref: '#/components/responses/StudyInfoResponse'
-        404:
+        '404':
           $ref: '#/components/responses/NoSuchRegistrationToken'
-        410:
+        '410':
           $ref: '#/components/responses/RegistrationTokenExpired'
     post:
       operationId: registerForStudy
@@ -53,17 +53,17 @@ paths:
             schema:
               $ref: '#/components/schemas/StudyConsent'
       responses:
-        201:
+        '201':
           description: Consent given and ApiKey created.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppConfiguration'
-        404:
+        '404':
           $ref: '#/components/responses/NoSuchRegistrationToken'
-        409:
+        '409':
           $ref: '#/components/responses/RegistrationNotPossible'
-        4XX:
+        '4XX':
           description: Error
           content:
             application/json:
@@ -77,9 +77,9 @@ paths:
       tags:
         - Configuration
       responses:
-        200:
+        '200':
           $ref: '#/components/responses/StudyInfoResponse'
-        401:
+        '401':
           $ref: '#/components/responses/UnauthorizedApiKey'
 
   /config/notifications:
@@ -89,7 +89,7 @@ paths:
       tags:
         - Configuration
       responses:
-        200:
+        '200':
           description: available push-notification services
           content:
             application/json:
@@ -97,7 +97,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/PushNotificationServiceType'
-        401:
+        '401':
           $ref: '#/components/responses/UnauthorizedApiKey'
 
   /config/notifications/{serviceType}:
@@ -106,19 +106,20 @@ paths:
         in: path
         schema:
           $ref: '#/components/schemas/PushNotificationServiceType'
+        required: true
     get:
       operationId: getPushNotificationServiceClientConfig
       description: retrieve the client-configuration for the push-notification service
       tags:
         - Configuration
       responses:
-        200:
+        '200':
           description: the notification-service config
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PushNotificationConfig'
-        401:
+        '401':
           $ref: '#/components/responses/UnauthorizedApiKey'
     put:
       operationId: setPushNotificationToken
@@ -131,11 +132,11 @@ paths:
             schema:
               $ref: '#/components/schemas/PushNotificationToken'
       responses:
-        202:
+        '202':
           description: notification-token updated
-        401:
+        '401':
           $ref: '#/components/responses/UnauthorizedApiKey'
-        404:
+        '404':
           description: unknown notification service
 
   /data/bulk:
@@ -158,14 +159,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Id'
-        401:
+        '401':
           $ref: '#/components/responses/UnauthorizedApiKey'
 
 components:
   schemas:
     Study:
       description:
-        The study object containing all information and module 
+        The study object containing all information and module
         information to configure and initialize the APP
       type: object
       properties:

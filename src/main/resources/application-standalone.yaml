@@ -1,9 +1,7 @@
 spring:
   application:
-    name: "MORE Data Streams Gateway (Standalone)"
+    name: "MORE Data Gateway (Standalone)"
 
 
   flyway:
     enabled: true
-  datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DBNAME:more}?readOnly=false
