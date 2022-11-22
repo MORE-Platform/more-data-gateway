@@ -43,10 +43,15 @@ public class RegistrationApiV1Controller implements RegistrationApi {
 
     @Override
     public ResponseEntity<StudyDTO> getStudyRegistrationInfo(String moreRegistrationToken) {
-        return ResponseEntity.of(
-                registrationService.loadStudyByRegistrationToken(moreRegistrationToken)
-                        .map(StudyTransformer::toDTO)
-        );
+        return registrationService.loadStudyByRegistrationToken(moreRegistrationToken)
+                .map(StudyTransformer::toDTO)
+                .map(study -> ResponseEntity.ok()
+                        // For better debugging: return the token for chaining
+                        .header("More-Registration-Token", moreRegistrationToken)
+                        .body(study)
+                )
+                .orElseGet(() -> ResponseEntity.notFound().build())
+                ;
     }
 
     @Override
