@@ -1,0 +1,45 @@
+_id: req_wrk_3c875888846a45988c061a9d86c4a4b47d72dabe
+type: Request
+parentId: fld_wrk_3c875888846a45988c061a9d86c4a4b4e5e429bc
+modified: 1669126569169
+created: 1669124043483
+url: "{{ api_base }}/data/bulk"
+name: Upload Data
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "bulkId": "string",
+      "dataPoints": [
+        {
+          "dataId": "string",
+          "observationId": "1",
+          "observationType": "string",
+          "dataValue": {},
+          "timestamp": "2022-11-22T13:34:03.480Z"
+        }
+      ]
+    }  
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+    id: pair_589ed5baa4b6443ca252eb4f2c7f7be7
+authentication:
+  type: basic
+  username: "{% response 'body',
+    'req_wrk_3c875888846a45988c061a9d86c4a4b4b4af2e7b',
+    'b64::JC5jcmVkZW50aWFscy5hcGlJZA==::46b', 'never', 60 %}"
+  password: "{% response 'body',
+    'req_wrk_3c875888846a45988c061a9d86c4a4b4b4af2e7b',
+    'b64::JC5jcmVkZW50aWFscy5hcGlJZA==::46b', 'never', 60 %}"
+metaSortKey: -1669124043483
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

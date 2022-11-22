@@ -1,0 +1,28 @@
+_id: req_wrk_3c875888846a45988c061a9d86c4a4b4aac8ceff
+type: Request
+parentId: fld_wrk_3c875888846a45988c061a9d86c4a4b475416485
+modified: 1669126426686
+created: 1669124043485
+url: "{{ api_base }}/config/notifications/{{ serviceType }}"
+name: Get Push-Notification Config
+description: ""
+method: GET
+body: {}
+parameters: []
+headers: []
+authentication:
+  type: basic
+  username: "{% response 'body',
+    'req_wrk_3c875888846a45988c061a9d86c4a4b4b4af2e7b',
+    'b64::JC5jcmVkZW50aWFscy5hcGlJZA==::46b', 'never', 60 %}"
+  password: "{% response 'body',
+    'req_wrk_3c875888846a45988c061a9d86c4a4b4b4af2e7b',
+    'b64::JC5jcmVkZW50aWFscy5hcGlJZA==::46b', 'never', 60 %}"
+metaSortKey: -1669124043485
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

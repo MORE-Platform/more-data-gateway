@@ -1,0 +1,27 @@
+_id: req_wrk_3c875888846a45988c061a9d86c4a4b4478a4079
+type: Request
+parentId: fld_wrk_3c875888846a45988c061a9d86c4a4b4b233e775
+modified: 1669126271511
+created: 1669124043491
+url: "{{ api_base }}/registration"
+name: Load Registration Info
+description: ""
+method: GET
+body: {}
+parameters: []
+headers:
+  - id: pair_2f777486ffcc4cf6b4c9b3431deca2af
+    name: More-Registration-Token
+    value: "{% prompt 'Enter Registration Token', 'Registration Token', '', '',
+      false, true %}"
+    description: ""
+    disabled: false
+authentication: {}
+metaSortKey: -1669124043491
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
