@@ -43,7 +43,7 @@ public class DataApiV1Controller implements DataApi {
             throw new AccessDeniedException("Authentication required");
         }
 
-        final RoutingInfo routingInfo = userDetails.getElastic();
+        final RoutingInfo routingInfo = userDetails.getRoutingInfo();
         final List<String> storedIDs = elasticService.storeDataPoints(
                 createDataPoints(dataBulkDTO), routingInfo);
         return ResponseEntity.status(HttpStatus.OK).body(storedIDs);

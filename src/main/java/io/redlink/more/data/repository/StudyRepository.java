@@ -3,7 +3,6 @@
  */
 package io.redlink.more.data.repository;
 
-import io.redlink.more.data.model.ApiCredentials;
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.ParticipantConsent;
 import io.redlink.more.data.model.RoutingInfo;
@@ -73,11 +72,11 @@ public class StudyRepository {
 
 
     public Optional<Study> findByRegistrationToken(String registrationToken) {
-        final Optional<RoutingInfo> ri = getRoutingInfo(registrationToken, false);
-        if (ri.isEmpty()) return Optional.empty();
+        return getRoutingInfo(registrationToken, false)
+                .flatMap(this::findStudy);
+    }
 
-        var routingInfo = ri.get();
-
+    public Optional<Study> findStudy(RoutingInfo routingInfo) {
         final List<Observation> observations = listObservations(routingInfo.studyId(), routingInfo.studyGroupId().orElse(-1));
 
         return Optional.ofNullable(
@@ -89,8 +88,8 @@ public class StudyRepository {
         return jdbcTemplate.query(SQL_LIST_OBSERVATIONS_BY_STUDY, getObservationRowMapper(), studyId, groupId);
     }
 
-    @Transactional(readOnly = false)
-    public Optional<ApiCredentials> createCredentials(String registrationToken, ParticipantConsent consent, Supplier<String> passwordSupplier) {
+    @Transactional
+    public Optional<String> createCredentials(String registrationToken, ParticipantConsent consent, Supplier<String> passwordSupplier) {
         final Optional<RoutingInfo> ri = getRoutingInfo(registrationToken, true);
         if (ri.isEmpty()) return Optional.empty();
 
@@ -106,9 +105,11 @@ public class StudyRepository {
                         .addValue("participant_id", routingInfo.participantId()),
                 (rs, row)-> rs.getString("api_id"));
 
-        jdbcTemplate.update(SQL_CLEAR_TOKEN, registrationToken);
-
-        return Optional.of(new ApiCredentials(apiId, secret));
+        if (apiId != null) {
+            jdbcTemplate.update(SQL_CLEAR_TOKEN, registrationToken);
+            return Optional.of(apiId);
+        }
+        throw new IllegalStateException("Creating API-Credentials failed!");
     }
 
     private void storeConsent(long studyId, int participantId, ParticipantConsent consent) {
@@ -167,5 +168,4 @@ public class StudyRepository {
                 .addValue("observation_id", consent.observationId())
                 ;
     }
-
 }
