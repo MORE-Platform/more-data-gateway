@@ -9,6 +9,7 @@ import io.redlink.more.data.api.app.v1.model.StudyConsentDTO;
 import io.redlink.more.data.api.app.v1.model.StudyConsentObservationsDTO;
 import io.redlink.more.data.api.app.v1.model.StudyDTO;
 import io.redlink.more.data.api.app.v1.webservices.RegistrationApi;
+import io.redlink.more.data.controller.transformer.StudyTransformer;
 import io.redlink.more.data.model.ApiCredentials;
 import io.redlink.more.data.model.ParticipantConsent;
 import io.redlink.more.data.properties.MoreProperties;
@@ -34,19 +35,17 @@ public class RegistrationApiV1Controller implements RegistrationApi {
 
     private final RegistrationService registrationService;
 
-    private final StudyTransformer studyTransformer;
 
-    public RegistrationApiV1Controller(MoreProperties moreProperties, RegistrationService registrationService, StudyTransformer studyTransformer) {
+    public RegistrationApiV1Controller(MoreProperties moreProperties, RegistrationService registrationService) {
         this.moreProperties = moreProperties;
         this.registrationService = registrationService;
-        this.studyTransformer = studyTransformer;
     }
 
     @Override
     public ResponseEntity<StudyDTO> getStudyRegistrationInfo(String moreRegistrationToken) {
         return ResponseEntity.of(
                 registrationService.loadStudyByRegistrationToken(moreRegistrationToken)
-                        .map(studyTransformer::toDTO)
+                        .map(StudyTransformer::toDTO)
         );
     }
 

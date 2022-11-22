@@ -2,7 +2,7 @@ spring:
   main:
     banner-mode: off
   application:
-    name: "MORE Data Streams Gateway"
+    name: "MORE Data Gateway"
   flyway:
     # No flyway! (only required in standalone-mode)
     enabled: false
