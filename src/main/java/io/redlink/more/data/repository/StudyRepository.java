@@ -67,7 +67,7 @@ public class StudyRepository {
 
     private Optional<RoutingInfo> getRoutingInfo(String registrationToken, boolean lock) {
         var sql = lock ? SQL_ROUTING_INFO_BY_REG_TOKEN_WITH_LOCK : SQL_ROUTING_INFO_BY_REG_TOKEN;
-        return jdbcTemplate.query(sql, getRoutingInfoMapper(), registrationToken).stream().findFirst();
+        return jdbcTemplate.queryForStream(sql, getRoutingInfoMapper(), registrationToken).findFirst();
     }
 
 
@@ -79,9 +79,8 @@ public class StudyRepository {
     public Optional<Study> findStudy(RoutingInfo routingInfo) {
         final List<Observation> observations = listObservations(routingInfo.studyId(), routingInfo.studyGroupId().orElse(-1));
 
-        return Optional.ofNullable(
-                jdbcTemplate.queryForObject(SQL_FIND_STUDY_BY_ID, getStudyRowMapper(observations), routingInfo.studyId())
-        );
+        return jdbcTemplate.queryForStream(SQL_FIND_STUDY_BY_ID, getStudyRowMapper(observations), routingInfo.studyId())
+                .findFirst();
     }
 
     private List<Observation> listObservations(long studyId, int groupId) {
