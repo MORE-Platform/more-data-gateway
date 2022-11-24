@@ -5,8 +5,8 @@ import java.util.Map;
 
 public record DataPoint(
         String datapointId,
-        String moduleId,
-        String moduleType,
+        String observationId,
+        String observationType,
         String dataType,
         Instant serverTime,
         Instant effectiveDateTime,

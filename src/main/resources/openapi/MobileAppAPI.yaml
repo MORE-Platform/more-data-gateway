@@ -166,7 +166,7 @@ components:
   schemas:
     Study:
       description:
-        The study object containing all information and module
+        The study object containing all information and observation
         information to configure and initialize the APP
       type: object
       properties:
@@ -236,7 +236,7 @@ components:
 
     StudyConsent:
       type: object
-      description: Confirms the participants consent to the study including supported modules on the device.
+      description: Confirms the participants consent to the study including supported observations on the device.
       properties:
         consent:
           description: Explicitly state the consent of the Participant
@@ -359,7 +359,7 @@ components:
 
     DataBulk:
       type: object
-      description: A bulk of module data containing a unique id, the API Key of the participant and the array of module data
+      description: A bulk of observation data containing a unique id, the API Key of the participant and the array of observation data
       properties:
         bulkId:
           $ref: '#/components/schemas/Id'

@@ -18,10 +18,12 @@ public record ElasticDataPoint(
         String participantId,
         @JsonProperty("study_id")
         String studyId,
-        @JsonProperty("module_id")
-        String moduleId,
-        @JsonProperty("module_type")
-        String moduleType,
+        @JsonProperty("study_group_id")
+        String studyGroupId,
+        @JsonProperty("observation_id")
+        String observationId,
+        @JsonProperty("observation_type")
+        String observationType,
         @JsonProperty("data_type")
         String dataType,
         @JsonProperty("storage_date")
@@ -58,8 +60,9 @@ public record ElasticDataPoint(
                 dataPoint.datapointId(),
                 "participant_" + elasticInfo.participantId(),
                 "study_" + elasticInfo.studyId(),
-                dataPoint.moduleId(),
-                dataPoint.moduleType(),
+                "study_group_" + elasticInfo.studyGroupId(),
+                dataPoint.observationId(),
+                dataPoint.observationType(),
                 dataPoint.dataType(),
                 dataPoint.serverTime(),
                 dataPoint.effectiveDateTime(),
