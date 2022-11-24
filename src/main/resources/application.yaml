@@ -12,6 +12,9 @@ spring:
     password: ${POSTGRES_PASSWORD:123}
     name: ${POSTGRES_DBNAME:more}
 
+server:
+  forward-headers-strategy: framework
+
 more:
   gateway:
     baseUrl: ${BASE_URL:}
