@@ -4,6 +4,8 @@ public record Observation(
          int observationId,
          String title,
          String type,
-         String participantInfo
+         String participantInfo,
+
+         Event observationSchedule
 ) {
 }
