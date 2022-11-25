@@ -136,7 +136,7 @@ public class StudyRepository {
                 rs.getString("title"),
                 rs.getString("type"),
                 rs.getString("participant_info"),
-                MapperUtils.readValue(rs.getString("schedule"), Event.class)
+                DbUtils.readValue(rs.getString("schedule"))
         );
     }
 

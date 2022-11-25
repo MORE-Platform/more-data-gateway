@@ -3,6 +3,11 @@
  */
 package io.redlink.more.data.repository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.redlink.more.data.model.Event;
+
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,6 +17,8 @@ import java.time.LocalDate;
 import java.util.OptionalInt;
 
 public final class DbUtils {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private DbUtils() {}
 
@@ -42,6 +49,15 @@ public final class DbUtils {
             return OptionalInt.empty();
         } else {
             return OptionalInt.of(value);
+        }
+    }
+
+    public static Event readValue(Object o) {
+        if(o == null) return null;
+        try {
+            return MAPPER.readValue(o.toString(), Event.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 
