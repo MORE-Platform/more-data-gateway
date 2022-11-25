@@ -29,6 +29,7 @@ public class ICalendarParser {
             Instant end = start.plus(eventDuration, ChronoUnit.SECONDS);
             observationSchedules.add(Pair.of(start, end));
         }
+        // TODO edge cases if calculated days are not consecutive (e.g. first weekend -> first of month is a sunday)
         return observationSchedules;
     }
 
