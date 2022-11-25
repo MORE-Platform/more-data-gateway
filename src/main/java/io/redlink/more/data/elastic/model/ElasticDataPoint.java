@@ -58,9 +58,12 @@ public record ElasticDataPoint(
     public static ElasticDataPoint toElastic(DataPoint dataPoint, RoutingInfo elasticInfo) {
         return new ElasticDataPoint(
                 dataPoint.datapointId(),
-                "participant_" + elasticInfo.participantId(),
-                "study_" + elasticInfo.studyId(),
-                "study_group_" + elasticInfo.studyGroupId(),
+                "participant_%d".formatted(elasticInfo.participantId()),
+                "study_%d".formatted(elasticInfo.studyId()),
+                elasticInfo.studyGroupId().stream()
+                        .mapToObj("study_group_%d"::formatted)
+                        .findFirst()
+                        .orElse(null),
                 dataPoint.observationId(),
                 dataPoint.observationType(),
                 dataPoint.dataType(),
