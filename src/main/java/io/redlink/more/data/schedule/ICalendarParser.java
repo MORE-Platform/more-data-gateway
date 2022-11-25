@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.TimeZone;
 
 public class ICalendarParser {
@@ -49,7 +50,7 @@ public class ICalendarParser {
             setCount(recurBuilder, eventRecurrence.getCount());
             setInterval(recurBuilder, eventRecurrence.getInterval());
             setByDay(recurBuilder, eventRecurrence.getByDay(), eventRecurrence.getBySetPos());
-            setByHour(recurBuilder, event.getDateStart().atZone(TimeZone.getDefault().toZoneId()).getHour());
+            setByHour(recurBuilder, eventRecurrence.getFreq(), event.getDateStart().atZone(TimeZone.getDefault().toZoneId()).getHour());
             setByMinute(recurBuilder, event.getDateEnd().atZone(TimeZone.getDefault().toZoneId()).getMinute());
             setByMonth(recurBuilder, eventRecurrence.getByMonth());
             setByMonthDay(recurBuilder, eventRecurrence.getByMonthDay());
@@ -63,8 +64,8 @@ public class ICalendarParser {
         if(minute != null) builder.byMinute(minute);
     }
 
-    private static void setByHour(Recurrence.Builder builder, Integer hour) {
-        if(hour != null) builder.byHour(hour);
+    private static void setByHour(Recurrence.Builder builder, String freq, Integer hour) {
+        if(hour != null && !Objects.equals(freq, "HOURLY")) builder.byHour(hour);
     }
 
     private static void setUntil(Recurrence.Builder builder, Instant until) {

@@ -233,4 +233,27 @@ public class ICalendarParserTest {
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());
     }
 
+    @Test
+    @DisplayName("Parsing hourly event with until")
+    void testParseHourlyEvent() {
+        List<Pair<Instant, Instant>> expectedValues = new ArrayList<>();
+
+        expectedValues.add(Pair.of(LocalDateTime.parse("2022-12-05 15:00:00", formatter).toInstant(ZoneOffset.UTC)
+                ,LocalDateTime.parse("2022-12-05 16:00:00", formatter).toInstant(ZoneOffset.UTC)));
+        expectedValues.add(Pair.of(LocalDateTime.parse("2022-12-05 17:00:00", formatter).toInstant(ZoneOffset.UTC),
+                LocalDateTime.parse("2022-12-05 18:00:00", formatter).toInstant(ZoneOffset.UTC)));
+        expectedValues.add(Pair.of(LocalDateTime.parse("2022-12-05 19:00:00", formatter).toInstant(ZoneOffset.UTC),
+                LocalDateTime.parse("2022-12-05 20:00:00", formatter).toInstant(ZoneOffset.UTC)));
+
+        Event event = new Event()
+                .setDateStart(LocalDateTime.parse("2022-12-05 15:00:00", formatter).toInstant(ZoneOffset.UTC))
+                .setDateEnd(LocalDateTime.parse("2022-12-05 16:00:00", formatter).toInstant(ZoneOffset.UTC))
+                .setRRule(new RecurrenceRule()
+                        .setFreq("HOURLY")
+                        .setInterval(2)
+                        .setUntil(LocalDateTime.parse("2022-12-05 20:00:00", formatter).toInstant(ZoneOffset.UTC)));
+        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(event);
+        assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
+                Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
+
 }
