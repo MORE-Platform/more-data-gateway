@@ -8,10 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.redlink.more.data.model.Event;
 
-import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.OptionalInt;
@@ -52,12 +49,13 @@ public final class DbUtils {
         }
     }
 
-    public static Event readValue(Object o) {
-        if(o == null) return null;
+    public static Event readEvent(ResultSet row, String columnLabel) throws SQLException {
+        var rawValue = row.getString(columnLabel);
+        if(rawValue == null) return null;
         try {
-            return MAPPER.readValue(o.toString(), Event.class);
+            return MAPPER.readValue(rawValue, Event.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new SQLDataException("Could not read Event from column '" + columnLabel + "'", e);
         }
     }
 
