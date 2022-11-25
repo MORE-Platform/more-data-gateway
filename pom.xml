@@ -44,6 +44,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>net.sf.biweekly</groupId>
+            <artifactId>biweekly</artifactId>
+            <version>0.6.6</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
         </dependency>
@@ -361,6 +366,9 @@
                                 |BSD|BSD 3-Clause License|BSD 3-clause
                                 |New BSD License|New BSD license|The New BSD License
                                 |The BSD License
+                            </licenseMerge>
+                            <licenseMerge>
+                                BSD-2-Clause|FreeBSD License
                             </licenseMerge>
                             <licenseMerge>
                                 BSD-style License

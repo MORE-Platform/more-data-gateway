@@ -4,9 +4,15 @@
 package io.redlink.more.data.controller.transformer;
 
 import io.redlink.more.data.api.app.v1.model.ObservationDTO;
+import io.redlink.more.data.api.app.v1.model.ObservationScheduleDTO;
 import io.redlink.more.data.api.app.v1.model.StudyDTO;
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.Study;
+import io.redlink.more.data.schedule.ICalendarParser;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 public final class StudyTransformer {
@@ -34,7 +40,18 @@ public final class StudyTransformer {
                 .observationType(observation.type())
                 .observationTitle(observation.title())
                 .participantInfo(observation.participantInfo())
+                .schedule(ICalendarParser
+                        .parseToObservationSchedules(observation.observationSchedule())
+                        .stream()
+                        .map(StudyTransformer::toObservationScheduleDTO)
+                        .toList())
                 ;
+    }
+
+    public static ObservationScheduleDTO toObservationScheduleDTO(Pair<Instant, Instant> schedule) {
+        return new ObservationScheduleDTO()
+                .start(schedule.getLeft().atOffset(ZoneOffset.UTC))
+                .end(schedule.getRight().atOffset(ZoneOffset.UTC));
     }
 
 }

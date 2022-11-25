@@ -3,10 +3,8 @@
  */
 package io.redlink.more.data.repository;
 
-import io.redlink.more.data.model.Observation;
-import io.redlink.more.data.model.ParticipantConsent;
-import io.redlink.more.data.model.RoutingInfo;
-import io.redlink.more.data.model.Study;
+import io.redlink.more.data.model.*;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -137,7 +135,8 @@ public class StudyRepository {
                 rs.getInt("observation_id"),
                 rs.getString("title"),
                 rs.getString("type"),
-                rs.getString("participant_info")
+                rs.getString("participant_info"),
+                DbUtils.readEvent(rs, "schedule")
         );
     }
 
