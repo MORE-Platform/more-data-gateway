@@ -10,6 +10,7 @@ import io.redlink.more.data.model.Study;
 import io.redlink.more.data.repository.StudyRepository;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -45,8 +46,12 @@ public class RegistrationService {
 
         var apiSecret = UUID.randomUUID().toString();
 
-        return studyRepository.createCredentials(registrationToken, consent, () -> passwordEncoder.encode(apiSecret))
-                .map(apiId -> new ApiCredentials(apiId, apiSecret));
+        try {
+            return studyRepository.createCredentials(registrationToken, consent, () -> passwordEncoder.encode(apiSecret))
+                    .map(apiId -> new ApiCredentials(apiId, apiSecret));
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("Invalid Consent", e);
+        }
     }
 
 }

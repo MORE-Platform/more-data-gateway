@@ -9,13 +9,13 @@ import io.redlink.more.data.api.app.v1.model.PushNotificationTokenDTO;
 import io.redlink.more.data.api.app.v1.model.StudyDTO;
 import io.redlink.more.data.api.app.v1.webservices.ConfigurationApi;
 import io.redlink.more.data.configuration.AuthenticationFacade;
+import io.redlink.more.data.controller.transformer.NotificationServiceTransformer;
 import io.redlink.more.data.controller.transformer.StudyTransformer;
 import io.redlink.more.data.model.GatewayUserDetails;
 import io.redlink.more.data.service.GatewayUserDetailService;
 import io.redlink.more.data.service.PushNotificationService;
 import io.redlink.more.data.service.RegistrationService;
 import java.util.List;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -67,7 +67,15 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
     public ResponseEntity<PushNotificationConfigDTO> getPushNotificationServiceClientConfig(PushNotificationServiceTypeDTO serviceType) {
         authenticationFacade.assertAuthority(GatewayUserDetailService.APP_ROLE);
 
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        if (serviceType == PushNotificationServiceTypeDTO.FCM && pushNotificationService.hasFcmConfig()) {
+            return ResponseEntity.ok(
+                    NotificationServiceTransformer.toDTO(
+                            pushNotificationService.getFcmConfig()
+                    )
+            );
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @Override
@@ -75,7 +83,11 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
         final GatewayUserDetails userDetails = authenticationFacade
                 .assertAuthority(GatewayUserDetailService.APP_ROLE);
 
-        pushNotificationService.storeToken(userDetails.getRoutingInfo(), pushNotificationTokenDTO.getToken());
+        if (serviceType == PushNotificationServiceTypeDTO.FCM) {
+            pushNotificationService.storeFcmToken(userDetails.getRoutingInfo(), pushNotificationTokenDTO.getToken());
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
         return ResponseEntity.accepted().build();
     }
 }

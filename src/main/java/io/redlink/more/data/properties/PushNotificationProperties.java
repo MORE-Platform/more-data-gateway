@@ -14,7 +14,6 @@ public record PushNotificationProperties(
             String projectId,
             String applicationId,
             String apiKey,
-            String databaseUrl,
             String gcmSenderId,
             String storageBucket
     ) {

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "test-gcm-sender-id",
+    "project_id": "test-project-id",
+    "storage_bucket": "test-storage-bucket"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "test-application-id",
+        "android_client_info": {
+          "package_name": "io.redlink.more.app.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "test-gcm-sender-id-random_hash.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "test-api-key"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "test-gcm-sender-id-random_hash.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
