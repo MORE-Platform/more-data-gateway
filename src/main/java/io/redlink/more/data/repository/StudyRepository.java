@@ -53,6 +53,10 @@ public class StudyRepository {
     private static final String SQL_INSERT_OBSERVATION_CONSENT =
             "INSERT INTO observation_consents(study_id, participant_id, observation_id) VALUES (:study_id, :participant_id, :observation_id) " +
             "ON CONFLICT (study_id, participant_id, observation_id) DO NOTHING";
+    private static final String SQL_SET_PARTICIPANT_ACTIVE =
+            "UPDATE participants " +
+            "SET status = 'active', modified = now() " +
+            "WHERE study_id = :study_id AND participant_id = :participant_id AND status = 'new'";
 
 
     private final JdbcTemplate jdbcTemplate;
@@ -96,14 +100,15 @@ public class StudyRepository {
         storeConsent(routingInfo.studyId(), routingInfo.participantId(), consent);
 
         final String apiId = namedTemplate.queryForObject(SQL_INSERT_CREDENTIALS,
-                new MapSqlParameterSource()
-                        .addValue("api_secret", secret)
-                        .addValue("study_id", routingInfo.studyId())
-                        .addValue("participant_id", routingInfo.participantId()),
-                (rs, row)-> rs.getString("api_id"));
+                toParameterSource(routingInfo.studyId(), routingInfo.participantId())
+                        .addValue("api_secret", secret),
+                (rs, row) -> rs.getString("api_id"));
 
         if (apiId != null) {
             jdbcTemplate.update(SQL_CLEAR_TOKEN, registrationToken);
+            namedTemplate.update(SQL_SET_PARTICIPANT_ACTIVE,
+                    toParameterSource(routingInfo.studyId(), routingInfo.participantId())
+            );
             return Optional.of(apiId);
         }
         throw new IllegalStateException("Creating API-Credentials failed!");
@@ -150,19 +155,22 @@ public class StudyRepository {
         );
     }
 
-    private static MapSqlParameterSource toParameterSource(long studyId, int participantId, ParticipantConsent consent) {
+    private static MapSqlParameterSource toParameterSource(long studyId, int participantId) {
         return new MapSqlParameterSource()
                 .addValue("study_id", studyId)
                 .addValue("participant_id", participantId)
+                ;
+    }
+
+    private static MapSqlParameterSource toParameterSource(long studyId, int participantId, ParticipantConsent consent) {
+        return toParameterSource(studyId, participantId)
                 .addValue("accepted", consent.accepted())
                 .addValue("origin", consent.deviceId())
                 .addValue("content_md5", consent.consentMd5());
     }
 
     private static MapSqlParameterSource toParameterSource(long studyId, int participantId, ParticipantConsent.ObservationConsent consent) {
-        return new MapSqlParameterSource()
-                .addValue("study_id", studyId)
-                .addValue("participant_id", participantId)
+        return toParameterSource(studyId, participantId)
                 .addValue("observation_id", consent.observationId())
                 ;
     }
