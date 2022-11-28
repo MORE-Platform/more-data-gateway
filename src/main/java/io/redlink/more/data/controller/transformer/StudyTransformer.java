@@ -35,17 +35,19 @@ public final class StudyTransformer {
     }
 
     public static ObservationDTO toDTO(Observation observation) {
-        return new ObservationDTO()
+        ObservationDTO dto =  new ObservationDTO()
                 .observationId(String.valueOf(observation.observationId()))
                 .observationType(observation.type())
                 .observationTitle(observation.title())
-                .participantInfo(observation.participantInfo())
-                .schedule(ICalendarParser
+                .participantInfo(observation.participantInfo());
+       if(observation.observationSchedule() != null) {
+           dto.schedule(ICalendarParser
                         .parseToObservationSchedules(observation.observationSchedule())
                         .stream()
                         .map(StudyTransformer::toObservationScheduleDTO)
                         .toList())
-                ;
+       }
+       return dto;
     }
 
     public static ObservationScheduleDTO toObservationScheduleDTO(Pair<Instant, Instant> schedule) {
