@@ -45,7 +45,7 @@ public final class StudyTransformer {
                         .parseToObservationSchedules(observation.observationSchedule())
                         .stream()
                         .map(StudyTransformer::toObservationScheduleDTO)
-                        .toList())
+                        .toList());
        }
        return dto;
     }
