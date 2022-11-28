@@ -1,9 +1,9 @@
 _id: req_wrk_3c875888846a45988c061a9d86c4a4b4aac8ceff
 type: Request
 parentId: fld_wrk_3c875888846a45988c061a9d86c4a4b475416485
-modified: 1669126426686
+modified: 1669389021901
 created: 1669124043485
-url: "{{ api_base }}/config/notifications/{{ serviceType }}"
+url: "{{ api_base }}/config/notifications/{{ _.service_type }}"
 name: Get Push-Notification Config
 description: ""
 method: GET

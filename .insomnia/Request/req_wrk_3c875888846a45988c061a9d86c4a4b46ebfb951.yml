@@ -1,9 +1,9 @@
 _id: req_wrk_3c875888846a45988c061a9d86c4a4b46ebfb951
 type: Request
 parentId: fld_wrk_3c875888846a45988c061a9d86c4a4b475416485
-modified: 1669126436851
+modified: 1669633330186
 created: 1669124043484
-url: "{{ api_base }}/config/notifications/{{ serviceType }}"
+url: "{{ api_base }}/config/notifications/{{ _.service_type }}"
 name: Register Push-Notification Token
 description: ""
 method: PUT
@@ -11,7 +11,7 @@ body:
   mimeType: application/json
   text: |-
     {
-      "token": "string"
+      "token": "{% hash 'sha256', 'hex', _.base_url %}"
     }
 parameters: []
 headers:

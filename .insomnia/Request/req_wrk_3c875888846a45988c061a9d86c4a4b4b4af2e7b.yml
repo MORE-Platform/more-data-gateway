@@ -1,7 +1,7 @@
 _id: req_wrk_3c875888846a45988c061a9d86c4a4b4b4af2e7b
 type: Request
 parentId: fld_wrk_3c875888846a45988c061a9d86c4a4b4b233e775
-modified: 1669126357697
+modified: 1669633325887
 created: 1669124043489
 url: "{{ api_base }}/registration"
 name: Create API Credentials
@@ -15,9 +15,6 @@ body:
       "deviceId": "{% uuid 'v1' %}",
       "consentInfoMD5": "{% hash 'md5', 'hex', _.base_url %}",
       "observations": [
-        {
-          "observationId": "1"
-        }
       ]
     }
 parameters: []
