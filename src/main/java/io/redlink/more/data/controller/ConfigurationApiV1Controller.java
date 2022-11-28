@@ -9,12 +9,13 @@ import io.redlink.more.data.api.app.v1.model.PushNotificationTokenDTO;
 import io.redlink.more.data.api.app.v1.model.StudyDTO;
 import io.redlink.more.data.api.app.v1.webservices.ConfigurationApi;
 import io.redlink.more.data.configuration.AuthenticationFacade;
+import io.redlink.more.data.controller.transformer.NotificationServiceTransformer;
 import io.redlink.more.data.controller.transformer.StudyTransformer;
 import io.redlink.more.data.model.GatewayUserDetails;
 import io.redlink.more.data.service.GatewayUserDetailService;
+import io.redlink.more.data.service.PushNotificationService;
 import io.redlink.more.data.service.RegistrationService;
 import java.util.List;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -30,14 +31,12 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
 
     private final RegistrationService registrationService;
 
-    public ConfigurationApiV1Controller(AuthenticationFacade authenticationFacade, RegistrationService registrationService) {
+    private final PushNotificationService pushNotificationService;
+
+    public ConfigurationApiV1Controller(AuthenticationFacade authenticationFacade, RegistrationService registrationService, PushNotificationService pushNotificationService) {
         this.authenticationFacade = authenticationFacade;
         this.registrationService = registrationService;
-    }
-
-    @Override
-    public ResponseEntity<PushNotificationConfigDTO> getPushNotificationServiceClientConfig(PushNotificationServiceTypeDTO serviceType) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        this.pushNotificationService = pushNotificationService;
     }
 
     @Override
@@ -53,11 +52,42 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
 
     @Override
     public ResponseEntity<List<PushNotificationServiceTypeDTO>> listPushNotificationServices() {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        authenticationFacade.assertAuthority(GatewayUserDetailService.APP_ROLE);
+
+        if (pushNotificationService.hasFcmConfig()) {
+            return ResponseEntity.ok(
+                    List.of(PushNotificationServiceTypeDTO.FCM)
+            );
+        } else {
+            return ResponseEntity.ok(List.of());
+        }
+    }
+
+    @Override
+    public ResponseEntity<PushNotificationConfigDTO> getPushNotificationServiceClientConfig(PushNotificationServiceTypeDTO serviceType) {
+        authenticationFacade.assertAuthority(GatewayUserDetailService.APP_ROLE);
+
+        if (serviceType == PushNotificationServiceTypeDTO.FCM && pushNotificationService.hasFcmConfig()) {
+            return ResponseEntity.ok(
+                    NotificationServiceTransformer.toDTO(
+                            pushNotificationService.getFcmConfig()
+                    )
+            );
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @Override
     public ResponseEntity<Void> setPushNotificationToken(PushNotificationServiceTypeDTO serviceType, PushNotificationTokenDTO pushNotificationTokenDTO) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        final GatewayUserDetails userDetails = authenticationFacade
+                .assertAuthority(GatewayUserDetailService.APP_ROLE);
+
+        if (serviceType == PushNotificationServiceTypeDTO.FCM) {
+            pushNotificationService.storeFcmToken(userDetails.getRoutingInfo(), pushNotificationTokenDTO.getToken());
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.accepted().build();
     }
 }

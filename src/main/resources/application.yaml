@@ -24,3 +24,7 @@ elastic:
   port: ${ELASTIC_PORT:9200}
   username: ${ELASTIC_USERNAME:elastic}
   password: ${ELASTIC_PASSWORD:ctEDwSLMI-vLsQ1w+8-O}
+
+push-notifications:
+  fcm:
+    google-service-json: classpath:google-services.json

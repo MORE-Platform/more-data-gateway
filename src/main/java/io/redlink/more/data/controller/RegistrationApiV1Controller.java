@@ -57,20 +57,26 @@ public class RegistrationApiV1Controller implements RegistrationApi {
     @Override
     public ResponseEntity<AppConfigurationDTO> registerForStudy(String moreRegistrationToken, StudyConsentDTO studyConsentDTO) {
         final ParticipantConsent consent = convert(studyConsentDTO);
-        if (registrationService.validateConsent(consent)) {
-            return ResponseEntity.of(
-                    registrationService.register(moreRegistrationToken, consent)
-                            .map(RegistrationApiV1Controller::convert)
-                            .map(cred -> new AppConfigurationDTO()
-                                    .credentials(cred)
-                                    .endpoint(getBaseURI())
-                            )
-            );
-        }
+        try {
+            if (registrationService.validateConsent(consent)) {
+                return ResponseEntity.of(
+                        registrationService.register(moreRegistrationToken, consent)
+                                .map(RegistrationApiV1Controller::convert)
+                                .map(cred -> new AppConfigurationDTO()
+                                        .credentials(cred)
+                                        .endpoint(getBaseURI())
+                                )
+                );
+            }
 
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .header("X-Info", "Consent not given")
-                .build();
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .header("X-Info", "Consent not given")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .header("X-Info", e.getMessage())
+                    .build();
+        }
     }
 
     private URI getBaseURI() {
