@@ -1,7 +1,7 @@
 _id: req_wrk_3c875888846a45988c061a9d86c4a4b43d13ab00
 type: Request
 parentId: fld_wrk_3c875888846a45988c061a9d86c4a4b475416485
-modified: 1669126393906
+modified: 1669650096569
 created: 1669124043488
 url: "{{ api_base }}/config/study"
 name: Load Study Info
