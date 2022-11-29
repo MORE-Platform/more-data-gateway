@@ -31,11 +31,13 @@ public class GatewayUserRepository {
     }
 
     public Optional<GatewayUserDetails> findByApiId(String apiId, Set<String> roles) {
-        return jdbcTemplate.queryForStream(
+        try (var stream = jdbcTemplate.queryForStream(
                 GET_AUTH_ROUTING_INFO,
                 Map.of("api_id", apiId),
                 (rs, rowNum) -> readUserDetails(rs, roles)
-        ).findFirst();
+        )) {
+            return stream.findFirst();
+        }
     }
 
     private static GatewayUserDetails readUserDetails(ResultSet rs, Set<String> roles) throws SQLException {
