@@ -2,7 +2,7 @@
 <configuration>
     <springProfile name="docker">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-            <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
         </appender>
 
         <root level="INFO">
@@ -11,7 +11,7 @@
 
     </springProfile>
     <springProfile name="default">
-        <include resource="org/springframework/boot/logging/logback/default.xml"/>
+        <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
         <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
         <root level="INFO">
