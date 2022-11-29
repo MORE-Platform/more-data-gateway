@@ -16,13 +16,8 @@ import static io.redlink.more.data.repository.DbUtils.readOptionalInt;
 @Service
 public class GatewayUserRepository {
 
-    // TODO: switch to dedicated table view (auth_routing_info)
     private static final String GET_AUTH_ROUTING_INFO =
-            "SELECT ac.*, pt.study_group_id " +
-            "FROM api_credentials ac" +
-            "    INNER JOIN participants pt " +
-            "        ON (ac.study_id = pt.study_id and ac.participant_id = pt.participant_id) " +
-            "WHERE api_id = :api_id";
+            "SELECT * FROM auth_routing_info WHERE api_id = :api_id";
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 

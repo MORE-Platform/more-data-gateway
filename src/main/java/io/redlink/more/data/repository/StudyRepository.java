@@ -33,9 +33,7 @@ public class StudyRepository {
             "FROM participants pt INNER JOIN registration_tokens rt ON (pt.study_id = rt.study_id and pt.participant_id = rt.participant_id) " +
             "WHERE rt.token = ?";
     private static final String SQL_ROUTING_INFO_BY_REG_TOKEN_WITH_LOCK =
-            "SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id " +
-            "FROM participants pt INNER JOIN registration_tokens rt ON (pt.study_id = rt.study_id and pt.participant_id = rt.participant_id) " +
-            "WHERE rt.token = ? FOR UPDATE OF rt";
+            SQL_ROUTING_INFO_BY_REG_TOKEN + " FOR UPDATE OF rt";
 
     private static final String SQL_CLEAR_TOKEN =
             "DELETE FROM registration_tokens WHERE token = ?";
@@ -45,20 +43,28 @@ public class StudyRepository {
             "INSERT INTO api_credentials (api_id, api_secret, study_id, participant_id) " +
             "SELECT md5(study_id::text || random()::text), api_secret, study_id, participant_id FROM data " +
             "RETURNING api_id";
-
     private static final String SQL_CLEAR_CREDENTIALS =
-            "DELETE FROM api_credentials WHERE api_id = :apiId";
+            "DELETE FROM api_credentials " +
+            "WHERE api_id = :api_id " +
+            "RETURNING study_id, participant_id";
+
     private static final String SQL_INSERT_STUDY_CONSENT =
             "INSERT INTO participation_consents(study_id, participant_id, accepted, origin, content_md5) VALUES (:study_id, :participant_id, :accepted, :origin, :content_md5) " +
-            "ON CONFLICT (study_id, participant_id) DO UPDATE SET accepted = excluded.accepted, origin = excluded.origin, content_md5 = excluded.content_md5, consent_timestamp = now()";
+            "ON CONFLICT (study_id, participant_id) DO " +
+            "   UPDATE SET accepted = excluded.accepted, origin = excluded.origin, content_md5 = excluded.content_md5, " +
+            "              consent_timestamp = now(), consent_withdrawn = NULL";
+    private static final String SQL_WITHDRAW_STUDY_CONSENT =
+            "UPDATE participation_consents " +
+            "SET consent_withdrawn = now() " +
+            "WHERE study_id = :study_id AND participant_id = :participant_id";
 
     private static final String SQL_INSERT_OBSERVATION_CONSENT =
             "INSERT INTO observation_consents(study_id, participant_id, observation_id) VALUES (:study_id, :participant_id, :observation_id) " +
             "ON CONFLICT (study_id, participant_id, observation_id) DO NOTHING";
     private static final String SQL_SET_PARTICIPANT_STATUS =
             "UPDATE participants " +
-            "SET status = :newStatus, modified = now() " +
-            "WHERE study_id = :study_id AND participant_id = :participant_id AND status = :oldStatus";
+            "SET status = :newStatus::participant_status, modified = now() " +
+            "WHERE study_id = :study_id AND participant_id = :participant_id AND status = :oldStatus::participant_status";
 
 
     private final JdbcTemplate jdbcTemplate;
@@ -132,15 +138,20 @@ public class StudyRepository {
                         .toArray(SqlParameterSource[]::new));
     }
 
+    private void withdrawConsent(long studyId, int participantId) {
+        namedTemplate.update(SQL_WITHDRAW_STUDY_CONSENT, toParameterSource(studyId, participantId));
+    }
+
     @Transactional
     public void clearCredentials(String apiId) {
         namedTemplate.query(SQL_CLEAR_CREDENTIALS,
                 new MapSqlParameterSource()
-                        .addValue("apiId", apiId),
+                        .addValue("api_id", apiId),
                 rs -> {
-                    updateParticipantStatus(
-                            rs.getLong("study_id"),
-                            rs.getInt("participant_id"),
+                    final long studyId = rs.getLong("study_id");
+                    final int participantId = rs.getInt("participant_id");
+                    withdrawConsent(studyId, participantId);
+                    updateParticipantStatus(studyId, participantId,
                             "active", "abandoned");
                 }
         );
