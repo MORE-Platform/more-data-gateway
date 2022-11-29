@@ -9,10 +9,13 @@ import io.redlink.more.data.api.app.v1.model.StudyConsentDTO;
 import io.redlink.more.data.api.app.v1.model.StudyConsentObservationsDTO;
 import io.redlink.more.data.api.app.v1.model.StudyDTO;
 import io.redlink.more.data.api.app.v1.webservices.RegistrationApi;
+import io.redlink.more.data.configuration.AuthenticationFacade;
 import io.redlink.more.data.controller.transformer.StudyTransformer;
 import io.redlink.more.data.model.ApiCredentials;
+import io.redlink.more.data.model.GatewayUserDetails;
 import io.redlink.more.data.model.ParticipantConsent;
 import io.redlink.more.data.properties.MoreProperties;
+import io.redlink.more.data.service.GatewayUserDetailService;
 import io.redlink.more.data.service.RegistrationService;
 import java.net.URI;
 import java.util.List;
@@ -35,10 +38,13 @@ public class RegistrationApiV1Controller implements RegistrationApi {
 
     private final RegistrationService registrationService;
 
+    private final AuthenticationFacade authenticationFacade;
 
-    public RegistrationApiV1Controller(MoreProperties moreProperties, RegistrationService registrationService) {
+
+    public RegistrationApiV1Controller(MoreProperties moreProperties, RegistrationService registrationService, AuthenticationFacade authenticationFacade) {
         this.moreProperties = moreProperties;
         this.registrationService = registrationService;
+        this.authenticationFacade = authenticationFacade;
     }
 
     @Override
@@ -77,6 +83,16 @@ public class RegistrationApiV1Controller implements RegistrationApi {
                     .header("X-Info", e.getMessage())
                     .build();
         }
+    }
+
+    @Override
+    public ResponseEntity<Void> unregisterFromStudy() {
+        final GatewayUserDetails userDetails = authenticationFacade
+                .assertAuthority(GatewayUserDetailService.APP_ROLE);
+
+        registrationService.unregister(userDetails.getUsername(), userDetails.getRoutingInfo());
+
+        return ResponseEntity.noContent().build();
     }
 
     private URI getBaseURI() {

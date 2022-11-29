@@ -25,14 +25,14 @@ security:
 
 paths:
   /registration:
-    parameters:
-      - $ref: '#/components/parameters/RegistrationToken'
     get:
       operationId: getStudyRegistrationInfo
       description: Provide the information on a study required to register and consent.
       tags:
         - Registration
       security: [ ]
+      parameters:
+        - $ref: '#/components/parameters/RegistrationToken'
       responses:
         '200':
           $ref: '#/components/responses/StudyInfoResponse'
@@ -46,6 +46,8 @@ paths:
       tags:
         - Registration
       security: [ ]
+      parameters:
+        - $ref: '#/components/parameters/RegistrationToken'
       requestBody:
         required: true
         content:
@@ -69,6 +71,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    delete:
+      operationId: unregisterFromStudy
+      description: Leave study / Withdraw Consent
+      tags:
+        - Registration
+      responses:
+        '204':
+          description: Participant left the study.
 
   /config/study:
     get:
