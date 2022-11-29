@@ -39,7 +39,8 @@ public final class StudyTransformer {
                 .observationId(String.valueOf(observation.observationId()))
                 .observationType(observation.type())
                 .observationTitle(observation.title())
-                .participantInfo(observation.participantInfo());
+                .participantInfo(observation.participantInfo())
+                ._configuration(observation.properties());
        if(observation.observationSchedule() != null) {
            dto.schedule(ICalendarParser
                         .parseToObservationSchedules(observation.observationSchedule())

@@ -141,6 +141,7 @@ public class StudyRepository {
                 rs.getString("title"),
                 rs.getString("type"),
                 rs.getString("participant_info"),
+                DbUtils.readObject(rs,"properties"),
                 DbUtils.readEvent(rs, "schedule")
         );
     }

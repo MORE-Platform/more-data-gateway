@@ -5,7 +5,7 @@ public record Observation(
          String title,
          String type,
          String participantInfo,
-
+         Object properties,
          Event observationSchedule
 ) {
 }
