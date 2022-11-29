@@ -3,8 +3,10 @@
  */
 package io.redlink.more.data.repository;
 
-import io.redlink.more.data.model.*;
-
+import io.redlink.more.data.model.Observation;
+import io.redlink.more.data.model.ParticipantConsent;
+import io.redlink.more.data.model.RoutingInfo;
+import io.redlink.more.data.model.Study;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -77,7 +79,9 @@ public class StudyRepository {
 
     private Optional<RoutingInfo> getRoutingInfo(String registrationToken, boolean lock) {
         var sql = lock ? SQL_ROUTING_INFO_BY_REG_TOKEN_WITH_LOCK : SQL_ROUTING_INFO_BY_REG_TOKEN;
-        return jdbcTemplate.queryForStream(sql, getRoutingInfoMapper(), registrationToken).findFirst();
+        try (var stream = jdbcTemplate.queryForStream(sql, getRoutingInfoMapper(), registrationToken)) {
+            return stream.findFirst();
+        }
     }
 
 
@@ -89,8 +93,9 @@ public class StudyRepository {
     public Optional<Study> findStudy(RoutingInfo routingInfo) {
         final List<Observation> observations = listObservations(routingInfo.studyId(), routingInfo.studyGroupId().orElse(-1));
 
-        return jdbcTemplate.queryForStream(SQL_FIND_STUDY_BY_ID, getStudyRowMapper(observations), routingInfo.studyId())
-                .findFirst();
+        try (var stream = jdbcTemplate.queryForStream(SQL_FIND_STUDY_BY_ID, getStudyRowMapper(observations), routingInfo.studyId())) {
+            return stream.findFirst();
+        }
     }
 
     private List<Observation> listObservations(long studyId, int groupId) {
@@ -178,6 +183,7 @@ public class StudyRepository {
                 rs.getString("title"),
                 rs.getString("type"),
                 rs.getString("participant_info"),
+                DbUtils.readObject(rs,"properties"),
                 DbUtils.readEvent(rs, "schedule")
         );
     }

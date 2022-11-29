@@ -59,5 +59,15 @@ public final class DbUtils {
         }
     }
 
+    public static Object readObject(ResultSet row, String columnLabel) throws SQLException {
+        var rawValue = row.getString(columnLabel);
+        if(rawValue == null) return null;
+        try {
+            return MAPPER.readValue(rawValue, Object.class);
+        } catch (JsonProcessingException e) {
+            throw new SQLDataException("Could not read Object from column '" + columnLabel + "'", e);
+        }
+    }
+
 
 }
