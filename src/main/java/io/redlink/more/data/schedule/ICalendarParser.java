@@ -22,13 +22,15 @@ public class ICalendarParser {
 
     public static List<Pair<Instant, Instant>> parseToObservationSchedules(Event event) {
         List<Pair<Instant, Instant>> observationSchedules = new ArrayList<>();
-        VEvent iCalEvent = parseToICalEvent(event);
-        long eventDuration = getEventTime(event);
-        DateIterator it = iCalEvent.getDateIterator(TimeZone.getDefault());
-        while (it.hasNext()) {
-            Instant start = it.next().toInstant();
-            Instant end = start.plus(eventDuration, ChronoUnit.SECONDS);
-            observationSchedules.add(Pair.of(start, end));
+        if(event.getDateStart() != null && event.getDateEnd() != null) {
+            VEvent iCalEvent = parseToICalEvent(event);
+            long eventDuration = getEventTime(event);
+            DateIterator it = iCalEvent.getDateIterator(TimeZone.getDefault());
+            while (it.hasNext()) {
+                Instant start = it.next().toInstant();
+                Instant end = start.plus(eventDuration, ChronoUnit.SECONDS);
+                observationSchedules.add(Pair.of(start, end));
+            }
         }
         // TODO edge cases if calculated days are not consecutive (e.g. first weekend -> first of month is a sunday)
         return observationSchedules;
