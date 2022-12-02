@@ -104,8 +104,8 @@
             <version>2.2.7</version>
         </dependency>
         <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
         </dependency>
 
         <dependency>
@@ -183,6 +183,8 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <release>${java.version}</release>
+                    <parameters>true</parameters>
+                    <optimize>true</optimize>
                 </configuration>
             </plugin>
             <plugin>
@@ -275,8 +277,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <!-- Version 6.0.1 has bug with discriminator mapping -->
-                <version>5.4.0</version>
+                <version>6.2.1</version>
                 <executions>
                     <execution>
                         <id>data-api</id>
@@ -310,6 +311,7 @@
                     <generateSupportingFiles>false</generateSupportingFiles>
 
                     <configOptions>
+                        <useSpringBoot3>true</useSpringBoot3>
                         <sourceFolder>src</sourceFolder>
                         <documentationProvider>source</documentationProvider>
                         <interfaceOnly>true</interfaceOnly>
@@ -330,7 +332,7 @@
                             <useMissingFile>true</useMissingFile>
                             <includedLicenses>
                                 Apache-2.0|BSD-2-Clause|BSD-3-Clause|CDDL-1.1|EPL-1.0|EPL-2.0|Eclipse Distribution License 1.0|GPL 2.0 with Classpath
-                                Exception|Go License|LGPL|LGPL-2.1-or-later|MIT|CC0|Bouncy Castle Licence
+                                Exception|Go License|LGPL|LGPL-2.1-or-later|LGPL-3.0|MIT|CC0|Bouncy Castle Licence
                             </includedLicenses>
                             <failOnMissing>true</failOnMissing>
                             <failOnBlacklist>
@@ -415,8 +417,9 @@
                                 |GNU Lesser General Public License (LGPL), version 2.1 or later
                             </licenseMerge>
                             <licenseMerge>
-                                LGPL 3.0
-                                |LGPL 3.0 license
+                                LGPL-3.0
+                                |GNU Lesser General Public License v3.0
+                                |LGPL 3.0|LGPL 3.0 license
                             </licenseMerge>
                             <licenseMerge>
                                 MIT|MIT License

@@ -222,6 +222,7 @@ components:
         schedule:
           type: array
           items:
+            title: ObservationSchedule
             type: object
             properties:
               start:
@@ -263,6 +264,7 @@ components:
         observations:
           type: array
           items:
+            title: ObservationConsent
             type: object
             properties:
               observationId:
