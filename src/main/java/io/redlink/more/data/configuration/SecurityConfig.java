@@ -18,6 +18,9 @@ import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.firewall.HttpStatusRequestRejectedHandler;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
 
 @Configuration
 public class SecurityConfig {
@@ -34,19 +37,24 @@ public class SecurityConfig {
 
         http.csrf().disable()
                 .authenticationProvider(authenticationProvider)
-                .authorizeRequests(req -> {
+                .authorizeHttpRequests(req -> {
                     // root for smoke-tests is allowed
-                    req.antMatchers("/")
+                    req.requestMatchers("/")
                             .permitAll();
                     // registration-endpoints needs to be open
-                    req.antMatchers("/api/v1/registration")
+                    req.requestMatchers("/api/v1/registration")
                             .permitAll();
                     // all other apis require credentials
-                    req.antMatchers("/api/v1/**")
+                    req.requestMatchers("/api/v1/**")
                             .authenticated();
                     // actuator only from localhost
-                    req.antMatchers("/actuator/**")
-                            .hasIpAddress("127.0.0.1/8");
+                    req.requestMatchers(
+                                    new AndRequestMatcher(
+                                            new AntPathRequestMatcher("/actuator/**"),
+                                            new IpAddressMatcher("127.0.0.1/8")
+                                    )
+                            )
+                            .permitAll();
                     // everything else is denied
                     req.anyRequest().denyAll();
                 })
@@ -56,7 +64,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder){
+    public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder);
         provider.setUserDetailsService(gatewayUserDetailService);
@@ -71,9 +79,9 @@ public class SecurityConfig {
         encoders.put(encodingId, new BCryptPasswordEncoder());
         encoders.put("noop", org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance());
         encoders.put(null, org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance());
-        encoders.put("pbkdf2", new Pbkdf2PasswordEncoder());
-        encoders.put("scrypt", new SCryptPasswordEncoder());
-        encoders.put("argon2", new Argon2PasswordEncoder());
+        encoders.put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+        encoders.put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8());
+        encoders.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
         return new DelegatingPasswordEncoder(encodingId, encoders);
     }
 

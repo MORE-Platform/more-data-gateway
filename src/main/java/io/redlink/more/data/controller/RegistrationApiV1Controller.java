@@ -5,8 +5,8 @@ package io.redlink.more.data.controller;
 
 import io.redlink.more.data.api.app.v1.model.ApiKeyDTO;
 import io.redlink.more.data.api.app.v1.model.AppConfigurationDTO;
+import io.redlink.more.data.api.app.v1.model.ObservationConsentDTO;
 import io.redlink.more.data.api.app.v1.model.StudyConsentDTO;
-import io.redlink.more.data.api.app.v1.model.StudyConsentObservationsDTO;
 import io.redlink.more.data.api.app.v1.model.StudyDTO;
 import io.redlink.more.data.api.app.v1.webservices.RegistrationApi;
 import io.redlink.more.data.configuration.AuthenticationFacade;
@@ -117,13 +117,13 @@ public class RegistrationApiV1Controller implements RegistrationApi {
         );
     }
 
-    private static List<ParticipantConsent.ObservationConsent> convert(List<StudyConsentObservationsDTO> observations) {
+    private static List<ParticipantConsent.ObservationConsent> convert(List<ObservationConsentDTO> observations) {
         return observations.stream()
                 .map(RegistrationApiV1Controller::convert)
                 .toList();
     }
 
-    private static ParticipantConsent.ObservationConsent convert(StudyConsentObservationsDTO observations) {
+    private static ParticipantConsent.ObservationConsent convert(ObservationConsentDTO observations) {
         return new ParticipantConsent.ObservationConsent(
                 Integer.parseInt(observations.getObservationId()),
                 null
