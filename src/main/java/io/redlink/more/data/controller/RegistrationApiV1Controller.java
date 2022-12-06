@@ -19,6 +19,7 @@ import io.redlink.more.data.service.GatewayUserDetailService;
 import io.redlink.more.data.service.RegistrationService;
 import java.net.URI;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -110,10 +111,26 @@ public class RegistrationApiV1Controller implements RegistrationApi {
     private static ParticipantConsent convert(StudyConsentDTO dto) {
         return new ParticipantConsent(
                 dto.getConsent(),
-                dto.getDeviceId(),
+                obfuscate(dto.getDeviceId()),
                 dto.getConsentInfoMD5(),
                 null,
                 convert(dto.getObservations())
+        );
+    }
+
+    /**
+     * Device-ID has the format "[MODEL]#[SERIAL], we obfuscate to [MODEL]#[SERIAL:0:6]...[SERIAL:-6:-0]
+     */
+    private static String obfuscate(String string) {
+        final String unknown = "unknown";
+        if (string == null) return unknown;
+
+        final int keepChars = 6;
+        final int delim = string.indexOf('#');
+        return "%s#%s...%s".formatted(
+                StringUtils.defaultIfEmpty(StringUtils.left(string, delim), unknown),
+                StringUtils.mid(string, delim + 1, keepChars),
+                StringUtils.right(string, keepChars)
         );
     }
 
