@@ -21,6 +21,7 @@ public final class StudyTransformer {
 
     public static StudyDTO toDTO(Study study) {
         return new StudyDTO()
+                .active(study.active())
                 .studyTitle(study.title())
                 .participantInfo(study.participantInfo())
                 .consentInfo(study.consentInfo())

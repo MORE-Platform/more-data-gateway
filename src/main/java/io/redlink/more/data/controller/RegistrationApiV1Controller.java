@@ -5,12 +5,15 @@ package io.redlink.more.data.controller;
 
 import io.redlink.more.data.api.app.v1.model.ApiKeyDTO;
 import io.redlink.more.data.api.app.v1.model.AppConfigurationDTO;
+import io.redlink.more.data.api.app.v1.model.ErrorDTO;
 import io.redlink.more.data.api.app.v1.model.ObservationConsentDTO;
 import io.redlink.more.data.api.app.v1.model.StudyConsentDTO;
 import io.redlink.more.data.api.app.v1.model.StudyDTO;
 import io.redlink.more.data.api.app.v1.webservices.RegistrationApi;
 import io.redlink.more.data.configuration.AuthenticationFacade;
+import io.redlink.more.data.exception.RegistrationNotPossibleException;
 import io.redlink.more.data.controller.transformer.StudyTransformer;
+import io.redlink.more.data.controller.transformer.ErrorTransformer;
 import io.redlink.more.data.model.ApiCredentials;
 import io.redlink.more.data.model.GatewayUserDetails;
 import io.redlink.more.data.model.ParticipantConsent;
@@ -25,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -64,26 +68,33 @@ public class RegistrationApiV1Controller implements RegistrationApi {
     @Override
     public ResponseEntity<AppConfigurationDTO> registerForStudy(String moreRegistrationToken, StudyConsentDTO studyConsentDTO) {
         final ParticipantConsent consent = convert(studyConsentDTO);
-        try {
-            if (registrationService.validateConsent(consent)) {
-                return ResponseEntity.of(
-                        registrationService.register(moreRegistrationToken, consent)
-                                .map(RegistrationApiV1Controller::convert)
-                                .map(cred -> new AppConfigurationDTO()
-                                        .credentials(cred)
-                                        .endpoint(getBaseURI())
-                                )
-                );
-            }
 
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .header("X-Info", "Consent not given")
-                    .build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .header("X-Info", e.getMessage())
-                    .build();
+        if (registrationService.validateConsent(consent)) {
+            return ResponseEntity.of(
+                    registrationService.register(moreRegistrationToken, consent)
+                            .map(RegistrationApiV1Controller::convert)
+                            .map(cred -> new AppConfigurationDTO()
+                                    .credentials(cred)
+                                    .endpoint(getBaseURI())
+                            )
+            );
         }
+
+        throw RegistrationNotPossibleException.noConsentGiven();
+    }
+
+    @ExceptionHandler(RegistrationNotPossibleException.class)
+    public ResponseEntity<ErrorDTO> handleRegistrationError(RegistrationNotPossibleException rnpe) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .header("X-Info", "[%S] %s".formatted(rnpe.getErrorCode(), rnpe.getMessage()))
+                .body(ErrorTransformer.toDTO(rnpe));
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorDTO> handleError(RuntimeException ex) {
+        return ResponseEntity.internalServerError()
+                .header("X-Info", ex.getMessage())
+                .body(ErrorTransformer.toDTO(ex));
     }
 
     @Override
