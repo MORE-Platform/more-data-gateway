@@ -3,7 +3,7 @@
  */
 package io.redlink.more.data.service;
 
-import io.redlink.more.data.controller.exception.RegistrationNotPossibleException;
+import io.redlink.more.data.exception.RegistrationNotPossibleException;
 import io.redlink.more.data.model.ApiCredentials;
 import io.redlink.more.data.model.ParticipantConsent;
 import io.redlink.more.data.model.RoutingInfo;
@@ -62,7 +62,7 @@ public class RegistrationService {
             return studyRepository.createCredentials(registrationToken, consent, () -> passwordEncoder.encode(apiSecret))
                     .map(apiId -> new ApiCredentials(apiId, apiSecret));
         } catch (DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("Invalid Consent", e);
+            throw new RegistrationNotPossibleException("ER-000", "Invalid Consent", e);
         }
     }
 
