@@ -2,6 +2,7 @@ package io.redlink.more.data.controller;
 
 import io.redlink.more.data.api.StorageService;
 import io.redlink.more.data.api.app.v1.model.DataBulkDTO;
+import io.redlink.more.data.api.app.v1.model.ObservationDataDTO;
 import io.redlink.more.data.api.app.v1.webservices.DataApi;
 import io.redlink.more.data.configuration.AuthenticationFacade;
 import io.redlink.more.data.controller.transformer.DataTransformer;
@@ -10,7 +11,8 @@ import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.service.ElasticService;
 import io.redlink.more.data.service.GatewayUserDetailService;
 import java.util.List;
-import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -22,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class DataApiV1Controller implements DataApi {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DataApiV1Controller.class);
 
     private final AuthenticationFacade authenticationFacade;
 
@@ -42,9 +46,20 @@ public class DataApiV1Controller implements DataApi {
         }
 
         final RoutingInfo routingInfo = userDetails.getRoutingInfo();
-        final List<String> storedIDs = elasticService.storeDataPoints(
-                DataTransformer.createDataPoints(dataBulkDTO), routingInfo);
-        return ResponseEntity.status(HttpStatus.OK).body(storedIDs);
+        if (routingInfo.studyActive()) {
+            final List<String> storedIDs = elasticService.storeDataPoints(
+                    DataTransformer.createDataPoints(dataBulkDTO), routingInfo);
+            return ResponseEntity.ok(storedIDs);
+        } else {
+            final List<String> discardedIDs = dataBulkDTO.getDataPoints().stream()
+                    .map(ObservationDataDTO::getDataId)
+                    .toList();
+            LOG.info("Discarding {} observations because study_{} is not 'active'",
+                    discardedIDs.size(), routingInfo.studyId());
+            return ResponseEntity.ok(
+                    discardedIDs
+            );
+        }
     }
 
 }

@@ -44,7 +44,7 @@ public class GatewayUserRepository {
                         rs.getLong("study_id"),
                         rs.getInt("participant_id"),
                         readOptionalInt(rs, "study_group_id"),
-                        false // TODO(MORE-455)
+                        rs.getBoolean("study_is_active")
                 ));
     }
 }
