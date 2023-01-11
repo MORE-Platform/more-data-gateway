@@ -180,6 +180,11 @@ components:
         information to configure and initialize the APP
       type: object
       properties:
+        active:
+          description:
+            The current study-state. Mainly used during the registration process.
+          type: boolean
+          default: true
         studyTitle:
           type: string
         participantInfo:
@@ -449,8 +454,9 @@ components:
     RegistrationNotPossible:
       description: |
         Registration could not be completed:
+        * the study currently does not accept new participants
         * `consent` was `false`
-        * a required observation is not enabled/active
+        * a **required** observation is not enabled/active
       content:
         application/json:
           schema:
