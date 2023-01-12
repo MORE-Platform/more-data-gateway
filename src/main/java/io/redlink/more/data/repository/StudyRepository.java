@@ -187,7 +187,9 @@ public class StudyRepository {
                 rs.getString("type"),
                 rs.getString("participant_info"),
                 DbUtils.readObject(rs,"properties"),
-                DbUtils.readEvent(rs, "schedule")
+                DbUtils.readEvent(rs, "schedule"),
+                toInstant(rs.getTimestamp("created")),
+                toInstant(rs.getTimestamp("modified"))
         );
     }
 
