@@ -202,6 +202,8 @@ components:
           items:
             $ref: '#/components/schemas/Observation'
           minItems: 1
+        version:
+          $ref: '#/components/schemas/VersionTag'
       required:
         - studyTitle
         - participantInfo
@@ -209,6 +211,7 @@ components:
         - start
         - end
         - observations
+        - version
 
     Observation:
       description: The configuration of an observation for the study.
@@ -242,6 +245,8 @@ components:
         hidden:
           type: boolean
           default: false
+        version:
+          $ref: '#/components/schemas/VersionTag'
       required:
         - observationId
         - observationType
@@ -249,6 +254,14 @@ components:
         - participantInfo
         - schedule
         - required
+        - version
+
+    VersionTag:
+      description:
+        A version indicator. Currently the last-modified date in EPOCH-format
+        but that's not guaranteed.
+      type: integer
+      format: int64
 
     StudyConsent:
       type: object

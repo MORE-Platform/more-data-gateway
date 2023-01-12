@@ -12,7 +12,6 @@ import io.redlink.more.data.schedule.ICalendarParser;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 
 public final class StudyTransformer {
@@ -28,6 +27,7 @@ public final class StudyTransformer {
                 .start(study.startDate())
                 .end(study.endDate())
                 .observations(toDTO(study.observations()))
+                .version(BaseTransformers.toVersionTag(study.modified()))
                 ;
     }
 
@@ -41,7 +41,9 @@ public final class StudyTransformer {
                 .observationType(observation.type())
                 .observationTitle(observation.title())
                 .participantInfo(observation.participantInfo())
-                ._configuration(observation.properties());
+                ._configuration(observation.properties())
+                .version(BaseTransformers.toVersionTag(observation.modified()))
+                ;
        if(observation.observationSchedule() != null) {
            dto.schedule(ICalendarParser
                         .parseToObservationSchedules(observation.observationSchedule())
@@ -54,8 +56,9 @@ public final class StudyTransformer {
 
     public static ObservationScheduleDTO toObservationScheduleDTO(Pair<Instant, Instant> schedule) {
         return new ObservationScheduleDTO()
-                .start(schedule.getLeft().atOffset(ZoneOffset.UTC))
-                .end(schedule.getRight().atOffset(ZoneOffset.UTC));
+                .start(BaseTransformers.toOffsetDateTime(schedule.getLeft()))
+                .end(BaseTransformers.toOffsetDateTime(schedule.getRight()))
+                ;
     }
 
 }
