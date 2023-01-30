@@ -324,28 +324,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>license-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>add-third-party</id>
-                        <configuration>
-                            <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByLicense.ftl</fileTemplate>
-                            <useMissingFile>true</useMissingFile>
-                            <includedLicenses>
-                                Apache-2.0|BSD-2-Clause|BSD-3-Clause|CDDL-1.1|EPL-1.0|EPL-2.0|Eclipse Distribution License 1.0|GPL 2.0 with Classpath
-                                Exception|Go License|LGPL|LGPL-2.1-or-later|LGPL-3.0|MIT|CC0|Bouncy Castle Licence
-                            </includedLicenses>
-                            <failOnMissing>true</failOnMissing>
-                            <failOnBlacklist>
-                                true
-                            </failOnBlacklist>
-                        </configuration>
-                        <goals>
-                            <goal>add-third-party</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                </configuration>
             </plugin>
         </plugins>
         <pluginManagement>
@@ -354,62 +332,131 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>license-maven-plugin</artifactId>
                     <version>2.0.0</version>
+                    <executions>
+                        <execution>
+                            <id>generate-third-party</id>
+                            <goals>
+                                <goal>add-third-party</goal>
+                            </goals>
+                            <phase>generate-resources</phase>
+                            <configuration>
+                                <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByLicense.ftl</fileTemplate>
+                                <failOnBlacklist>false</failOnBlacklist>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>validate-third-party</id>
+                            <goals>
+                                <goal>add-third-party</goal>
+                            </goals>
+                            <phase>compile</phase>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}</outputDirectory>
+                                <failOnBlacklist>true</failOnBlacklist>
+                            </configuration>
+                        </execution>
+                    </executions>
                     <configuration>
+                        <excludedGroups>\Q${project.groupId}\E</excludedGroups>
+                        <useMissingFile>true</useMissingFile>
+                        <failOnMissing>true</failOnMissing>
+                        <includedLicenses>
+                            <includedLicense>Apache License, Version 2.0</includedLicense>
+                            <includedLicense>Common Development and Distribution License 1.0</includedLicense>
+                            <includedLicense>Common Development and Distribution License 1.1</includedLicense>
+                            <includedLicense>Creative Commons Attribution 3.0 Unported</includedLicense>
+                            <includedLicense>Creative Commons Attribution 4.0 Unported</includedLicense>
+                            <includedLicense>Creative Commons Zero</includedLicense>
+                            <includedLicense>Do What The F*ck You Want To Public License</includedLicense>
+                            <includedLicense>Eclipse Public License - 1.0</includedLicense>
+                            <includedLicense>Eclipse Public License - 2.0</includedLicense>
+                            <includedLicense>GNU General Public License v2.0 w/Classpath exception</includedLicense>
+                            <includedLicense>GNU Lesser General Public License v2.1 or later</includedLicense>
+                            <includedLicense>GNU Lesser General Public License v3.0 or later</includedLicense>
+                            <includedLicense>Go License</includedLicense>
+                            <includedLicense>ISC License</includedLicense>
+                            <includedLicense>MIT License</includedLicense>
+                            <includedLicense>MIT No Attribution</includedLicense>
+                            <includedLicense>Python License 2.0</includedLicense>
+                            <includedLicense>The 2-Clause BSD License</includedLicense>
+                            <includedLicense>The 3-Clause BSD License</includedLicense>
+                            <includedLicense>The Unlicense</includedLicense>
+                            <includedLicense>zlib License</includedLicense>
+                        </includedLicenses>
                         <licenseMerges>
                             <licenseMerge>
-                                Apache-2.0|Apache License, Version 2.0
-                                |Apache License Version 2.0|Apache License 2.0|ASL, version 2|Apache 2|Apache 2.0|Apache
-                                2.0 license
+                                Apache License, Version 2.0
+                                |Apache-2.0
+                                |Apache License Version 2.0|Apache License 2.0|ASL, version 2|Apache 2|Apache 2.0
+                                |Apache 2.0 license
                                 |Apache License|Apache Software Licenses
                                 |The Apache Software License, Version 2.0|Apache License v2|Apache License v2.0
                                 |The Apache License, Version 2.0
                                 |Apache License, version 2.0
                             </licenseMerge>
                             <licenseMerge>
-                                Apache-1.1|Apache License, Version 1.1
-                                |Apache Software License, Version 1.1
-                                |The Apache Software License, Version 1.1
+                                Common Development and Distribution License 1.0
+                                |CDDL-1.0
+                                |CDDL 1.0|CDDL, v1.0|CDDL 1.0 license
+                                |Common Development and Distribution License (CDDL) v1.0
                             </licenseMerge>
                             <licenseMerge>
-                                BSD-3-Clause|BSD 3-Clause "New" or "Revised" License
-                                |BSD License
-                                |BSD License 3|BSD New license
-                                |BSD|BSD 3-Clause License|BSD 3-clause
-                                |New BSD License|New BSD license|The New BSD License
-                                |The BSD License
-                            </licenseMerge>
-                            <licenseMerge>
-                                BSD-2-Clause|FreeBSD License
-                            </licenseMerge>
-                            <licenseMerge>
-                                BSD-style License
-                            </licenseMerge>
-                            <licenseMerge>
-                                CDDL-1.1|Common Development and Distribution License (CDDL) v1.1
+                                Common Development and Distribution License 1.1
+                                |CDDL-1.1
                                 |CDDL 1.1
                                 |CDDL License
+                                |Common Development and Distribution License (CDDL) v1.1
                                 |CDDL or GPLv2 with exceptions|CDDL + GPLv2 with classpath exception|CDDL/GPLv2+CE
                             </licenseMerge>
                             <licenseMerge>
-                                CDDL-1.0|Common Development and Distribution License (CDDL) v1.0
-                                |CDDL 1.0|CDDL, v1.0|CDDL 1.0 license
-                            </licenseMerge>
-                            <licenseMerge>
-                                CC BY-SA 3.0
+                                Creative Commons Attribution 3.0 Unported
+                                |CC-BY-3.0
+                                |CC BY-SA 3.0
                                 |Creative Commons 3.0 BY-SA
                             </licenseMerge>
                             <licenseMerge>
-                                GPL-2.0-with-classpath-exception|GPL 2.0 with Classpath Exception
+                                Creative Commons Attribution 4.0 Unported
+                                |CC-BY-4.0
+                            </licenseMerge>
+                            <licenseMerge>
+                                Creative Commons Zero
+                                |CC0-1.0
+                                |CC0
+                                |Public Domain, per Creative Commons CC0
+                            </licenseMerge>
+                            <licenseMerge>
+                                Do What The F*ck You Want To Public License
+                                |WTFPL
+                                |WTF Public License
+                            </licenseMerge>
+                            <licenseMerge>
+                                Eclipse Public License - 1.0
+                                |EPL-1.0
+                                |Eclipse Public License 1.0
+                                |Eclipse Public License Version 1.0|Eclipse Public License, Version 1.0
+                                |Eclipse Public License - v 1.0
+                                |EPL 1.0 license
+                            </licenseMerge>
+                            <licenseMerge>
+                                Eclipse Public License - 2.0
+                                |EPL-2.0
+                                |EPL 2.0|Eclipse Public License - v 2.0
+                                |Eclipse Public License 2.0
+                                |Eclipse Public License v. 2.0
+                                |Eclipse Public License v2.0
+                            </licenseMerge>
+                            <licenseMerge>
+                                GNU General Public License v2.0 w/Classpath exception
+                                |GPL-2.0-with-classpath-exception
+                                |GPL 2.0 with Classpath Exception
                                 |GNU General Public License, version 2 with the GNU Classpath Exception
                                 |GPL2 w/ CPE
                             </licenseMerge>
                             <licenseMerge>
-                                LGPL
-                                |Lesser General Public License (LGPL)
-                                |GNU LESSER GENERAL PUBLIC LICENSE|GNU Lesser General Public License
-                            </licenseMerge>
-                            <licenseMerge>
-                                LGPL-2.1-or-later|LGPL 2.1
+                                GNU Lesser General Public License v2.1 or later
+                                |LGPL-2.1-or-later|LGPL 2.1
+                                |GNU Lesser General Public License, Version 2.1
+                                |GNU Lesser General Public License, version 2.1
                                 |LGPL, v2.1 or later|LGPL, version 2.1|LGPL 2.1 license
                                 |GNU Library General Public License v2.1 or later
                                 |GNU Lesser General Public License (LGPL), Version 2.1
@@ -417,46 +464,57 @@
                                 |GNU Lesser General Public License (LGPL), version 2.1 or later
                             </licenseMerge>
                             <licenseMerge>
-                                LGPL-3.0
+                                GNU Lesser General Public License v3.0 or later
+                                |LGPL-3.0
                                 |GNU Lesser General Public License v3.0
                                 |LGPL 3.0|LGPL 3.0 license
                             </licenseMerge>
                             <licenseMerge>
-                                MIT|MIT License
-                                |MIT license
-                                |MIT License (MIT)
+                                Go License
+                            </licenseMerge>
+                            <licenseMerge>
+                                ISC License
+                            </licenseMerge>
+                            <licenseMerge>
+                                MIT License
+                                |MIT
+                                |MIT License (MIT)|MIT license
                                 |The MIT License
                             </licenseMerge>
                             <licenseMerge>
+                                MIT No Attribution
+                                |MIT-0
+                            </licenseMerge>
+                            <licenseMerge>
                                 Mozilla Public License 1.1
+                                |MPL-1.1
                                 |MPL 1.1
-                                |Mozilla Public License 1.1 (MPL 1.1)
                             </licenseMerge>
                             <licenseMerge>
-                                EPL-1.0|
-                                Eclipse Public License 1.0
-                                |Eclipse Public License Version 1.0
-                                |Eclipse Public License - v 1.0|Eclipse Distribution License v. 1.0
-                                |EPL 1.0 license
+                                Python License 2.0
                             </licenseMerge>
                             <licenseMerge>
-                                WTF Public License
-                                |WFTPL
+                                The 2-Clause BSD License
+                                |BSD-2-Clause
+                                |FreeBSD License
                             </licenseMerge>
                             <licenseMerge>
-                                Eclipse Distribution License 1.0
-                                |Eclipse Distribution License - v 1.0
+                                The 3-Clause BSD License
+                                |BSD-3-Clause
+                                |BSD 3-Clause "New" or "Revised" License
+                                |BSD License|BSD License 3|BSD New license
+                                |BSD|BSD 3-Clause License|BSD 3-clause
+                                |New BSD License|New BSD license|The New BSD License
+                                |The BSD License
+                                |Eclipse Distribution License 1.0
                                 |EDL 1.0
+                                |Eclipse Distribution License - v 1.0
                             </licenseMerge>
                             <licenseMerge>
-                                EPL-2.0
-                                |Eclipse Public License 2.0
-                                |EPL 2.0|Eclipse Public License - v 2.0
-                                |Eclipse Public License v. 2.0
-                                |Eclipse Public License v2.0
+                                The Unlicense
                             </licenseMerge>
                             <licenseMerge>
-                                CC0|Public Domain, per Creative Commons CC0
+                                zlib License
                             </licenseMerge>
                         </licenseMerges>
                     </configuration>
