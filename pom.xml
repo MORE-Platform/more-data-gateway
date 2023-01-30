@@ -362,16 +362,21 @@
                         <failOnMissing>true</failOnMissing>
                         <includedLicenses>
                             <includedLicense>Apache License, Version 2.0</includedLicense>
+                            <includedLicense>Common Development and Distribution License 1.0</includedLicense>
+                            <includedLicense>Common Development and Distribution License 1.1</includedLicense>
                             <includedLicense>Creative Commons Attribution 3.0 Unported</includedLicense>
                             <includedLicense>Creative Commons Attribution 4.0 Unported</includedLicense>
                             <includedLicense>Creative Commons Zero</includedLicense>
                             <includedLicense>Do What The F*ck You Want To Public License</includedLicense>
                             <includedLicense>Eclipse Public License - 1.0</includedLicense>
                             <includedLicense>Eclipse Public License - 2.0</includedLicense>
+                            <includedLicense>GNU General Public License v2.0 w/Classpath exception</includedLicense>
                             <includedLicense>GNU Lesser General Public License v2.1 or later</includedLicense>
+                            <includedLicense>GNU Lesser General Public License v3.0 or later</includedLicense>
                             <includedLicense>Go License</includedLicense>
                             <includedLicense>ISC License</includedLicense>
                             <includedLicense>MIT License</includedLicense>
+                            <includedLicense>MIT No Attribution</includedLicense>
                             <includedLicense>Python License 2.0</includedLicense>
                             <includedLicense>The 2-Clause BSD License</includedLicense>
                             <includedLicense>The 3-Clause BSD License</includedLicense>
