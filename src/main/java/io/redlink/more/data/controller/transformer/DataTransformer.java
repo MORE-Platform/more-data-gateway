@@ -7,7 +7,6 @@ import io.redlink.more.data.api.app.v1.model.DataBulkDTO;
 import io.redlink.more.data.api.app.v1.model.ObservationDataDTO;
 import io.redlink.more.data.model.DataPoint;
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.List;
 
 public final class DataTransformer {
@@ -28,13 +27,8 @@ public final class DataTransformer {
                 dataPoint.getObservationType(),
                 dataPoint.getObservationType(),
                 recordingTime,
-                toInstant(dataPoint.getTimestamp()),
+                BaseTransformers.toInstant(dataPoint.getTimestamp()),
                 dataPoint.getDataValue());
     }
 
-    public static Instant toInstant(OffsetDateTime dateTime) {
-        if (dateTime == null)
-            return null;
-        return dateTime.toInstant();
-    }
 }

@@ -7,15 +7,6 @@ jobs:
   Compile-and-Test:
     name: Compile and Test
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:14-alpine
-        env:
-          POSTGRES_DB: more
-          POSTGRES_USER: more-dsb
-          POSTGRES_PASSWORD: more-dsb
-        ports:
-          - 5432:5432
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 17
@@ -27,6 +18,9 @@ jobs:
         run: ./mvnw -B -U
           --no-transfer-progress
           compile test
+      - name: Show 3rd-Party Licenses
+        run: |
+          cat ./target/generated-sources/license/THIRD-PARTY.txt
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v3

@@ -180,6 +180,11 @@ components:
         information to configure and initialize the APP
       type: object
       properties:
+        active:
+          description:
+            The current study-state. Mainly used during the registration process.
+          type: boolean
+          default: true
         studyTitle:
           type: string
         participantInfo:
@@ -197,6 +202,8 @@ components:
           items:
             $ref: '#/components/schemas/Observation'
           minItems: 1
+        version:
+          $ref: '#/components/schemas/VersionTag'
       required:
         - studyTitle
         - participantInfo
@@ -204,6 +211,7 @@ components:
         - start
         - end
         - observations
+        - version
 
     Observation:
       description: The configuration of an observation for the study.
@@ -237,6 +245,8 @@ components:
         hidden:
           type: boolean
           default: false
+        version:
+          $ref: '#/components/schemas/VersionTag'
       required:
         - observationId
         - observationType
@@ -244,6 +254,14 @@ components:
         - participantInfo
         - schedule
         - required
+        - version
+
+    VersionTag:
+      description:
+        A version indicator. Currently the last-modified date in EPOCH-format
+        but that's not guaranteed.
+      type: integer
+      format: int64
 
     StudyConsent:
       type: object
@@ -449,8 +467,9 @@ components:
     RegistrationNotPossible:
       description: |
         Registration could not be completed:
+        * the study currently does not accept new participants
         * `consent` was `false`
-        * a required observation is not enabled/active
+        * a **required** observation is not enabled/active
       content:
         application/json:
           schema:

@@ -3,11 +3,20 @@ package io.redlink.more.data.model;
 import java.io.Serializable;
 import java.util.OptionalInt;
 
-public record RoutingInfo(long studyId, int participantId, int rawStudyGroupId) implements Serializable {
+public record RoutingInfo(
+        long studyId,
+        int participantId,
+        int rawStudyGroupId,
+        boolean studyActive
+) implements Serializable {
 
-    public RoutingInfo(long studyId, int participantId,
-                       @SuppressWarnings("OptionalUsedAsFieldOrParameterType") OptionalInt studyGroupId) {
-        this(studyId, participantId, studyGroupId.orElse(Integer.MIN_VALUE));
+    public RoutingInfo(long studyId,
+                       int participantId,
+                       @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                       OptionalInt studyGroupId,
+                       boolean studyActive
+    ) {
+        this(studyId, participantId, studyGroupId.orElse(Integer.MIN_VALUE), studyActive);
     }
 
     public OptionalInt studyGroupId() {
@@ -17,5 +26,4 @@ public record RoutingInfo(long studyId, int participantId, int rawStudyGroupId) 
             return OptionalInt.of(rawStudyGroupId);
         }
     }
-
 }
