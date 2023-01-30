@@ -6,7 +6,24 @@ import java.util.OptionalInt;
 public record RoutingInfo(
         long studyId,
         int participantId,
-        OptionalInt studyGroupId,
+        int rawStudyGroupId,
         boolean studyActive
 ) implements Serializable {
+
+    public RoutingInfo(long studyId,
+                       int participantId,
+                       @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                       OptionalInt studyGroupId,
+                       boolean studyActive
+    ) {
+        this(studyId, participantId, studyGroupId.orElse(Integer.MIN_VALUE), studyActive);
+    }
+
+    public OptionalInt studyGroupId() {
+        if (this.rawStudyGroupId < 0) {
+            return OptionalInt.empty();
+        } else {
+            return OptionalInt.of(rawStudyGroupId);
+        }
+    }
 }

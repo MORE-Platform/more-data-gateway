@@ -12,6 +12,16 @@ spring:
     password: ${POSTGRES_PASSWORD:123}
     name: ${POSTGRES_DBNAME:more}
 
+  session:
+    store-type: redis
+    redis:
+      namespace: more:data-gateway:session
+    timeout: PT30M
+
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+
 server:
   forward-headers-strategy: framework
 

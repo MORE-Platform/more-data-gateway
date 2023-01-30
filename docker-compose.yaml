@@ -5,8 +5,18 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_DB: more
-      POSTGRES_USER: more-dsb
-      POSTGRES_PASSWORD: more-dsb
+      POSTGRES_USER: more
+      POSTGRES_PASSWORD: more
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: [ 'CMD-SHELL', '[ "$$(redis-cli ping)" = "PONG" ]' ]
+      interval: 10s
+      timeout: 1s
+      retries: 5
+    ports:
+      - "6379:6379"
 
   elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.3.2
