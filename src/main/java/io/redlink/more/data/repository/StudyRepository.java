@@ -31,8 +31,10 @@ public class StudyRepository {
             "SELECT * FROM observations WHERE study_id = ? AND ( study_group_id IS NULL OR study_group_id = ? )";
 
     private static final String SQL_ROUTING_INFO_BY_REG_TOKEN =
-            "SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id " +
-            "FROM participants pt INNER JOIN registration_tokens rt ON (pt.study_id = rt.study_id and pt.participant_id = rt.participant_id) " +
+            "SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id, s.status = 'active' as is_active " +
+            "FROM participants pt " +
+            "  INNER JOIN registration_tokens rt ON (pt.study_id = rt.study_id and pt.participant_id = rt.participant_id) " +
+            "  INNER JOIN studies s on (s.study_id = pt.study_id) " +
             "WHERE rt.token = ?";
     private static final String SQL_ROUTING_INFO_BY_REG_TOKEN_WITH_LOCK =
             SQL_ROUTING_INFO_BY_REG_TOKEN + " FOR UPDATE OF rt";
@@ -167,6 +169,7 @@ public class StudyRepository {
         return (rs, rowNum) -> new Study(
                 rs.getLong("study_id"),
                 rs.getString("title"),
+                "active".equalsIgnoreCase(rs.getString("status")),
                 rs.getString("participant_info"),
                 rs.getString("consent_info"),
                 toLocalDate(rs.getDate("start_date")),
@@ -184,7 +187,9 @@ public class StudyRepository {
                 rs.getString("type"),
                 rs.getString("participant_info"),
                 DbUtils.readObject(rs,"properties"),
-                DbUtils.readEvent(rs, "schedule")
+                DbUtils.readEvent(rs, "schedule"),
+                toInstant(rs.getTimestamp("created")),
+                toInstant(rs.getTimestamp("modified"))
         );
     }
 
@@ -193,7 +198,8 @@ public class StudyRepository {
                 new RoutingInfo(
                         row.getLong("study_id"),
                         row.getInt("participant_id"),
-                        DbUtils.readOptionalInt(row, "study_group_id")
+                        DbUtils.readOptionalInt(row, "study_group_id"),
+                        row.getBoolean("is_active")
                 )
         );
     }

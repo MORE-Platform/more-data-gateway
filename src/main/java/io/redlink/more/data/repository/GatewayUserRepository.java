@@ -43,7 +43,8 @@ public class GatewayUserRepository {
                 new RoutingInfo(
                         rs.getLong("study_id"),
                         rs.getInt("participant_id"),
-                        readOptionalInt(rs, "study_group_id")
+                        readOptionalInt(rs, "study_group_id"),
+                        rs.getBoolean("study_is_active")
                 ));
     }
 }

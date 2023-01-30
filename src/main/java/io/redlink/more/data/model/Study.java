@@ -7,6 +7,7 @@ import java.util.List;
 public record Study(
         long studyId,
         String title,
+        boolean active,
         String participantInfo,
         String consentInfo,
         LocalDate startDate,
