@@ -59,6 +59,40 @@ public class ICalendarParserTest {
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
     @Test
+    @DisplayName("Parsing daily event with count and until. Event duration is 30min")
+    void testParseDailyEventWith30MinDuration() {
+        List<Pair<Instant, Instant>> expectedValues = new ArrayList<>();
+
+        expectedValues.add(Pair.of(LocalDateTime.parse("2022-11-23 14:00:00", formatter).toInstant(ZoneOffset.UTC)
+                ,LocalDateTime.parse("2022-11-23 14:30:00", formatter).toInstant(ZoneOffset.UTC)));
+        expectedValues.add(Pair.of(LocalDateTime.parse("2022-11-24 14:00:00", formatter).toInstant(ZoneOffset.UTC),
+                LocalDateTime.parse("2022-11-24 14:30:00", formatter).toInstant(ZoneOffset.UTC)));
+        expectedValues.add(Pair.of(LocalDateTime.parse("2022-11-25 14:00:00", formatter).toInstant(ZoneOffset.UTC),
+                LocalDateTime.parse("2022-11-25 14:30:00", formatter).toInstant(ZoneOffset.UTC)));
+
+        Event eventCount = new Event()
+                .setDateStart(LocalDateTime.parse("2022-11-23 14:00:00", formatter).toInstant(ZoneOffset.UTC))
+                .setDateEnd(LocalDateTime.parse("2022-11-23 14:30:00", formatter).toInstant(ZoneOffset.UTC))
+                .setRRule(new RecurrenceRule()
+                        .setFreq("DAILY")
+                        .setInterval(1)
+                        .setCount(3));
+        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(eventCount);
+        assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
+                Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());
+
+        Event eventUntil = new Event()
+                .setDateStart(LocalDateTime.parse("2022-11-23 14:00:00", formatter).toInstant(ZoneOffset.UTC))
+                .setDateEnd(LocalDateTime.parse("2022-11-23 14:30:00", formatter).toInstant(ZoneOffset.UTC))
+                .setRRule(new RecurrenceRule()
+                        .setFreq("DAILY")
+                        .setInterval(1)
+                        .setUntil(LocalDateTime.parse("2022-11-25 14:00:00", formatter).toInstant(ZoneOffset.UTC)));
+
+        actualValues = ICalendarParser.parseToObservationSchedules(eventUntil);
+        assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
+                Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
+    @Test
     @DisplayName("Parsing monthly event with until and byDay and bySetPos")
     void testParseMonthlyEvent() {
         List<Pair<Instant, Instant>> expectedValues = new ArrayList<>();
