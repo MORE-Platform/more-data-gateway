@@ -53,7 +53,7 @@ public class ICalendarParser {
             setInterval(recurBuilder, eventRecurrence.getInterval());
             setByDay(recurBuilder, eventRecurrence.getByDay(), eventRecurrence.getBySetPos());
             setByHour(recurBuilder, eventRecurrence.getFreq(), event.getDateStart().atZone(TimeZone.getDefault().toZoneId()).getHour());
-            setByMinute(recurBuilder, event.getDateEnd().atZone(TimeZone.getDefault().toZoneId()).getMinute());
+            setByMinute(recurBuilder, event.getDateStart().atZone(TimeZone.getDefault().toZoneId()).getMinute());
             setByMonth(recurBuilder, eventRecurrence.getByMonth());
             setByMonthDay(recurBuilder, eventRecurrence.getByMonthDay());
 
