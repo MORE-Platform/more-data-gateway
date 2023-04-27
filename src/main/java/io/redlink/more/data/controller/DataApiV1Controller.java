@@ -10,6 +10,7 @@ import io.redlink.more.data.model.GatewayUserDetails;
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.service.ElasticService;
 import io.redlink.more.data.service.GatewayUserDetailService;
+import io.redlink.more.data.util.LoggingUtils;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,19 +47,21 @@ public class DataApiV1Controller implements DataApi {
         }
 
         final RoutingInfo routingInfo = userDetails.getRoutingInfo();
-        if (routingInfo.studyActive()) {
-            final List<String> storedIDs = elasticService.storeDataPoints(
-                    DataTransformer.createDataPoints(dataBulkDTO), routingInfo);
-            return ResponseEntity.ok(storedIDs);
-        } else {
-            final List<String> discardedIDs = dataBulkDTO.getDataPoints().stream()
-                    .map(ObservationDataDTO::getDataId)
-                    .toList();
-            LOG.info("Discarding {} observations because study_{} is not 'active'",
-                    discardedIDs.size(), routingInfo.studyId());
-            return ResponseEntity.ok(
-                    discardedIDs
-            );
+        try (LoggingUtils.LoggingContext ctx = LoggingUtils.createContext(userDetails.getRoutingInfo())) {
+            if (routingInfo.studyActive()) {
+                final List<String> storedIDs = elasticService.storeDataPoints(
+                        DataTransformer.createDataPoints(dataBulkDTO), routingInfo);
+                return ResponseEntity.ok(storedIDs);
+            } else {
+                final List<String> discardedIDs = dataBulkDTO.getDataPoints().stream()
+                        .map(ObservationDataDTO::getDataId)
+                        .toList();
+                LOG.info("Discarding {} observations because study_{} is not 'active'",
+                        discardedIDs.size(), routingInfo.studyId());
+                return ResponseEntity.ok(
+                        discardedIDs
+                );
+            }
         }
     }
 
