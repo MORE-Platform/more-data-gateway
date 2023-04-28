@@ -18,7 +18,7 @@ Loadtest used config.json to get properties. Copy config.tpl.json to config.json
     "apiKey": "d6950f4d-b26d-4e9f-bb63-0136582251a5" // required
   },
   "files": {
-    "input": "./unpacked.csv", // required
+    "input": "./unpacked.csv", // can be also "FAKE"
     "output": "200b-20w.csv"
   },
   "options": {

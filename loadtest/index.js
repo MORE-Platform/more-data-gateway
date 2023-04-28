@@ -2,8 +2,10 @@ import pLimit from 'p-limit';
 import countLines from 'linecount/promise.js';
 import lineByLine from 'n-readlines';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 import {createObjectCsvWriter} from 'csv-writer'
-import config from './config.tpl.json' assert {type: 'json'}
+import { readFileSync } from "fs";
+const config = JSON.parse(readFileSync("./config.json"));
 
 function checkRequired(folder, property, _default) {
     const value = (config[folder] ? config[folder][property] : undefined) || _default;
@@ -15,19 +17,24 @@ function checkRequired(folder, property, _default) {
     return value;
 }
 
-const baseUrl = checkRequired('system','baseUrl', "https://dsb.platform-test.more.redlink.io")
+const baseUrl = checkRequired('system','baseUrl', "https://data.platform-test.more.redlink.io")
 const endPoint = checkRequired('system', 'endPoint', 'bulk')
 const apiId = checkRequired('system','apiId')
 const apiKey = checkRequired('system','apiKey')
 const file = checkRequired('files','input')
+const useFakeData = file === "FAKE"
 const bulkSize = checkRequired('options', 'bulkSize', 100);
 const parallelWorkers = checkRequired('options', 'parallelWorkers', 2);
 const maxDataPoints = checkRequired('options', 'maxDataPoints', Number.MAX_VALUE);
 const output = checkRequired('files','output',`./out/${maxDataPoints === Number.MAX_VALUE ? 'all' : maxDataPoints}p-${bulkSize}b-${parallelWorkers}w_${endPoint}.csv`)
 
-const liner = new lineByLine(file);
-liner.next();
-const url = `${baseUrl}/api/v1/${endPoint}`
+let liner;
+if(!useFakeData) {
+    liner = new lineByLine(file);
+    liner.next();
+}
+
+const url = `${baseUrl}/api/v1/data/${endPoint}`
 const auth = {
     username: apiId,
     password: apiKey
@@ -57,24 +64,44 @@ function createBulk(bulkId, lines) {
     return {bulkId, dataPoints};
 }
 
+const dataBuilders = [
+    (dataId) => ({dataId, moduleId: 'm1', observationId: '1', observationType: 'acc-mobile-observation', timestamp: new Date().toISOString(), dataValue:{x: Math.random()*10,y: Math.random()*10,z: Math.random()*10}}),
+    (dataId) => ({dataId, moduleId: 'm2', observationId: '2', observationType: 'gps-mobile-observation', timestamp: new Date().toISOString(), dataValue:{latitude: Math.random()*50,longitude: Math.random()*50,altitude: Math.floor(Math.random()*8000)}})
+]
+
+function createFakeBulk(bulkId, count) {
+    const dataPoints = [];
+    for(let i = 0; i < bulkSize; i++) {
+        const randomDataBuilder = dataBuilders[Math.floor(Math.random() * dataBuilders.length)];
+
+        dataPoints.push(randomDataBuilder.apply(this, [uuidv4()]));
+    }
+    return {bulkId, dataPoints};
+}
+
 (async () => {
     // get number of bulks
-    const lineCount = Math.min(await countLines(file), maxDataPoints);
+    const lineCount = useFakeData ? maxDataPoints : Math.min(await countLines(file), maxDataPoints);
     const bulkNum = Math.ceil(lineCount/bulkSize);
-    const start_time = new Date();    
+    const start_time = new Date();
     const bulkArray = Array.from(Array(bulkNum).keys())
     const worker = pLimit(parallelWorkers);
 
     const start = process.hrtime();
 
-    function toMillis(hrt) {        
+    function toMillis(hrt) {
         return Math.round(hrt[0] * 1000 + hrt[1] / 1000000);
     }
 
     function sendBulk(bulkId) {
         return new Promise((resolve) => {
-            const lines = readLines(bulkId, bulkSize);
-            const bulk = createBulk(bulkId.toString(), lines);
+            let bulk;
+            if(useFakeData) {
+                bulk = createFakeBulk(bulkId.toString(), bulkSize);
+            } else {
+                const lines = readLines(bulkId, bulkSize);
+                bulk = createBulk(bulkId.toString(), lines);
+            }
             const startBulk = process.hrtime(start)
             console.log(`send bulk ${bulkId}`)
             //console.log(JSON.stringify(bulk, null, 2));
@@ -85,7 +112,7 @@ function createBulk(bulkId, lines) {
                     finishedAt: toMillis(process.hrtime(start))
                 });
             }).catch((error) => {
-                console.error(bulkId, error.response.data);
+                console.error(bulkId, error.message);
                 process.exit(0);
             });
         })
@@ -112,5 +139,5 @@ function createBulk(bulkId, lines) {
     console.log(`start time ${start_time}`);
     console.log(`end time ${end_time}`);
     console.log(`time taken ${(end_time - start_time)/60000} minutes`);
-    await csvWriter.writeRecords(result)    
+    await csvWriter.writeRecords(result)
 })();
