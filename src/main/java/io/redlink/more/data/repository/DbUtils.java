@@ -4,6 +4,7 @@
 package io.redlink.more.data.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.redlink.more.data.model.Event;
@@ -69,5 +70,14 @@ public final class DbUtils {
         }
     }
 
+    public static Object mergeObjects(Object o1, Object o2) {
+        try {
+            JsonNode n1 = MAPPER.valueToTree(o1);
+            JsonNode n2 = MAPPER.valueToTree(o2);
+            return MAPPER.treeToValue(MAPPER.updateValue(n1,n2), Object.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not merge json Objects", e);
+        }
+    }
 
 }

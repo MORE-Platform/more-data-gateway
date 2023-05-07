@@ -12,4 +12,9 @@ public record Observation(
          Instant created,
          Instant modified
 ) {
+    public Observation withProperties(Object properties) {
+        return new Observation(
+                observationId, title, type, participantInfo, properties, observationSchedule, created, modified
+        );
+    }
 }

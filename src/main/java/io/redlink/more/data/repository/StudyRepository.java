@@ -7,9 +7,7 @@ import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.ParticipantConsent;
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.model.Study;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Supplier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -17,6 +15,10 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 import static io.redlink.more.data.repository.DbUtils.toInstant;
 import static io.redlink.more.data.repository.DbUtils.toLocalDate;
@@ -70,6 +72,10 @@ public class StudyRepository {
             "SET status = :newStatus::participant_status, modified = now() " +
             "WHERE study_id = :study_id AND participant_id = :participant_id AND status = :oldStatus::participant_status";
 
+    private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT =
+            "SELECT properties FROM participant_observation_properties " +
+            "WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
+
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -93,15 +99,42 @@ public class StudyRepository {
     }
 
     public Optional<Study> findStudy(RoutingInfo routingInfo) {
-        final List<Observation> observations = listObservations(routingInfo.studyId(), routingInfo.studyGroupId().orElse(-1));
+        final List<Observation> observations = listObservations(
+                routingInfo.studyId(), routingInfo.studyGroupId().orElse(-1), routingInfo.participantId());
 
         try (var stream = jdbcTemplate.queryForStream(SQL_FIND_STUDY_BY_ID, getStudyRowMapper(observations), routingInfo.studyId())) {
             return stream.findFirst();
         }
     }
 
-    private List<Observation> listObservations(long studyId, int groupId) {
-        return jdbcTemplate.query(SQL_LIST_OBSERVATIONS_BY_STUDY, getObservationRowMapper(), studyId, groupId);
+    private List<Observation> listObservations(long studyId, int groupId, int participantId) {
+        return jdbcTemplate.query(SQL_LIST_OBSERVATIONS_BY_STUDY, getObservationRowMapper(), studyId, groupId).stream()
+                .map(o -> mergeParticipantProperties(o, studyId, participantId))
+                .toList();
+    }
+
+    private Observation mergeParticipantProperties(Observation observation, long studyId, int participantId) {
+        return getParticipantProperties(studyId, participantId, observation.observationId())
+                .map(props -> observation.withProperties(
+                        DbUtils.mergeObjects(observation.properties(), props)))
+                .orElse(observation);
+    }
+
+    public Optional<Object> getParticipantProperties(Long studyId, Integer participantId, Integer observationId) {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(
+                    GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT,
+                    getParticipantObservationPropertiesRowMapper(),
+                    studyId,
+                    participantId,
+                    observationId));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    private static RowMapper<Object> getParticipantObservationPropertiesRowMapper() {
+        return (rs, rowNum) -> DbUtils.readObject(rs,"properties");
     }
 
     @Transactional
