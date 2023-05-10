@@ -323,6 +323,18 @@
                             <modelPackage>io.redlink.more.data.api.app.v1.model</modelPackage>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>external-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/ExternalAPI.yaml</inputSpec>
+                            <output>${project.build.directory}/generated-sources/external</output>
+                            <apiPackage>io.redlink.more.data.api.app.v1.webservices</apiPackage>
+                            <modelPackage>io.redlink.more.data.api.app.v1.model</modelPackage>
+                        </configuration>
+                    </execution>
                 </executions>
                 <configuration>
                     <generatorName>spring</generatorName>

@@ -80,12 +80,12 @@ components:
         dataPoints:
           type: array
           items:
-            $ref: '#components/schemas/ObservationData'
+            $ref: '#components/schemas/ExternalData'
       required:
         - participantId
         - dataPoints
 
-    ObservationData:
+    ExternalData:
       type: object
       description: One recorded datapoint
       properties:
@@ -117,6 +117,6 @@ components:
 
   securitySchemes:
     BearerToken:
-      type: string
+      type: apiKey
       in: header
-      name: bearerToken
+      name: BearerToken
