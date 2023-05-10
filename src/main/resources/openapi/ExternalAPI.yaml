@@ -20,7 +20,7 @@ security:
 paths:
   /external/bulk/{endpointId}:
     parameters:
-      - $ref: '#components/parameters/EndpointId'
+      - $ref: '#/components/parameters/EndpointId'
     post:
       operationId: storeExternalBulk
       description: Send data to given observation endpoint
@@ -30,7 +30,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#components/schemas/EndpointDataBulk'
+              $ref: '#/components/schemas/EndpointDataBulk'
       security:
         - BearerToken: []
       responses:
@@ -39,7 +39,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#components/schemas/ParticipationDetails'
+                $ref: '#/components/schemas/ParticipationDetails'
         '401':
           $ref: '#/components/responses/UnauthorizedApiKey'
         '404':
@@ -80,7 +80,7 @@ components:
         dataPoints:
           type: array
           items:
-            $ref: '#components/schemas/ExternalData'
+            $ref: '#/components/schemas/ExternalData'
       required:
         - participantId
         - dataPoints
@@ -106,7 +106,7 @@ components:
       name: endpointId
       in: path
       schema:
-        $ref: '#components/schemas/EndpointId'
+        $ref: '#/components/schemas/EndpointId'
       required: true
 
 
