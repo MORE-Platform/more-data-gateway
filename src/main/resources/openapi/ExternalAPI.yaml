@@ -1,0 +1,122 @@
+openapi: 3.0.3
+info:
+  title: External API
+  description: API for external data upload to the MORE platform
+  version: '1'
+servers:
+  - url: /api/v1
+
+tags:
+  - name: ExternalData
+    description: |
+      Endpoints to **send** external observation-data
+
+externalDocs:
+  url: https://github.com/MORE-Platform
+
+security:
+  - BearerToken: [ ]
+
+paths:
+  /external/bulk/{endpointId}:
+    parameters:
+      - $ref: '#components/parameters/EndpointId'
+    post:
+      operationId: storeExternalBulk
+      description: Send data to given observation endpoint
+      tags:
+        - ExternalData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#components/schemas/EndpointDataBulk'
+      security:
+        - BearerToken: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#components/schemas/ParticipationDetails'
+        '401':
+          $ref: '#/components/responses/UnauthorizedApiKey'
+        '404':
+          description: not found
+
+components:
+  schemas:
+    EndpointId:
+      type: integer
+      format: int64
+      readOnly: true
+
+    ParticipationDetails:
+      type: object
+      description:
+        Observation and participant details
+      properties:
+        observationId:
+          type: string
+        observationType:
+          type: string
+        observationTitle:
+          type: string
+        participantId:
+          type: string
+        participantAlias:
+          type: string
+        studyGroupId:
+          type: string
+
+    EndpointDataBulk:
+      type: object
+      description:
+        A bulk of observation data containing a unique id, the recorded values, the id of the participant and a timestamp
+      properties:
+        participantId:
+          type: string
+        dataPoints:
+          type: array
+          items:
+            $ref: '#components/schemas/ObservationData'
+      required:
+        - participantId
+        - dataPoints
+
+    ObservationData:
+      type: object
+      description: One recorded datapoint
+      properties:
+        dataId:
+          type: string
+        dataValue:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - dataId
+        - dataValue
+        - timestamp
+
+  parameters:
+    EndpointId:
+      name: endpointId
+      in: path
+      schema:
+        $ref: '#components/schemas/EndpointId'
+      required: true
+
+
+  responses:
+    UnauthorizedApiKey:
+      description: Invalid/Unknown authentication Token
+
+
+  securitySchemes:
+    BearerToken:
+      type: string
+      in: header
+      name: bearerToken
