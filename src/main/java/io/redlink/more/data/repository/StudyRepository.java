@@ -3,11 +3,9 @@
  */
 package io.redlink.more.data.repository;
 
-import io.redlink.more.data.model.Observation;
-import io.redlink.more.data.model.ParticipantConsent;
-import io.redlink.more.data.model.RoutingInfo;
-import io.redlink.more.data.model.Study;
+import io.redlink.more.data.model.*;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -76,7 +74,14 @@ public class StudyRepository {
             "SELECT properties FROM participant_observation_properties " +
             "WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
 
-
+    private static final String GET_API_ROUTING_INFO_BY_API_TOKEN =
+            "SELECT tok.study_id, tok.observation_id, ob.observation_type, study_group_id, status = 'active' AS is_active " +
+            "FROM observation_api_tokens tok " +
+                "INNER JOIN observations ob ON (tok.study_id = ob.study_id AND tok.observation_id = ob.observation_id) " +
+                "INNER JOIN (SELECT * FROM participants WHERE participant_id = ? AS pt) " +
+                    "ON (tok.study_id = pt.study_id) " +
+            "WHERE token = ?";
+//TODO add creadentials anschauen wegen credentials
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -90,6 +95,13 @@ public class StudyRepository {
         try (var stream = jdbcTemplate.queryForStream(sql, getRoutingInfoMapper(), registrationToken)) {
             return stream.findFirst();
         }
+    }
+
+    public ApiRoutingInfo getApiRoutingInfo(String token, String participantId) {
+        return jdbcTemplate.queryForObject(
+                GET_API_ROUTING_INFO_BY_API_TOKEN,
+                getApiRoutingInfoRowMapper(),
+                participantId, token);
     }
 
 
@@ -234,6 +246,17 @@ public class StudyRepository {
                         DbUtils.readOptionalInt(row, "study_group_id"),
                         row.getBoolean("is_active")
                 )
+        );
+    }
+
+    private static RowMapper<ApiRoutingInfo> getApiRoutingInfoRowMapper() {
+        return ((rs, rowNum) -> new ApiRoutingInfo(
+                rs.getLong("study_id"),
+                rs.getInt("observation_id"),
+                rs.getString("observation_type"),
+                rs.getInt("participant_id"),
+                rs.getInt("study_group_id"),
+                rs.getBoolean("is_active"))
         );
     }
 

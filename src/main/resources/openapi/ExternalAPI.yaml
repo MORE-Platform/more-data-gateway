@@ -14,32 +14,23 @@ tags:
 externalDocs:
   url: https://github.com/MORE-Platform
 
-security:
-  - BearerToken: [ ]
-
 paths:
-  /external/bulk/{endpointId}:
-    parameters:
-      - $ref: '#/components/parameters/EndpointId'
+  /external/bulk:
     post:
       operationId: storeExternalBulk
       description: Send data to given observation endpoint
       tags:
         - ExternalData
+      parameters:
+        - $ref: '#/components/parameters/ExternalApiToken'
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/EndpointDataBulk'
-      security:
-        - BearerToken: []
       responses:
         '200':
           description: ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ParticipationDetails'
         '401':
           $ref: '#/components/responses/UnauthorizedApiKey'
         '404':
@@ -47,29 +38,6 @@ paths:
 
 components:
   schemas:
-    EndpointId:
-      type: integer
-      format: int64
-      readOnly: true
-
-    ParticipationDetails:
-      type: object
-      description:
-        Observation and participant details
-      properties:
-        observationId:
-          type: string
-        observationType:
-          type: string
-        observationTitle:
-          type: string
-        participantId:
-          type: string
-        participantAlias:
-          type: string
-        studyGroupId:
-          type: string
-
     EndpointDataBulk:
       type: object
       description:
@@ -93,6 +61,7 @@ components:
           type: string
         dataValue:
           type: object
+          additionalProperties: true
         timestamp:
           type: string
           format: date-time
@@ -102,21 +71,15 @@ components:
         - timestamp
 
   parameters:
-    EndpointId:
-      name: endpointId
-      in: path
-      schema:
-        $ref: '#/components/schemas/EndpointId'
+    ExternalApiToken:
+      name: More-Api-Token
+      in: header
       required: true
-
+      schema:
+        type: string
+      description: The token to authorize sending external data
 
   responses:
     UnauthorizedApiKey:
       description: Invalid/Unknown authentication Token
 
-
-  securitySchemes:
-    BearerToken:
-      type: apiKey
-      in: header
-      name: BearerToken
