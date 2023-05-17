@@ -75,13 +75,14 @@ public class StudyRepository {
             "WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
 
     private static final String GET_API_ROUTING_INFO_BY_API_TOKEN =
-            "SELECT tok.study_id, tok.observation_id, ob.observation_type, study_group_id, status = 'active' AS is_active " +
+            "SELECT tok.study_id, tok.observation_id, ob.type, pt.study_group_id, participant_id, s.status = 'active' AS is_active " +
             "FROM observation_api_tokens tok " +
                 "INNER JOIN observations ob ON (tok.study_id = ob.study_id AND tok.observation_id = ob.observation_id) " +
-                "INNER JOIN (SELECT * FROM participants WHERE participant_id = ? AS pt) " +
+                "INNER JOIN (SELECT * FROM participants WHERE participant_id = ?) pt " +
                     "ON (tok.study_id = pt.study_id) " +
+                "INNER JOIN studies s ON (tok.study_id = s.study_id) " +
             "WHERE token = ?";
-//TODO add creadentials anschauen wegen credentials
+
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -101,9 +102,8 @@ public class StudyRepository {
         return jdbcTemplate.queryForObject(
                 GET_API_ROUTING_INFO_BY_API_TOKEN,
                 getApiRoutingInfoRowMapper(),
-                participantId, token);
+                Integer.parseInt(participantId), token);
     }
-
 
     public Optional<Study> findByRegistrationToken(String registrationToken) {
         return getRoutingInfo(registrationToken, false)
@@ -253,7 +253,7 @@ public class StudyRepository {
         return ((rs, rowNum) -> new ApiRoutingInfo(
                 rs.getLong("study_id"),
                 rs.getInt("observation_id"),
-                rs.getString("observation_type"),
+                rs.getString("type"),
                 rs.getInt("participant_id"),
                 rs.getInt("study_group_id"),
                 rs.getBoolean("is_active"))
