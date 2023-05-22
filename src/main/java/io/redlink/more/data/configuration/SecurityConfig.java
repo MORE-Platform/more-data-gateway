@@ -46,6 +46,9 @@ public class SecurityConfig {
                     // registration-endpoints needs to be open
                     req.requestMatchers("/api/v1/registration")
                             .permitAll();
+                    //External Data Gateway
+                    req.requestMatchers("/api/v1/external/bulk")
+                            .permitAll();
                     // all other apis require credentials
                     req.requestMatchers("/api/v1/**")
                             .authenticated();

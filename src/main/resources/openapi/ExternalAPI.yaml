@@ -1,0 +1,85 @@
+openapi: 3.0.3
+info:
+  title: External API
+  description: API for external data upload to the MORE platform
+  version: '1'
+servers:
+  - url: /api/v1
+
+tags:
+  - name: ExternalData
+    description: |
+      Endpoints to **send** external observation-data
+
+externalDocs:
+  url: https://github.com/MORE-Platform
+
+paths:
+  /external/bulk:
+    post:
+      operationId: storeExternalBulk
+      description: Send data to given observation endpoint
+      tags:
+        - ExternalData
+      parameters:
+        - $ref: '#/components/parameters/ExternalApiToken'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndpointDataBulk'
+      responses:
+        '200':
+          description: ok
+        '401':
+          $ref: '#/components/responses/UnauthorizedApiKey'
+        '404':
+          description: not found
+
+components:
+  schemas:
+    EndpointDataBulk:
+      type: object
+      description:
+        A bulk of observation data containing a unique id, the recorded values, the id of the participant and a timestamp
+      properties:
+        participantId:
+          type: string
+        dataPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalData'
+      required:
+        - participantId
+        - dataPoints
+
+    ExternalData:
+      type: object
+      description: One recorded datapoint
+      properties:
+        dataId:
+          type: string
+        dataValue:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - dataId
+        - dataValue
+        - timestamp
+
+  parameters:
+    ExternalApiToken:
+      name: More-Api-Token
+      in: header
+      required: true
+      schema:
+        type: string
+      description: The token to authorize sending external data
+
+  responses:
+    UnauthorizedApiKey:
+      description: Invalid/Unknown authentication Token
+
