@@ -255,7 +255,7 @@ public class StudyRepository {
                 rs.getInt("observation_id"),
                 rs.getString("type"),
                 rs.getInt("participant_id"),
-                rs.getInt("study_group_id"),
+                DbUtils.readOptionalInt(rs, "study_group_id"),
                 rs.getBoolean("is_active"))
         );
     }
