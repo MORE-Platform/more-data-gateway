@@ -4,23 +4,19 @@ import java.io.Serializable;
 import java.util.OptionalInt;
 
 public record ApiRoutingInfo(
-        long studyId,
-        int observationId,
         String observationType,
-        int participantId,
         int rawStudyGroupId,
-        boolean studyActive
+        boolean studyActive,
+        String secret
 ) implements Serializable {
 
-    public ApiRoutingInfo(long studyId,
-                       int observationId,
-                       String observationType,
-                       int participantId,
+    public ApiRoutingInfo(String observationType,
                        @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
                        OptionalInt studyGroupId,
-                       boolean studyActive
+                       boolean studyActive,
+                          String secret
     ) {
-        this(studyId, observationId, observationType, participantId, studyGroupId.orElse(Integer.MIN_VALUE), studyActive);
+        this(observationType, studyGroupId.orElse(Integer.MIN_VALUE), studyActive, secret);
     }
 
     public OptionalInt studyGroupId() {
