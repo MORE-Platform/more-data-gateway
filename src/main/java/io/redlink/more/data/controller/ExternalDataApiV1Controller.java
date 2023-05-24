@@ -46,23 +46,19 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
             Integer tokenId = Integer.valueOf(primaryKey[2]);
             String secret = new String(Base64.getDecoder().decode(split[1]));
 
-
             final Optional<ApiRoutingInfo> apiRoutingInfo = externalService.getRoutingInfo(
                     studyId,
                     observationId,
                     tokenId,
-                    secret,
-                    participantId);
+                    secret);
             if(apiRoutingInfo.isEmpty()) {
                 throw new AccessDeniedException("Invalid token");
             }
-            final RoutingInfo routingInfo = new RoutingInfo(
-                    studyId,
-                    participantId,
-                    apiRoutingInfo.get().rawStudyGroupId(),
-                    apiRoutingInfo.get().studyActive()
-            );
 
+            final RoutingInfo routingInfo = new RoutingInfo(
+                    externalService.validateRoutingInfo(apiRoutingInfo.get(), participantId),
+                    participantId
+            );
             try (LoggingUtils.LoggingContext ctx = LoggingUtils.createContext(routingInfo)) {
                 if(routingInfo.studyActive()) {
                     elasticService.storeDataPoints(
