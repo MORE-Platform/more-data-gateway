@@ -66,9 +66,7 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
                             routingInfo
                     );
                 } else {
-                    final List<String> discardedIDs = endpointDataBulkDTO.getDataPoints().stream()
-                            .map(ExternalDataDTO::getDataId)
-                            .toList();
+                    final List<ExternalDataDTO> discardedIDs = endpointDataBulkDTO.getDataPoints();
                     LOG.info("Discarding {} observations because study_{} is not 'active'",
                             discardedIDs.size(), routingInfo.studyId());
                 }
