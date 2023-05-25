@@ -11,11 +11,13 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.Supplier;
 
 import static io.redlink.more.data.repository.DbUtils.toInstant;
@@ -75,13 +77,12 @@ public class StudyRepository {
             "WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
 
     private static final String GET_API_ROUTING_INFO_BY_API_TOKEN =
-            "SELECT tok.study_id, tok.observation_id, ob.type, pt.study_group_id, participant_id, s.status = 'active' AS is_active " +
-            "FROM observation_api_tokens tok " +
-                "INNER JOIN observations ob ON (tok.study_id = ob.study_id AND tok.observation_id = ob.observation_id) " +
-                "INNER JOIN (SELECT * FROM participants WHERE participant_id = ?) pt " +
-                    "ON (tok.study_id = pt.study_id) " +
-                "INNER JOIN studies s ON (tok.study_id = s.study_id) " +
-            "WHERE token = ?";
+            "SELECT t.study_id, t.observation_id, o.study_group_id, o.type, t.token, s.status = 'active' AS is_active " +
+            "FROM observation_api_tokens t " +
+                "INNER JOIN observations o ON (t.study_id = o.study_id AND t.observation_id = o.observation_id) " +
+                "INNER JOIN studies s ON (t.study_id = s.study_id) " +
+            "WHERE s.study_id = ? AND o.observation_id = ? AND t.token_id = ?";
+    private static final String GET_PARTICIPANT_STUDY_GROUP = "SELECT study_group_id FROM participants WHERE study_id = ? AND participant_id = ?";
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -98,11 +99,20 @@ public class StudyRepository {
         }
     }
 
-    public ApiRoutingInfo getApiRoutingInfo(String token, String participantId) {
-        return jdbcTemplate.queryForObject(
+    public Optional<ApiRoutingInfo> getApiRoutingInfo(Long studyId, Integer observationId, Integer tokenId) {
+        return jdbcTemplate.queryForStream(
                 GET_API_ROUTING_INFO_BY_API_TOKEN,
                 getApiRoutingInfoRowMapper(),
-                Integer.parseInt(participantId), token);
+                studyId, observationId, tokenId
+        ).findFirst();
+    }
+
+    public Optional<OptionalInt> getParticipantStudyGroupId(Long studyId, Integer participantId) {
+        return jdbcTemplate.queryForStream(
+                GET_PARTICIPANT_STUDY_GROUP,
+                ((rs, rowNum) -> DbUtils.readOptionalInt(rs, "study_group_id")),
+                studyId, participantId
+        ).findFirst();
     }
 
     public Optional<Study> findByRegistrationToken(String registrationToken) {
@@ -254,9 +264,9 @@ public class StudyRepository {
                 rs.getLong("study_id"),
                 rs.getInt("observation_id"),
                 rs.getString("type"),
-                rs.getInt("participant_id"),
                 DbUtils.readOptionalInt(rs, "study_group_id"),
-                rs.getBoolean("is_active"))
+                rs.getBoolean("is_active"),
+                rs.getString("token"))
         );
     }
 

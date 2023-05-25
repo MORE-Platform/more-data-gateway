@@ -19,6 +19,10 @@ public record RoutingInfo(
         this(studyId, participantId, studyGroupId.orElse(Integer.MIN_VALUE), studyActive);
     }
 
+    public RoutingInfo(ApiRoutingInfo routingInfo, Integer participantId) {
+        this(routingInfo.studyId(), participantId, routingInfo.studyGroupId(), routingInfo.studyActive());
+    }
+
     public OptionalInt studyGroupId() {
         if (this.rawStudyGroupId < 0) {
             return OptionalInt.empty();
