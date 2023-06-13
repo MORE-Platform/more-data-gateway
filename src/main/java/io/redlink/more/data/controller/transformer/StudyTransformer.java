@@ -3,9 +3,11 @@
  */
 package io.redlink.more.data.controller.transformer;
 
+import io.redlink.more.data.api.app.v1.model.ContactInfoDTO;
 import io.redlink.more.data.api.app.v1.model.ObservationDTO;
 import io.redlink.more.data.api.app.v1.model.ObservationScheduleDTO;
 import io.redlink.more.data.api.app.v1.model.StudyDTO;
+import io.redlink.more.data.model.Contact;
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.Study;
 import io.redlink.more.data.schedule.ICalendarParser;
@@ -24,10 +26,20 @@ public final class StudyTransformer {
                 .studyTitle(study.title())
                 .participantInfo(study.participantInfo())
                 .consentInfo(study.consentInfo())
+                .contact(toDTO(study.contact()))
                 .start(study.startDate())
                 .end(study.endDate())
                 .observations(toDTO(study.observations()))
                 .version(BaseTransformers.toVersionTag(study.modified()))
+                ;
+    }
+
+    public static ContactInfoDTO toDTO(Contact contact) {
+        return new ContactInfoDTO()
+                .institute(contact.institute())
+                .person(contact.person())
+                .email(contact.email())
+                .phoneNumber(contact.phoneNumber())
                 ;
     }
 

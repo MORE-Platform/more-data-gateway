@@ -10,6 +10,7 @@ public record Study(
         boolean active,
         String participantInfo,
         String consentInfo,
+        Contact contact,
         LocalDate startDate,
         LocalDate endDate,
         List<Observation> observations,

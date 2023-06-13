@@ -3,22 +3,26 @@
  */
 package io.redlink.more.data.repository;
 
-import io.redlink.more.data.model.*;
+import io.redlink.more.data.model.ApiRoutingInfo;
+import io.redlink.more.data.model.Contact;
+import io.redlink.more.data.model.Observation;
+import io.redlink.more.data.model.ParticipantConsent;
+import io.redlink.more.data.model.RoutingInfo;
+import io.redlink.more.data.model.Study;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.function.Supplier;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.function.Supplier;
 
 import static io.redlink.more.data.repository.DbUtils.toInstant;
 import static io.redlink.more.data.repository.DbUtils.toLocalDate;
@@ -227,11 +231,21 @@ public class StudyRepository {
                 "active".equalsIgnoreCase(rs.getString("status")),
                 rs.getString("participant_info"),
                 rs.getString("consent_info"),
+                readContact(rs),
                 toLocalDate(rs.getDate("start_date")),
                 toLocalDate(rs.getDate("planned_end_date")),
                 observations,
                 toInstant(rs.getTimestamp("created")),
                 toInstant(rs.getTimestamp("modified"))
+        );
+    }
+
+    private static Contact readContact(ResultSet rs) throws SQLException {
+        return new Contact(
+                rs.getString("institute"),
+                rs.getString("contact_person"),
+                rs.getString("contact_email"),
+                rs.getString("contact_phone")
         );
     }
 
