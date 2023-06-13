@@ -191,6 +191,8 @@ components:
           type: string
         consentInfo:
           type: string
+        contact:
+          $ref: '#/components/schemas/ContactInfo'
         start:
           type: string
           format: date
@@ -212,6 +214,19 @@ components:
         - end
         - observations
         - version
+
+    ContactInfo:
+      description: Contact-Information
+      type: object
+      properties:
+        institute:
+          type: string
+        person:
+          type: string
+        email:
+          type: string
+        phoneNumber:
+          type: string
 
     Observation:
       description: The configuration of an observation for the study.
