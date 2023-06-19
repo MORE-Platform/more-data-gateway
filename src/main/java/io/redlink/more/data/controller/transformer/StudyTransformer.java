@@ -55,6 +55,7 @@ public final class StudyTransformer {
                 .participantInfo(observation.participantInfo())
                 ._configuration(observation.properties())
                 .version(BaseTransformers.toVersionTag(observation.modified()))
+                .hidden(observation.hidden())
                 ;
        if(observation.observationSchedule() != null) {
            dto.schedule(ICalendarParser
