@@ -258,7 +258,8 @@ public class StudyRepository {
                 DbUtils.readObject(rs,"properties"),
                 DbUtils.readEvent(rs, "schedule"),
                 toInstant(rs.getTimestamp("created")),
-                toInstant(rs.getTimestamp("modified"))
+                toInstant(rs.getTimestamp("modified")),
+                rs.getBoolean("hidden")
         );
     }
 

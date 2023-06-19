@@ -10,11 +10,12 @@ public record Observation(
          Object properties,
          Event observationSchedule,
          Instant created,
-         Instant modified
+         Instant modified,
+         boolean hidden
 ) {
     public Observation withProperties(Object properties) {
         return new Observation(
-                observationId, title, type, participantInfo, properties, observationSchedule, created, modified
+                observationId, title, type, participantInfo, properties, observationSchedule, created, modified, hidden
         );
     }
 }
