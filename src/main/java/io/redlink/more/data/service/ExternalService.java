@@ -3,10 +3,14 @@ package io.redlink.more.data.service;
 import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.exception.NotFoundException;
 import io.redlink.more.data.model.ApiRoutingInfo;
+import io.redlink.more.data.model.Event;
 import io.redlink.more.data.repository.StudyRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -40,5 +44,19 @@ public class ExternalService {
             throw BadRequestException.StudyGroup(observationStudyGroup.getAsInt(), participantStudyGroup.getAsInt());
         }
         return routingInfo.withParticipantStudyGroup(participantStudyGroup);
+    }
+
+    public void validateTimeFrame(Long studyId, Integer observationId, List<Instant> timestamps) {
+        Optional<Event> schedule = repository.getObservationSchedule(studyId, observationId);
+        if(schedule.isEmpty()){
+            throw NotFoundException.Observation(observationId);
+        }
+        Instant startDate = schedule.get().getDateStart();
+        Instant endDate = schedule.get().getDateEnd();
+
+        timestamps.forEach(timestamp -> {
+            if(timestamp.isBefore(startDate) || timestamp.isAfter(endDate))
+                throw BadRequestException.TimeFrame();
+        });
     }
 }
