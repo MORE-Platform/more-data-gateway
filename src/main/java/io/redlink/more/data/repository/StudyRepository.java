@@ -102,27 +102,33 @@ public class StudyRepository {
     }
 
     public Optional<ApiRoutingInfo> getApiRoutingInfo(Long studyId, Integer observationId, Integer tokenId) {
-        return jdbcTemplate.queryForStream(
+        try(var stream = jdbcTemplate.queryForStream(
                 GET_API_ROUTING_INFO_BY_API_TOKEN,
                 getApiRoutingInfoRowMapper(),
                 studyId, observationId, tokenId
-        ).findFirst();
+        )) {
+            return stream.findFirst();
+        }
     }
 
     public Optional<OptionalInt> getParticipantStudyGroupId(Long studyId, Integer participantId) {
-        return jdbcTemplate.queryForStream(
+        try(var stream = jdbcTemplate.queryForStream(
                 GET_PARTICIPANT_STUDY_GROUP,
                 ((rs, rowNum) -> DbUtils.readOptionalInt(rs, "study_group_id")),
                 studyId, participantId
-        ).findFirst();
+        )) {
+            return stream.findFirst();
+        }
     }
 
     public Optional<Event> getObservationSchedule(Long studyId, Integer observationId) {
-        return jdbcTemplate.queryForStream(
+        try (var stream = jdbcTemplate.queryForStream(
                 GET_OBSERVATION_SCHEDULE,
                 getObservationScheduleRowMapper(),
                 studyId, observationId
-        ).findFirst();
+        )) {
+            return stream.findFirst();
+        }
     }
 
     public Optional<Study> findByRegistrationToken(String registrationToken) {
