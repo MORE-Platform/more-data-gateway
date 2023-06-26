@@ -11,4 +11,8 @@ public class NotFoundException extends RuntimeException {
     public static NotFoundException Participant(Integer id) {
         return new NotFoundException(String.format("Participant with id %s cannot be found", id.toString()));
     }
+
+    public static NotFoundException Observation(Integer id) {
+        return new NotFoundException(String.format("Observation with id %s cannot be found", id.toString()));
+    }
 }

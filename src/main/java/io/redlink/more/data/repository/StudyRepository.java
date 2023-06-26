@@ -3,12 +3,8 @@
  */
 package io.redlink.more.data.repository;
 
-import io.redlink.more.data.model.ApiRoutingInfo;
-import io.redlink.more.data.model.Contact;
-import io.redlink.more.data.model.Observation;
-import io.redlink.more.data.model.ParticipantConsent;
-import io.redlink.more.data.model.RoutingInfo;
-import io.redlink.more.data.model.Study;
+import io.redlink.more.data.model.*;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -88,6 +84,8 @@ public class StudyRepository {
             "WHERE s.study_id = ? AND o.observation_id = ? AND t.token_id = ?";
     private static final String GET_PARTICIPANT_STUDY_GROUP = "SELECT study_group_id FROM participants WHERE study_id = ? AND participant_id = ?";
 
+    private static final String GET_OBSERVATION_SCHEDULE = "SELECT schedule FROM observations WHERE study_id = ? AND observation_id = ?";
+
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -104,19 +102,33 @@ public class StudyRepository {
     }
 
     public Optional<ApiRoutingInfo> getApiRoutingInfo(Long studyId, Integer observationId, Integer tokenId) {
-        return jdbcTemplate.queryForStream(
+        try(var stream = jdbcTemplate.queryForStream(
                 GET_API_ROUTING_INFO_BY_API_TOKEN,
                 getApiRoutingInfoRowMapper(),
                 studyId, observationId, tokenId
-        ).findFirst();
+        )) {
+            return stream.findFirst();
+        }
     }
 
     public Optional<OptionalInt> getParticipantStudyGroupId(Long studyId, Integer participantId) {
-        return jdbcTemplate.queryForStream(
+        try(var stream = jdbcTemplate.queryForStream(
                 GET_PARTICIPANT_STUDY_GROUP,
                 ((rs, rowNum) -> DbUtils.readOptionalInt(rs, "study_group_id")),
                 studyId, participantId
-        ).findFirst();
+        )) {
+            return stream.findFirst();
+        }
+    }
+
+    public Optional<Event> getObservationSchedule(Long studyId, Integer observationId) {
+        try (var stream = jdbcTemplate.queryForStream(
+                GET_OBSERVATION_SCHEDULE,
+                getObservationScheduleRowMapper(),
+                studyId, observationId
+        )) {
+            return stream.findFirst();
+        }
     }
 
     public Optional<Study> findByRegistrationToken(String registrationToken) {
@@ -161,6 +173,10 @@ public class StudyRepository {
 
     private static RowMapper<Object> getParticipantObservationPropertiesRowMapper() {
         return (rs, rowNum) -> DbUtils.readObject(rs,"properties");
+    }
+
+    private static RowMapper<Event> getObservationScheduleRowMapper() {
+        return (rs, rowNum) -> DbUtils.readEvent(rs, "schedule");
     }
 
     @Transactional

@@ -55,6 +55,11 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
                 throw new AccessDeniedException("Invalid token");
             }
 
+            externalService.validateTimeFrame(studyId, observationId,
+                    endpointDataBulkDTO.getDataPoints().stream().map(datapoint ->
+                            datapoint.getTimestamp().toInstant()
+                    ).toList());
+
             final RoutingInfo routingInfo = new RoutingInfo(
                     externalService.validateRoutingInfo(apiRoutingInfo.get(), participantId),
                     participantId
