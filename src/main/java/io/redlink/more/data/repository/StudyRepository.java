@@ -3,12 +3,8 @@
  */
 package io.redlink.more.data.repository;
 
-import io.redlink.more.data.model.ApiRoutingInfo;
-import io.redlink.more.data.model.Contact;
-import io.redlink.more.data.model.Observation;
-import io.redlink.more.data.model.ParticipantConsent;
-import io.redlink.more.data.model.RoutingInfo;
-import io.redlink.more.data.model.Study;
+import io.redlink.more.data.model.*;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -32,6 +28,9 @@ public class StudyRepository {
 
     private static final String SQL_FIND_STUDY_BY_ID =
             "SELECT * FROM studies WHERE study_id = ?";
+
+    private static final String SQL_FIND_PARTICIPANT_BY_STUDY_AND_ID =
+            "SELECT * FROM participants WHERE study_id = ? AND participant_id = ?";
 
     private static final String SQL_LIST_OBSERVATIONS_BY_STUDY =
             "SELECT * FROM observations WHERE study_id = ? AND ( study_group_id IS NULL OR study_group_id = ? )";
@@ -128,7 +127,20 @@ public class StudyRepository {
         final List<Observation> observations = listObservations(
                 routingInfo.studyId(), routingInfo.studyGroupId().orElse(-1), routingInfo.participantId());
 
-        try (var stream = jdbcTemplate.queryForStream(SQL_FIND_STUDY_BY_ID, getStudyRowMapper(observations), routingInfo.studyId())) {
+        final SimpleParticipant participant = findParticipant(routingInfo).orElse(null);
+
+        try (var stream = jdbcTemplate.queryForStream(SQL_FIND_STUDY_BY_ID, getStudyRowMapper(observations, participant), routingInfo.studyId())) {
+            return stream.findFirst();
+        }
+    }
+
+    public Optional<SimpleParticipant> findParticipant(RoutingInfo routingInfo) {
+        try (var stream = jdbcTemplate.queryForStream(SQL_FIND_PARTICIPANT_BY_STUDY_AND_ID,
+                (rs, rowNum) -> new SimpleParticipant(
+                        rs.getInt("participant_id"),
+                        rs.getString("alias")
+                )
+                , routingInfo.studyId(), routingInfo.participantId())) {
             return stream.findFirst();
         }
     }
@@ -224,19 +236,22 @@ public class StudyRepository {
 
     }
 
-    private static RowMapper<Study> getStudyRowMapper(List<Observation> observations) {
+    private static RowMapper<Study> getStudyRowMapper(List<Observation> observations, SimpleParticipant participant) {
         return (rs, rowNum) -> new Study(
                 rs.getLong("study_id"),
                 rs.getString("title"),
                 "active".equalsIgnoreCase(rs.getString("status")),
                 rs.getString("participant_info"),
+                rs.getString("finish_text"),
+                rs.getString("status"),
                 rs.getString("consent_info"),
                 readContact(rs),
                 toLocalDate(rs.getDate("start_date")),
                 toLocalDate(rs.getDate("planned_end_date")),
                 observations,
                 toInstant(rs.getTimestamp("created")),
-                toInstant(rs.getTimestamp("modified"))
+                toInstant(rs.getTimestamp("modified")),
+                participant
         );
     }
 

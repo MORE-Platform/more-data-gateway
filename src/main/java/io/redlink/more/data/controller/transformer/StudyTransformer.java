@@ -3,12 +3,10 @@
  */
 package io.redlink.more.data.controller.transformer;
 
-import io.redlink.more.data.api.app.v1.model.ContactInfoDTO;
-import io.redlink.more.data.api.app.v1.model.ObservationDTO;
-import io.redlink.more.data.api.app.v1.model.ObservationScheduleDTO;
-import io.redlink.more.data.api.app.v1.model.StudyDTO;
+import io.redlink.more.data.api.app.v1.model.*;
 import io.redlink.more.data.model.Contact;
 import io.redlink.more.data.model.Observation;
+import io.redlink.more.data.model.SimpleParticipant;
 import io.redlink.more.data.model.Study;
 import io.redlink.more.data.schedule.ICalendarParser;
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,12 +24,24 @@ public final class StudyTransformer {
                 .studyTitle(study.title())
                 .participantInfo(study.participantInfo())
                 .consentInfo(study.consentInfo())
+                .finishText(study.finishText())
+                .studyState(StudyDTO.StudyStateEnum.fromValue(study.studyState()))
+                .participant(toDTO(study.participant()))
                 .contact(toDTO(study.contact()))
                 .start(study.startDate())
                 .end(study.endDate())
                 .observations(toDTO(study.observations()))
                 .version(BaseTransformers.toVersionTag(study.modified()))
                 ;
+    }
+
+    public static SimpleParticipantDTO toDTO(SimpleParticipant participant) {
+        if(participant == null) {
+            return null;
+        }
+        return new SimpleParticipantDTO()
+                .id(participant.id())
+                .alias(participant.alias());
     }
 
     public static ContactInfoDTO toDTO(Contact contact) {

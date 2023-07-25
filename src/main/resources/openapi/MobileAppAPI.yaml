@@ -185,11 +185,21 @@ components:
             The current study-state. Mainly used during the registration process.
           type: boolean
           default: true
+        studyState:
+          type: string
+          enum:
+            - active
+            - paused
+            - closed
+        participant:
+          $ref: '#/components/schemas/SimpleParticipant'
         studyTitle:
           type: string
         participantInfo:
           type: string
         consentInfo:
+          type: string
+        finishText:
           type: string
         contact:
           $ref: '#/components/schemas/ContactInfo'
@@ -214,6 +224,14 @@ components:
         - end
         - observations
         - version
+
+    SimpleParticipant:
+      type: object
+      properties:
+        id:
+          type: integer
+        alias:
+          type: string
 
     ContactInfo:
       description: Contact-Information
