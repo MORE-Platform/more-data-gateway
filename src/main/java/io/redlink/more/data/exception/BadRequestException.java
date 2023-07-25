@@ -16,4 +16,8 @@ public class BadRequestException extends RuntimeException {
                 )
         );
     }
+
+    public static BadRequestException TimeFrame(){
+        return new BadRequestException("DataBulk Invalid: At least one dataPoint was recorded outside of required timeframe");
+    }
 }
