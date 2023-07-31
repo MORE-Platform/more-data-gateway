@@ -2,11 +2,16 @@ package io.redlink.more.data.controller;
 
 import io.redlink.more.data.api.app.v1.model.PushNotificationDTO;
 import io.redlink.more.data.api.app.v1.webservices.NotificationsApi;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
 
+@RestController
+@RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class NotificationApiV1Controller implements NotificationsApi {
     @Override
     public ResponseEntity<Void> deleteNotification(String msgId) {
