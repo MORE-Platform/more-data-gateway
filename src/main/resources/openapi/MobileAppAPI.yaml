@@ -379,6 +379,9 @@ components:
           type: string
         data:
           type: object
+        timestamp:
+          type: string
+          format: date-time
 
     AppConfiguration:
       description: |

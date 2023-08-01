@@ -7,6 +7,10 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 @Component
@@ -42,6 +46,7 @@ public class NotificationRepository {
         return (rs, rowNum) -> {
             var result = new PushNotificationDTO()
                     .msgId(rs.getString("msg_id"))
+                    .timestamp(getTimestamp(rs))
                     .type(PushNotificationDTO.TypeEnum.fromValue(rs.getString("type")));
             var data = toJson(rs.getString("data"));
             switch (result.getType()) {
@@ -50,6 +55,16 @@ public class NotificationRepository {
             }
             return result;
         };
+    }
+
+    private static OffsetDateTime getTimestamp(ResultSet rs) {
+        try {
+            return Optional.ofNullable(rs.getTimestamp("timestamp"))
+                    .map(d -> d.toInstant().atOffset(ZoneOffset.UTC))
+                    .orElse(null);
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
     private static Map toJson(String s) {
