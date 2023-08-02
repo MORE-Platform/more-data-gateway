@@ -8,6 +8,8 @@ import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.repository.NotificationRepository;
 import io.redlink.more.data.service.GatewayUserDetailService;
 import io.redlink.more.data.util.LoggingUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -21,6 +23,7 @@ import java.util.Map;
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class NotificationApiV1Controller implements NotificationsApi {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotificationApiV1Controller.class);
     private final AuthenticationFacade authenticationFacade;
     private final NotificationRepository repository;
 
@@ -40,6 +43,7 @@ public class NotificationApiV1Controller implements NotificationsApi {
         final RoutingInfo routingInfo = userDetails.getRoutingInfo();
 
         if(this.repository.delete(routingInfo.studyId(), routingInfo.participantId(), msgId) > 0) {
+            LOGGER.info("Deleted Message (sid:{} pid:{}, mid:{})", routingInfo.studyId(), routingInfo.participantId(), msgId);
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.notFound().build();
@@ -57,8 +61,9 @@ public class NotificationApiV1Controller implements NotificationsApi {
 
         final RoutingInfo routingInfo = userDetails.getRoutingInfo();
 
-        return ResponseEntity.ok(
-                repository.listAndDeleteFor(routingInfo.studyId(), routingInfo.participantId())
-        );
+        var result = repository.listAndDeleteFor(routingInfo.studyId(), routingInfo.participantId());
+
+        LOGGER.info("Listed and Deleted {} Messages (sid:{} pid:{})", result.size(), routingInfo.studyId(), routingInfo.participantId());
+        return ResponseEntity.ok(result);
     }
 }
