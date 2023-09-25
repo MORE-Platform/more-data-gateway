@@ -294,7 +294,8 @@ public class StudyRepository {
                 DbUtils.readEvent(rs, "schedule"),
                 toInstant(rs.getTimestamp("created")),
                 toInstant(rs.getTimestamp("modified")),
-                rs.getBoolean("hidden")
+                rs.getBoolean("hidden"),
+                rs.getBoolean("no_schedule")
         );
     }
 

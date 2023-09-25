@@ -66,6 +66,7 @@ public final class StudyTransformer {
                 ._configuration(observation.properties())
                 .version(BaseTransformers.toVersionTag(observation.modified()))
                 .hidden(observation.hidden())
+                .noSchedule(observation.noSchedule())
                 ;
        if(observation.observationSchedule() != null) {
            dto.schedule(ICalendarParser
