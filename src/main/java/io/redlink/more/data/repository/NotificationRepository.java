@@ -50,7 +50,10 @@ public class NotificationRepository {
                     .type(PushNotificationDTO.TypeEnum.fromValue(rs.getString("type")));
             var data = toJson(rs.getString("data"));
             switch (result.getType()) {
-                case TEXT -> result.body(valueFor("body", data)).title(valueFor("title", data));
+                case TEXT -> result
+                        .body(valueFor("body", data))
+                        .title(valueFor("title", data))
+                        .deepLink(valueFor("deepLink", data));
                 default -> result.data(data);
             }
             return result;

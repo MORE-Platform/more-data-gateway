@@ -380,6 +380,8 @@ components:
           type: string
         body:
           type: string
+        deepLink:
+          type: string
         data:
           type: object
         timestamp:
