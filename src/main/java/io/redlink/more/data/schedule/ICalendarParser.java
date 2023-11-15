@@ -5,13 +5,15 @@ import biweekly.util.DayOfWeek;
 import biweekly.util.Frequency;
 import biweekly.util.Recurrence;
 import biweekly.util.com.google.ical.compat.javautil.DateIterator;
-import io.redlink.more.data.model.Event;
-import io.redlink.more.data.model.RecurrenceRule;
+import io.redlink.more.data.model.scheduler.Event;
+import io.redlink.more.data.model.scheduler.RecurrenceRule;
+import io.redlink.more.data.model.scheduler.ScheduleEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.sql.Date;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,16 +22,18 @@ import java.util.TimeZone;
 
 public class ICalendarParser {
 
-    public static List<Pair<Instant, Instant>> parseToObservationSchedules(Event event) {
+    public static List<Pair<Instant, Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, LocalDateTime start) {
+        //TODO implement
+        Event event = (Event) scheduleEvent;
         List<Pair<Instant, Instant>> observationSchedules = new ArrayList<>();
         if(event.getDateStart() != null && event.getDateEnd() != null) {
             VEvent iCalEvent = parseToICalEvent(event);
             long eventDuration = getEventTime(event);
             DateIterator it = iCalEvent.getDateIterator(TimeZone.getDefault());
             while (it.hasNext()) {
-                Instant start = it.next().toInstant();
-                Instant end = start.plus(eventDuration, ChronoUnit.SECONDS);
-                observationSchedules.add(Pair.of(start, end));
+                Instant ostart = it.next().toInstant();
+                Instant oend = ostart.plus(eventDuration, ChronoUnit.SECONDS);
+                observationSchedules.add(Pair.of(ostart, oend));
             }
         }
         // TODO edge cases if calculated days are not consecutive (e.g. first weekend -> first of month is a sunday)

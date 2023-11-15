@@ -1,5 +1,7 @@
 package io.redlink.more.data.model;
 
+import io.redlink.more.data.model.scheduler.ScheduleEvent;
+
 import java.time.Instant;
 
 public record Observation(
@@ -8,7 +10,7 @@ public record Observation(
          String type,
          String participantInfo,
          Object properties,
-         Event observationSchedule,
+         ScheduleEvent observationSchedule,
          Instant created,
          Instant modified,
          boolean hidden,

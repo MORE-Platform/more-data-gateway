@@ -1,4 +1,4 @@
-package io.redlink.more.data.model;
+package io.redlink.more.data.model.scheduler;
 
 import java.time.Instant;
 import java.util.List;
