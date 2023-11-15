@@ -6,12 +6,3 @@
  * Foerderung der wissenschaftlichen Forschung).
  * Licensed under the Elastic License 2.0.
  */
-package io.redlink.more.data.model;
-
-public record Contact(
-        String institute,
-        String person,
-        String email,
-        String phoneNumber
-) {
-}
