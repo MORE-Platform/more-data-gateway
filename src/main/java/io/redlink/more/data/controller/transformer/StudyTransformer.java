@@ -12,6 +12,7 @@ import io.redlink.more.data.schedule.ICalendarParser;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public final class StudyTransformer {
@@ -30,7 +31,7 @@ public final class StudyTransformer {
                 .contact(toDTO(study.contact()))
                 .start(study.startDate())
                 .end(study.endDate())
-                .observations(toDTO(study.observations()))
+                .observations(toDTO(study.observations(), study.participant().start()))
                 .version(BaseTransformers.toVersionTag(study.modified()))
                 ;
     }
@@ -53,11 +54,11 @@ public final class StudyTransformer {
                 ;
     }
 
-    public static List<ObservationDTO> toDTO(List<Observation> observations) {
-        return observations.stream().map(StudyTransformer::toDTO).toList();
+    public static List<ObservationDTO> toDTO(List<Observation> observations, LocalDateTime start) {
+        return observations.stream().map(o -> StudyTransformer.toDTO(o, start)).toList();
     }
 
-    public static ObservationDTO toDTO(Observation observation) {
+    public static ObservationDTO toDTO(Observation observation, LocalDateTime start) {
         ObservationDTO dto =  new ObservationDTO()
                 .observationId(String.valueOf(observation.observationId()))
                 .observationType(observation.type())
@@ -68,9 +69,9 @@ public final class StudyTransformer {
                 .hidden(observation.hidden())
                 .noSchedule(observation.noSchedule())
                 ;
-       if(observation.observationSchedule() != null) {
+       if(observation.observationSchedule() != null && start != null) {
            dto.schedule(ICalendarParser
-                        .parseToObservationSchedules(observation.observationSchedule())
+                        .parseToObservationSchedules(observation.observationSchedule(), start)
                         .stream()
                         .map(StudyTransformer::toObservationScheduleDTO)
                         .toList());

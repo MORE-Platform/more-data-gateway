@@ -7,10 +7,14 @@ import io.redlink.more.data.model.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
+
+import io.redlink.more.data.model.scheduler.ScheduleEvent;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -72,7 +76,7 @@ public class StudyRepository {
             "ON CONFLICT (study_id, participant_id, observation_id) DO NOTHING";
     private static final String SQL_SET_PARTICIPANT_STATUS =
             "UPDATE participants " +
-            "SET status = :newStatus::participant_status, modified = now() " +
+            "SET status = :newStatus::participant_status, start = :start, modified = now() " +
             "WHERE study_id = :study_id AND participant_id = :participant_id AND status = :oldStatus::participant_status";
 
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT =
@@ -124,7 +128,7 @@ public class StudyRepository {
         }
     }
 
-    public Optional<Event> getObservationSchedule(Long studyId, Integer observationId) {
+    public Optional<ScheduleEvent> getObservationSchedule(Long studyId, Integer observationId) {
         try (var stream = jdbcTemplate.queryForStream(
                 GET_OBSERVATION_SCHEDULE,
                 getObservationScheduleRowMapper(),
@@ -154,7 +158,8 @@ public class StudyRepository {
         try (var stream = jdbcTemplate.queryForStream(SQL_FIND_PARTICIPANT_BY_STUDY_AND_ID,
                 (rs, rowNum) -> new SimpleParticipant(
                         rs.getInt("participant_id"),
-                        rs.getString("alias")
+                        rs.getString("alias"),
+                        Optional.ofNullable(rs.getTimestamp("start")).map(Timestamp::toLocalDateTime).orElse(null)
                 )
                 , routingInfo.studyId(), routingInfo.participantId())) {
             return stream.findFirst();
@@ -191,7 +196,7 @@ public class StudyRepository {
         return (rs, rowNum) -> DbUtils.readObject(rs,"properties");
     }
 
-    private static RowMapper<Event> getObservationScheduleRowMapper() {
+    private static RowMapper<ScheduleEvent> getObservationScheduleRowMapper() {
         return (rs, rowNum) -> DbUtils.readEvent(rs, "schedule");
     }
 
@@ -203,7 +208,7 @@ public class StudyRepository {
         var routingInfo = ri.get();
         final String secret = passwordSupplier.get();
 
-        storeConsent(routingInfo.studyId(), routingInfo.participantId(), consent);
+        //storeConsent(routingInfo.studyId(), routingInfo.participantId(), consent);
 
         final String apiId = namedTemplate.queryForObject(SQL_INSERT_CREDENTIALS,
                 toParameterSource(routingInfo.studyId(), routingInfo.participantId())
@@ -221,6 +226,7 @@ public class StudyRepository {
     private void updateParticipantStatus(long studyId, int particpantId, String oldStatus, String newStatus) {
         namedTemplate.update(SQL_SET_PARTICIPANT_STATUS,
                 toParameterSource(studyId, particpantId)
+                        .addValue("start", "active".equals(newStatus) ? Timestamp.valueOf(LocalDateTime.now()) : null)
                         .addValue("oldStatus", oldStatus)
                         .addValue("newStatus", newStatus)
         );
