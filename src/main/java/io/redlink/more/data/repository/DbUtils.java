@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.redlink.more.data.model.scheduler.Duration;
 import io.redlink.more.data.model.scheduler.ScheduleEvent;
 
 import java.sql.*;
@@ -57,6 +58,16 @@ public final class DbUtils {
             return MAPPER.readValue(rawValue, ScheduleEvent.class);
         } catch (JsonProcessingException e) {
             throw new SQLDataException("Could not read Event from column '" + columnLabel + "'", e);
+        }
+    }
+
+    public static Duration readDuration(ResultSet row, String columnLabel) throws SQLException {
+        var rawValue = row.getString(columnLabel);
+        if(rawValue == null) return null;
+        try {
+            return MAPPER.readValue(rawValue, Duration.class);
+        } catch (JsonProcessingException e) {
+            throw new SQLDataException("Could not read Duration from column '" + columnLabel + "'", e);
         }
     }
 

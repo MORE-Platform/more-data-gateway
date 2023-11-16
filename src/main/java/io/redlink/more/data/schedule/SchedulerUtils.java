@@ -5,26 +5,31 @@ import biweekly.util.DayOfWeek;
 import biweekly.util.Frequency;
 import biweekly.util.Recurrence;
 import biweekly.util.com.google.ical.compat.javautil.DateIterator;
-import io.redlink.more.data.model.scheduler.Event;
-import io.redlink.more.data.model.scheduler.RecurrenceRule;
-import io.redlink.more.data.model.scheduler.ScheduleEvent;
+import io.redlink.more.data.model.scheduler.*;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.sql.Date;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.TimeZone;
 
-public class ICalendarParser {
+public class SchedulerUtils {
 
-    public static List<Pair<Instant, Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, LocalDateTime start) {
+    public static Instant getEnd(RelativeEvent event, Instant start, Instant end) {
+        return parseToObservationSchedulesForRelativeEvent(event, start, end)
+                .stream().map(Pair::getRight).max(Instant::compareTo).orElse(null);
+    }
+
+    public static List<Pair<Instant, Instant>> parseToObservationSchedulesForRelativeEvent(
+            RelativeEvent event, Instant start, Instant end) {
         //TODO implement
-        Event event = (Event) scheduleEvent;
+        return List.of();
+    }
+    public static List<Pair<Instant, Instant>> parseToObservationSchedulesForEvent(Event event) {
         List<Pair<Instant, Instant>> observationSchedules = new ArrayList<>();
         if(event.getDateStart() != null && event.getDateEnd() != null) {
             VEvent iCalEvent = parseToICalEvent(event);
@@ -38,6 +43,14 @@ public class ICalendarParser {
         }
         // TODO edge cases if calculated days are not consecutive (e.g. first weekend -> first of month is a sunday)
         return observationSchedules;
+    }
+
+    public static List<Pair<Instant, Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, Instant start, Instant end) {
+        if(Event.class.isAssignableFrom(scheduleEvent.getClass())) {
+            return parseToObservationSchedulesForEvent((Event) scheduleEvent);
+        } else {
+            return parseToObservationSchedulesForRelativeEvent((RelativeEvent) scheduleEvent, start, end);
+        }
     }
 
     private static long getEventTime(Event event) {

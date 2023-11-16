@@ -8,7 +8,7 @@ import io.redlink.more.data.model.Contact;
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.SimpleParticipant;
 import io.redlink.more.data.model.Study;
-import io.redlink.more.data.schedule.ICalendarParser;
+import io.redlink.more.data.schedule.SchedulerUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Instant;
@@ -31,7 +31,7 @@ public final class StudyTransformer {
                 .contact(toDTO(study.contact()))
                 .start(study.startDate())
                 .end(study.endDate())
-                .observations(toDTO(study.observations(), study.participant().start()))
+                .observations(toDTO(study.observations(), study.participant().start(), study.participant().end()))
                 .version(BaseTransformers.toVersionTag(study.modified()))
                 ;
     }
@@ -54,11 +54,11 @@ public final class StudyTransformer {
                 ;
     }
 
-    public static List<ObservationDTO> toDTO(List<Observation> observations, LocalDateTime start) {
-        return observations.stream().map(o -> StudyTransformer.toDTO(o, start)).toList();
+    public static List<ObservationDTO> toDTO(List<Observation> observations, Instant start, Instant end) {
+        return observations.stream().map(o -> StudyTransformer.toDTO(o, start, end)).toList();
     }
 
-    public static ObservationDTO toDTO(Observation observation, LocalDateTime start) {
+    public static ObservationDTO toDTO(Observation observation, Instant start, Instant end) {
         ObservationDTO dto =  new ObservationDTO()
                 .observationId(String.valueOf(observation.observationId()))
                 .observationType(observation.type())
@@ -70,8 +70,8 @@ public final class StudyTransformer {
                 .noSchedule(observation.noSchedule())
                 ;
        if(observation.observationSchedule() != null && start != null) {
-           dto.schedule(ICalendarParser
-                        .parseToObservationSchedules(observation.observationSchedule(), start)
+           dto.schedule(SchedulerUtils
+                        .parseToObservationSchedules(observation.observationSchedule(), start, end)
                         .stream()
                         .map(StudyTransformer::toObservationScheduleDTO)
                         .toList());

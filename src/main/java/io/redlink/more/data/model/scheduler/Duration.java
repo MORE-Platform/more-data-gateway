@@ -2,9 +2,21 @@ package io.redlink.more.data.model.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
+
 public class Duration {
 
     private Integer value;
+
+    public Instant getEnd(Instant start) {
+        if(start == null) {
+            return null;
+        }
+        return start.plus(value, unit.toTemporalUnit());
+    }
 
     /**
      * unit of time to offset
@@ -29,6 +41,10 @@ public class Duration {
         @Override
         public String toString() {
             return String.valueOf(value);
+        }
+
+        public TemporalUnit toTemporalUnit() {
+            return ChronoUnit.valueOf(value);
         }
 
         @JsonCreator
