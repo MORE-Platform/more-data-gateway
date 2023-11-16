@@ -8,13 +8,18 @@ import io.redlink.more.data.model.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
 
+import io.redlink.more.data.model.scheduler.Duration;
+import io.redlink.more.data.model.scheduler.Interval;
+import io.redlink.more.data.model.scheduler.RelativeEvent;
 import io.redlink.more.data.model.scheduler.ScheduleEvent;
+import io.redlink.more.data.schedule.SchedulerUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -32,9 +37,6 @@ public class StudyRepository {
 
     private static final String SQL_FIND_STUDY_BY_ID =
             "SELECT * FROM studies WHERE study_id = ?";
-
-    private static final String SQL_FIND_PARTICIPANT_BY_STUDY_AND_ID =
-            "SELECT * FROM participants WHERE study_id = ? AND participant_id = ?";
 
     private static final String SQL_LIST_OBSERVATIONS_BY_STUDY =
             "SELECT * FROM observations WHERE study_id = ? AND ( study_group_id IS NULL OR study_group_id = ? )";
@@ -92,6 +94,12 @@ public class StudyRepository {
     private static final String GET_PARTICIPANT_STUDY_GROUP = "SELECT study_group_id FROM participants WHERE study_id = ? AND participant_id = ?";
 
     private static final String GET_OBSERVATION_SCHEDULE = "SELECT schedule FROM observations WHERE study_id = ? AND observation_id = ?";
+
+    private static final String GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT =
+            "SELECT start, participant_id, alias, COALESCE(sg.duration, s.duration) AS duration, s.planned_end_date FROM participants p " +
+            "LEFT OUTER JOIN study_groups sg on p.study_id = sg.study_id and p.study_group_id = sg.study_group_id " +
+            "JOIN studies s on p.study_id = s.study_id " +
+            "WHERE p.study_id = ? AND participant_id = ?";
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -155,12 +163,20 @@ public class StudyRepository {
     }
 
     public Optional<SimpleParticipant> findParticipant(RoutingInfo routingInfo) {
-        try (var stream = jdbcTemplate.queryForStream(SQL_FIND_PARTICIPANT_BY_STUDY_AND_ID,
-                (rs, rowNum) -> new SimpleParticipant(
-                        rs.getInt("participant_id"),
-                        rs.getString("alias"),
-                        Optional.ofNullable(rs.getTimestamp("start")).map(Timestamp::toLocalDateTime).orElse(null)
-                )
+        try (var stream = jdbcTemplate.queryForStream(GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
+                (rs, rowNum) -> {
+                    Instant start = Optional.ofNullable(rs.getTimestamp("start"))
+                            .map(Timestamp::toInstant).orElse(null);
+                    Instant end = Optional.ofNullable(DbUtils.readDuration(rs, "duration"))
+                            .map(d -> d.getEnd(start))
+                            .orElse(Instant.ofEpochMilli(rs.getDate("endDate").getTime()));
+                    return new SimpleParticipant(
+                            rs.getInt("participant_id"),
+                            rs.getString("alias"),
+                            start,
+                            end
+                    );
+                }
                 , routingInfo.studyId(), routingInfo.participantId())) {
             return stream.findFirst();
         }
@@ -345,5 +361,23 @@ public class StudyRepository {
         return toParameterSource(studyId, participantId)
                 .addValue("observation_id", consent.observationId())
                 ;
+    }
+
+    public Interval getInterval(Long studyId, Integer participantId, RelativeEvent event) {
+        try(var stream = jdbcTemplate.queryForStream(
+                GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
+                ((rs, rowNum) -> {
+                    Instant start = rs.getTimestamp("start").toInstant();
+                    // TODO correct sql.Date to Instant with Time 0 ?!
+                    Instant end = Optional.ofNullable(DbUtils.readDuration(rs, "duration"))
+                            .map(d -> d.getEnd(start))
+                            .orElse(Instant.ofEpochMilli(rs.getDate("endDate").getTime()));
+                    return new Interval(start, SchedulerUtils.getEnd(event, start, end));
+
+                }),
+                studyId, participantId
+        )) {
+            return stream.findFirst().orElse(null);
+        }
     }
 }

@@ -1,10 +1,11 @@
 package io.redlink.more.data.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record SimpleParticipant(
         int id,
         String alias,
-        LocalDateTime start
+        Instant start,
+        Instant end
 ) {
 }

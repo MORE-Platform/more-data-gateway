@@ -19,7 +19,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ICalendarParserTest {
+public class SchedulerUtilsTest {
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -42,7 +42,7 @@ public class ICalendarParserTest {
                         .setFreq("DAILY")
                         .setInterval(1)
                         .setCount(3));
-        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(eventCount, LocalDateTime.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(eventCount, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());
 
@@ -54,7 +54,7 @@ public class ICalendarParserTest {
                         .setInterval(1)
                         .setUntil(LocalDateTime.parse("2022-11-25 14:00:00", formatter).toInstant(ZoneOffset.UTC)));
 
-        actualValues = ICalendarParser.parseToObservationSchedules(eventUntil, LocalDateTime.now());
+        actualValues = SchedulerUtils.parseToObservationSchedules(eventUntil, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -77,7 +77,7 @@ public class ICalendarParserTest {
                         .setFreq("DAILY")
                         .setInterval(1)
                         .setCount(3));
-        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(eventCount, LocalDateTime.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(eventCount, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());
 
@@ -89,7 +89,7 @@ public class ICalendarParserTest {
                         .setInterval(1)
                         .setUntil(LocalDateTime.parse("2022-11-25 14:00:00", formatter).toInstant(ZoneOffset.UTC)));
 
-        actualValues = ICalendarParser.parseToObservationSchedules(eventUntil, LocalDateTime.now());
+        actualValues = SchedulerUtils.parseToObservationSchedules(eventUntil, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
     @Test
@@ -114,7 +114,7 @@ public class ICalendarParserTest {
                         .setBySetPos(1)
                         .setCount(3));
 
-        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(event, LocalDateTime.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -153,7 +153,7 @@ public class ICalendarParserTest {
                         .setByDay(List.of(new String[]{"MO", "TU", "WE"}))
                         .setBySetPos(1)
                         .setCount(9));
-        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(event, LocalDateTime.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -177,7 +177,7 @@ public class ICalendarParserTest {
                         .setInterval(1)
                         .setByDay(List.of(new String[]{"WE"}))
                         .setCount(3));
-        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(event, LocalDateTime.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -202,7 +202,7 @@ public class ICalendarParserTest {
                         .setByMonthDay(5)
                         .setByMonth(12)
                         .setCount(3));
-        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(event, LocalDateTime.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -228,7 +228,7 @@ public class ICalendarParserTest {
                         .setByDay(List.of(new String[]{"MO"}))
                         .setByMonth(12)
                         .setCount(3));
-        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(event, LocalDateTime.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -262,7 +262,7 @@ public class ICalendarParserTest {
                         .setByDay(List.of(new String[]{"MO", "TU"}))
                         .setByMonth(12)
                         .setCount(6));
-        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(event, LocalDateTime.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());
     }
@@ -286,7 +286,7 @@ public class ICalendarParserTest {
                         .setFreq("HOURLY")
                         .setInterval(2)
                         .setUntil(LocalDateTime.parse("2022-12-05 20:00:00", formatter).toInstant(ZoneOffset.UTC)));
-        List<Pair<Instant, Instant>> actualValues = ICalendarParser.parseToObservationSchedules(event, LocalDateTime.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
