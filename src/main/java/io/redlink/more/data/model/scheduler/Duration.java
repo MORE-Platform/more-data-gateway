@@ -44,7 +44,7 @@ public class Duration {
         }
 
         public TemporalUnit toTemporalUnit() {
-            return ChronoUnit.valueOf(value);
+            return ChronoUnit.valueOf(value+"S");
         }
 
         @JsonCreator
