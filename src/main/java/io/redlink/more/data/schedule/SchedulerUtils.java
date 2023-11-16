@@ -9,8 +9,8 @@ import io.redlink.more.data.model.scheduler.*;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.sql.Date;
+import java.time.*;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +25,44 @@ public class SchedulerUtils {
     }
 
     public static List<Pair<Instant, Instant>> parseToObservationSchedulesForRelativeEvent(
-            RelativeEvent event, Instant start, Instant end) {
-        //TODO implement
-        return List.of();
+            RelativeEvent event, Instant start, Instant maxEnd) {
+
+        List<Pair<Instant, Instant>> events = new ArrayList<>();
+
+        start = shiftStartIfNecessary(start);
+
+        Pair<Instant, Instant> currentEvt = Pair.of(toInstant(event.getDtstart(), start), toInstant(event.getDtend(), start));
+
+        if(event.getRrrule() != null) {
+            RelativeRecurrenceRule rrule = event.getRrrule();
+            Instant maxEndOfRule = currentEvt.getRight().plus(rrule.getEndAfter().getValue(), rrule.getEndAfter().getUnit().toTemporalUnit());
+            maxEnd = maxEnd.isBefore(maxEndOfRule) ? maxEnd : maxEndOfRule;
+            long durationInMs = currentEvt.getRight().toEpochMilli() - currentEvt.getLeft().toEpochMilli();
+
+            while(currentEvt.getRight().isBefore(maxEnd)) {
+                events.add(currentEvt);
+                Instant estart = currentEvt.getLeft().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toTemporalUnit());
+                currentEvt = Pair.of(estart, estart.plusMillis(durationInMs));
+            }
+        } else {
+            events.add(currentEvt);
+        }
+
+        return events;
     }
+
+    private static Instant shiftStartIfNecessary(Instant start) {
+        // TODO
+        return start;
+    }
+
+    public static Instant toInstant(RelativeDate date, Instant start) {
+        return ZonedDateTime.ofInstant(start.plus(date.getOffset().getValue() - 1L, date.getOffset().getUnit().toTemporalUnit()), ZoneId.systemDefault())
+                .withHour(date.getHours())
+                .withMinute(date.getMinutes())
+                .withSecond(date.getSeconds()).toInstant();
+    }
+
     public static List<Pair<Instant, Instant>> parseToObservationSchedulesForEvent(Event event) {
         List<Pair<Instant, Instant>> observationSchedules = new ArrayList<>();
         if(event.getDateStart() != null && event.getDateEnd() != null) {

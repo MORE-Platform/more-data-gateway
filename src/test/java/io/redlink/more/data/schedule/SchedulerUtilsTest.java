@@ -1,8 +1,8 @@
 package io.redlink.more.data.schedule;
 
-import io.redlink.more.data.model.scheduler.Event;
-import io.redlink.more.data.model.scheduler.RecurrenceRule;
+import io.redlink.more.data.model.scheduler.*;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -288,6 +288,78 @@ public class SchedulerUtilsTest {
                         .setUntil(LocalDateTime.parse("2022-12-05 20:00:00", formatter).toInstant(ZoneOffset.UTC)));
         List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
-                Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
+                Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());
+    }
+
+    @Test
+    @DisplayName("Parsing relative event without recursion")
+    void testRelativeEvent() {
+        RelativeEvent event = new RelativeEvent()
+                .setDtstart(
+                    new RelativeDate()
+                            .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
+                            .setTime("10:00:00")
+                ).setDtend(
+                    new RelativeDate()
+                            .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
+                            .setTime("11:30:00")
+                );
+
+        Instant start = Instant.ofEpochSecond(1700118000); // Thursday, 30. November 2023 00:00:00
+        Instant maxEnd = Instant.ofEpochSecond(1701302400); // Thursday, 16. November 2023 07:00:00
+
+        List<Pair<Instant, Instant>> events =  SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start, maxEnd);
+        Assertions.assertEquals(1, events.size());
+    }
+
+    @Test
+    @DisplayName("Parsing relative event with recursion")
+    void testRelativeEventWithRecursion() {
+        RelativeEvent event = new RelativeEvent()
+                .setDtstart(
+                        new RelativeDate()
+                                .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
+                                .setTime("10:00:00")
+                ).setDtend(
+                        new RelativeDate()
+                                .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
+                                .setTime("11:30:00")
+                ).setRrrule(
+                        new RelativeRecurrenceRule()
+                                .setEndAfter(new Duration().setValue(10).setUnit(Duration.Unit.DAY))
+                                .setFrequency(new Duration().setValue(2).setUnit(Duration.Unit.DAY))
+                );
+
+        Instant start = Instant.ofEpochSecond(1700118000); // Thursday, 16. November 2023 07:00:00
+        Instant maxEnd = Instant.ofEpochSecond(1701302400); // Thursday, 30. November 2023 00:00:00
+
+        List<Pair<Instant, Instant>> events =  SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start, maxEnd);
+        Assertions.assertEquals(5, events.size());
+    }
+
+    @Test
+    @DisplayName("Parsing relative event with recursion (long run)")
+    void testRelativeEventWithRecursionLongRun() {
+        RelativeEvent event = new RelativeEvent()
+                .setDtstart(
+                        new RelativeDate()
+                                .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
+                                .setTime("10:00:00")
+                ).setDtend(
+                        new RelativeDate()
+                                .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
+                                .setTime("11:30:00")
+                ).setRrrule(
+                        new RelativeRecurrenceRule()
+                                .setEndAfter(new Duration().setValue(100).setUnit(Duration.Unit.DAY))
+                                .setFrequency(new Duration().setValue(3).setUnit(Duration.Unit.DAY))
+                );
+
+        Instant start = Instant.ofEpochSecond(1700118000); // Thursday, 16. November 2023 07:00:00
+        Instant maxEnd = Instant.ofEpochSecond(1701302400); // Thursday, 30. November 2023 00:00:00
+
+        List<Pair<Instant, Instant>> events =  SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start, maxEnd);
+        Assertions.assertEquals(5, events.size());
+    }
 
 }
