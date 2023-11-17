@@ -6,10 +6,7 @@
  * Foerderung der wissenschaftlichen Forschung).
  * Licensed under the Elastic License 2.0.
  */
-
-import biweekly.property.RecurrenceRule;
-import io.redlink.more.data.model.scheduler.ScheduleEvent;
-
+package io.redlink.more.data.model.scheduler;
 import java.time.Instant;
 
 public class Event implements ScheduleEvent {
