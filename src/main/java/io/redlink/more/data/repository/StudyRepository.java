@@ -2,7 +2,7 @@
  * Copyright (c) 2022 Redlink GmbH.
  */
 package io.redlink.more.data.repository;
-
+import org.apache.commons.lang3.tuple.Pair;
 import io.redlink.more.data.model.*;
 
 import java.sql.ResultSet;
@@ -15,7 +15,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
 
-import io.redlink.more.data.model.scheduler.Duration;
 import io.redlink.more.data.model.scheduler.Interval;
 import io.redlink.more.data.model.scheduler.RelativeEvent;
 import io.redlink.more.data.model.scheduler.ScheduleEvent;
@@ -40,6 +39,9 @@ public class StudyRepository {
 
     private static final String SQL_LIST_OBSERVATIONS_BY_STUDY =
             "SELECT * FROM observations WHERE study_id = ? AND ( study_group_id IS NULL OR study_group_id = ? )";
+
+    private static final String SQL_LIST_OBSERVATIONS_BY_STUDY_WITH_ALL_OBSERVATIONS =
+            "SELECT * FROM observations WHERE study_id = ?";
 
     private static final String SQL_ROUTING_INFO_BY_REG_TOKEN =
             "SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id, s.status = 'active' as is_active " +
@@ -101,6 +103,11 @@ public class StudyRepository {
             "JOIN studies s on p.study_id = s.study_id " +
             "WHERE p.study_id = ? AND participant_id = ?";
 
+    private static final String GET_DURATION_INFO_FOR_STUDY =
+            "SELECT sg.study_group_id as groupid, sg.duration AS groupduration, s.duration AS studyduration, s.planned_end_date AS enddate, s.planned_start_date AS startdate FROM studies s " +
+            "LEFT OUTER JOIN study_groups sg on s.study_id = sg.study_id " +
+            "WHERE s.study_id = ?";
+
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -152,8 +159,12 @@ public class StudyRepository {
     }
 
     public Optional<Study> findStudy(RoutingInfo routingInfo) {
+        return findStudy(routingInfo, true);
+    }
+
+    public Optional<Study> findStudy(RoutingInfo routingInfo, boolean filterObservationsByGroup) {
         final List<Observation> observations = listObservations(
-                routingInfo.studyId(), routingInfo.studyGroupId().orElse(-1), routingInfo.participantId());
+                routingInfo.studyId(), routingInfo.studyGroupId().orElse(-1), routingInfo.participantId(),filterObservationsByGroup);
 
         final SimpleParticipant participant = findParticipant(routingInfo).orElse(null);
 
@@ -182,10 +193,16 @@ public class StudyRepository {
         }
     }
 
-    private List<Observation> listObservations(long studyId, int groupId, int participantId) {
-        return jdbcTemplate.query(SQL_LIST_OBSERVATIONS_BY_STUDY, getObservationRowMapper(), studyId, groupId).stream()
-                .map(o -> mergeParticipantProperties(o, studyId, participantId))
-                .toList();
+    private List<Observation> listObservations(long studyId, int groupId, int participantId, boolean filterByGroup) {
+        if(filterByGroup) {
+            return jdbcTemplate.query(SQL_LIST_OBSERVATIONS_BY_STUDY, getObservationRowMapper(), studyId, groupId).stream()
+                    .map(o -> mergeParticipantProperties(o, studyId, participantId))
+                    .toList();
+        } else {
+            return jdbcTemplate.query(SQL_LIST_OBSERVATIONS_BY_STUDY_WITH_ALL_OBSERVATIONS, getObservationRowMapper(), studyId).stream()
+                    .map(o -> mergeParticipantProperties(o, studyId, participantId))
+                    .toList();
+        }
     }
 
     private Observation mergeParticipantProperties(Observation observation, long studyId, int participantId) {
@@ -289,6 +306,7 @@ public class StudyRepository {
                 rs.getString("consent_info"),
                 readContact(rs),
                 toLocalDate(rs.getDate("start_date")),
+                toLocalDate(rs.getDate("planned_start_date")),
                 toLocalDate(rs.getDate("planned_end_date")),
                 observations,
                 toInstant(rs.getTimestamp("created")),
@@ -309,6 +327,7 @@ public class StudyRepository {
     private static RowMapper<Observation> getObservationRowMapper() {
         return (rs, rowNum) -> new Observation(
                 rs.getInt("observation_id"),
+                rs.getInt("study_group_id"),
                 rs.getString("title"),
                 rs.getString("type"),
                 rs.getString("participant_info"),
@@ -379,5 +398,16 @@ public class StudyRepository {
         )) {
             return stream.findFirst().orElse(null);
         }
+    }
+
+    public Optional<StudyDurationInfo> getStudyDurationInfo(Long studyId) {
+        return jdbcTemplate.query(GET_DURATION_INFO_FOR_STUDY,
+                ((rs, rowNum) -> new StudyDurationInfo()
+                        .setEndDate(rs.getDate("enddate").toLocalDate())
+                        .setStartDate(rs.getDate("startdate").toLocalDate())
+                        .setDuration(DbUtils.readDuration(rs, "studyduration"))
+                        .addGroupDuration(Pair.of(rs.getInt("groupid"), DbUtils.readDuration(rs, "groupduration"))
+                )), studyId).stream()
+                .reduce((prev, curr) -> prev.addGroupDuration(curr.getGroupDurations().get(0)));
     }
 }

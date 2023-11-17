@@ -6,6 +6,7 @@ import java.time.Instant;
 
 public record Observation(
          int observationId,
+         Integer groupId,
          String title,
          String type,
          String participantInfo,
@@ -18,7 +19,7 @@ public record Observation(
 ) {
     public Observation withProperties(Object properties) {
         return new Observation(
-                observationId, title, type, participantInfo, properties, observationSchedule, created, modified, hidden, noSchedule
+                observationId, groupId, title, type, participantInfo, properties, observationSchedule, created, modified, hidden, noSchedule
         );
     }
 }

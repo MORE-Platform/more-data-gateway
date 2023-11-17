@@ -56,11 +56,10 @@ public class SchedulerUtils {
         return start;
     }
 
-    public static Instant toInstant(RelativeDate date, Instant start) {
+    private static Instant toInstant(RelativeDate date, Instant start) {
         return ZonedDateTime.ofInstant(start.plus(date.getOffset().getValue() - 1L, date.getOffset().getUnit().toTemporalUnit()), ZoneId.systemDefault())
                 .withHour(date.getHours())
-                .withMinute(date.getMinutes())
-                .withSecond(date.getSeconds()).toInstant();
+                .withMinute(date.getMinutes()).toInstant();
     }
 
     public static List<Pair<Instant, Instant>> parseToObservationSchedulesForEvent(Event event) {

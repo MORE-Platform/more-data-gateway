@@ -298,11 +298,11 @@ public class SchedulerUtilsTest {
                 .setDtstart(
                     new RelativeDate()
                             .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                            .setTime("10:00:00")
+                            .setTime("10:00")
                 ).setDtend(
                     new RelativeDate()
                             .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                            .setTime("11:30:00")
+                            .setTime("11:30")
                 );
 
         Instant start = Instant.ofEpochSecond(1700118000); // Thursday, 30. November 2023 00:00:00
@@ -319,11 +319,11 @@ public class SchedulerUtilsTest {
                 .setDtstart(
                         new RelativeDate()
                                 .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                                .setTime("10:00:00")
+                                .setTime("10:00")
                 ).setDtend(
                         new RelativeDate()
                                 .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                                .setTime("11:30:00")
+                                .setTime("11:30")
                 ).setRrrule(
                         new RelativeRecurrenceRule()
                                 .setEndAfter(new Duration().setValue(10).setUnit(Duration.Unit.DAY))
@@ -344,11 +344,11 @@ public class SchedulerUtilsTest {
                 .setDtstart(
                         new RelativeDate()
                                 .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                                .setTime("10:00:00")
+                                .setTime("10:00")
                 ).setDtend(
                         new RelativeDate()
                                 .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                                .setTime("11:30:00")
+                                .setTime("11:30")
                 ).setRrrule(
                         new RelativeRecurrenceRule()
                                 .setEndAfter(new Duration().setValue(100).setUnit(Duration.Unit.DAY))

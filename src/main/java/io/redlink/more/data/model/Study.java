@@ -14,6 +14,7 @@ public record Study(
         String consentInfo,
         Contact contact,
         LocalDate startDate,
+        LocalDate plannedStartDate,
         LocalDate endDate,
         List<Observation> observations,
         Instant created,
