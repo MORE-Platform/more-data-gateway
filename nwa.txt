@@ -6,14 +6,3 @@
  * Foerderung der wissenschaftlichen Forschung).
  * Licensed under the Elastic License 2.0.
  */
-package io.redlink.more.data.model;
-
-import java.time.Instant;
-
-public record SimpleParticipant(
-        int id,
-        String alias,
-        Instant start,
-        Instant end
-) {
-}

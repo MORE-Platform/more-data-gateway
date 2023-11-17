@@ -1,11 +1,21 @@
+/*
+ * Copyright LBI-DHP and/or licensed to LBI-DHP under one or more
+ * contributor license agreements (LBI-DHP: Ludwig Boltzmann Institute
+ * for Digital Health and Prevention -- A research institute of the
+ * Ludwig Boltzmann Gesellschaft, Oesterreichische Vereinigung zur
+ * Foerderung der wissenschaftlichen Forschung).
+ * Licensed under the Elastic License 2.0.
+ */
 package io.redlink.more.data.controller;
 
 import io.redlink.more.data.api.app.v1.model.EndpointDataBulkDTO;
 import io.redlink.more.data.api.app.v1.model.ExternalDataDTO;
 import io.redlink.more.data.api.app.v1.webservices.ExternalDataApi;
 import io.redlink.more.data.controller.transformer.DataTransformer;
+import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.model.ApiRoutingInfo;
 import io.redlink.more.data.model.RoutingInfo;
+import io.redlink.more.data.model.scheduler.Interval;
 import io.redlink.more.data.service.ElasticService;
 import io.redlink.more.data.service.ExternalService;
 import io.redlink.more.data.util.LoggingUtils;
@@ -55,10 +65,14 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
                 throw new AccessDeniedException("Invalid token");
             }
 
-            externalService.validateTimeFrame(studyId, observationId,
-                    endpointDataBulkDTO.getDataPoints().stream().map(datapoint ->
-                            datapoint.getTimestamp().toInstant()
-                    ).toList());
+            Interval interval = externalService.getIntervalForObservation(studyId, observationId, participantId);
+
+            endpointDataBulkDTO.getDataPoints().stream()
+                .map(datapoint -> datapoint.getTimestamp().toInstant())
+                .map(timestamp -> timestamp.isBefore(interval.getStart()) || timestamp.isAfter(interval.getEnd()))
+                .filter(v -> v)
+                .findFirst()
+                .orElseThrow(BadRequestException::TimeFrame);
 
             final RoutingInfo routingInfo = new RoutingInfo(
                     externalService.validateRoutingInfo(apiRoutingInfo.get(), participantId),

@@ -2,15 +2,23 @@
  * Copyright (c) 2022 Redlink GmbH.
  */
 package io.redlink.more.data.repository;
-
+import org.apache.commons.lang3.tuple.Pair;
 import io.redlink.more.data.model.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
+
+import io.redlink.more.data.model.scheduler.Interval;
+import io.redlink.more.data.model.scheduler.RelativeEvent;
+import io.redlink.more.data.model.scheduler.ScheduleEvent;
+import io.redlink.more.data.schedule.SchedulerUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -29,11 +37,11 @@ public class StudyRepository {
     private static final String SQL_FIND_STUDY_BY_ID =
             "SELECT * FROM studies WHERE study_id = ?";
 
-    private static final String SQL_FIND_PARTICIPANT_BY_STUDY_AND_ID =
-            "SELECT * FROM participants WHERE study_id = ? AND participant_id = ?";
-
     private static final String SQL_LIST_OBSERVATIONS_BY_STUDY =
             "SELECT * FROM observations WHERE study_id = ? AND ( study_group_id IS NULL OR study_group_id = ? )";
+
+    private static final String SQL_LIST_OBSERVATIONS_BY_STUDY_WITH_ALL_OBSERVATIONS =
+            "SELECT * FROM observations WHERE study_id = ?";
 
     private static final String SQL_ROUTING_INFO_BY_REG_TOKEN =
             "SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id, s.status = 'active' as is_active " +
@@ -72,7 +80,7 @@ public class StudyRepository {
             "ON CONFLICT (study_id, participant_id, observation_id) DO NOTHING";
     private static final String SQL_SET_PARTICIPANT_STATUS =
             "UPDATE participants " +
-            "SET status = :newStatus::participant_status, modified = now() " +
+            "SET status = :newStatus::participant_status, start = :start, modified = now() " +
             "WHERE study_id = :study_id AND participant_id = :participant_id AND status = :oldStatus::participant_status";
 
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT =
@@ -88,6 +96,17 @@ public class StudyRepository {
     private static final String GET_PARTICIPANT_STUDY_GROUP = "SELECT study_group_id FROM participants WHERE study_id = ? AND participant_id = ?";
 
     private static final String GET_OBSERVATION_SCHEDULE = "SELECT schedule FROM observations WHERE study_id = ? AND observation_id = ?";
+
+    private static final String GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT =
+            "SELECT start, participant_id, alias, COALESCE(sg.duration, s.duration) AS duration, s.planned_end_date FROM participants p " +
+            "LEFT OUTER JOIN study_groups sg on p.study_id = sg.study_id and p.study_group_id = sg.study_group_id " +
+            "JOIN studies s on p.study_id = s.study_id " +
+            "WHERE p.study_id = ? AND participant_id = ?";
+
+    private static final String GET_DURATION_INFO_FOR_STUDY =
+            "SELECT sg.study_group_id as groupid, sg.duration AS groupduration, s.duration AS studyduration, s.planned_end_date AS enddate, s.planned_start_date AS startdate FROM studies s " +
+            "LEFT OUTER JOIN study_groups sg on s.study_id = sg.study_id " +
+            "WHERE s.study_id = ?";
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -124,7 +143,7 @@ public class StudyRepository {
         }
     }
 
-    public Optional<Event> getObservationSchedule(Long studyId, Integer observationId) {
+    public Optional<ScheduleEvent> getObservationSchedule(Long studyId, Integer observationId) {
         try (var stream = jdbcTemplate.queryForStream(
                 GET_OBSERVATION_SCHEDULE,
                 getObservationScheduleRowMapper(),
@@ -140,8 +159,12 @@ public class StudyRepository {
     }
 
     public Optional<Study> findStudy(RoutingInfo routingInfo) {
+        return findStudy(routingInfo, true);
+    }
+
+    public Optional<Study> findStudy(RoutingInfo routingInfo, boolean filterObservationsByGroup) {
         final List<Observation> observations = listObservations(
-                routingInfo.studyId(), routingInfo.studyGroupId().orElse(-1), routingInfo.participantId());
+                routingInfo.studyId(), routingInfo.studyGroupId().orElse(-1), routingInfo.participantId(),filterObservationsByGroup);
 
         final SimpleParticipant participant = findParticipant(routingInfo).orElse(null);
 
@@ -151,20 +174,35 @@ public class StudyRepository {
     }
 
     public Optional<SimpleParticipant> findParticipant(RoutingInfo routingInfo) {
-        try (var stream = jdbcTemplate.queryForStream(SQL_FIND_PARTICIPANT_BY_STUDY_AND_ID,
-                (rs, rowNum) -> new SimpleParticipant(
-                        rs.getInt("participant_id"),
-                        rs.getString("alias")
-                )
+        try (var stream = jdbcTemplate.queryForStream(GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
+                (rs, rowNum) -> {
+                    Instant start = Optional.ofNullable(rs.getTimestamp("start"))
+                            .map(Timestamp::toInstant).orElse(null);
+                    Instant end = Optional.ofNullable(DbUtils.readDuration(rs, "duration"))
+                            .map(d -> d.getEnd(start))
+                            .orElse(Instant.ofEpochMilli(rs.getDate("endDate").getTime()));
+                    return new SimpleParticipant(
+                            rs.getInt("participant_id"),
+                            rs.getString("alias"),
+                            start,
+                            end
+                    );
+                }
                 , routingInfo.studyId(), routingInfo.participantId())) {
             return stream.findFirst();
         }
     }
 
-    private List<Observation> listObservations(long studyId, int groupId, int participantId) {
-        return jdbcTemplate.query(SQL_LIST_OBSERVATIONS_BY_STUDY, getObservationRowMapper(), studyId, groupId).stream()
-                .map(o -> mergeParticipantProperties(o, studyId, participantId))
-                .toList();
+    private List<Observation> listObservations(long studyId, int groupId, int participantId, boolean filterByGroup) {
+        if(filterByGroup) {
+            return jdbcTemplate.query(SQL_LIST_OBSERVATIONS_BY_STUDY, getObservationRowMapper(), studyId, groupId).stream()
+                    .map(o -> mergeParticipantProperties(o, studyId, participantId))
+                    .toList();
+        } else {
+            return jdbcTemplate.query(SQL_LIST_OBSERVATIONS_BY_STUDY_WITH_ALL_OBSERVATIONS, getObservationRowMapper(), studyId).stream()
+                    .map(o -> mergeParticipantProperties(o, studyId, participantId))
+                    .toList();
+        }
     }
 
     private Observation mergeParticipantProperties(Observation observation, long studyId, int participantId) {
@@ -191,7 +229,7 @@ public class StudyRepository {
         return (rs, rowNum) -> DbUtils.readObject(rs,"properties");
     }
 
-    private static RowMapper<Event> getObservationScheduleRowMapper() {
+    private static RowMapper<ScheduleEvent> getObservationScheduleRowMapper() {
         return (rs, rowNum) -> DbUtils.readEvent(rs, "schedule");
     }
 
@@ -203,7 +241,7 @@ public class StudyRepository {
         var routingInfo = ri.get();
         final String secret = passwordSupplier.get();
 
-        storeConsent(routingInfo.studyId(), routingInfo.participantId(), consent);
+        //storeConsent(routingInfo.studyId(), routingInfo.participantId(), consent);
 
         final String apiId = namedTemplate.queryForObject(SQL_INSERT_CREDENTIALS,
                 toParameterSource(routingInfo.studyId(), routingInfo.participantId())
@@ -221,6 +259,7 @@ public class StudyRepository {
     private void updateParticipantStatus(long studyId, int particpantId, String oldStatus, String newStatus) {
         namedTemplate.update(SQL_SET_PARTICIPANT_STATUS,
                 toParameterSource(studyId, particpantId)
+                        .addValue("start", "active".equals(newStatus) ? Timestamp.valueOf(LocalDateTime.now()) : null)
                         .addValue("oldStatus", oldStatus)
                         .addValue("newStatus", newStatus)
         );
@@ -267,6 +306,7 @@ public class StudyRepository {
                 rs.getString("consent_info"),
                 readContact(rs),
                 toLocalDate(rs.getDate("start_date")),
+                toLocalDate(rs.getDate("planned_start_date")),
                 toLocalDate(rs.getDate("planned_end_date")),
                 observations,
                 toInstant(rs.getTimestamp("created")),
@@ -287,6 +327,7 @@ public class StudyRepository {
     private static RowMapper<Observation> getObservationRowMapper() {
         return (rs, rowNum) -> new Observation(
                 rs.getInt("observation_id"),
+                rs.getInt("study_group_id"),
                 rs.getString("title"),
                 rs.getString("type"),
                 rs.getString("participant_info"),
@@ -339,5 +380,34 @@ public class StudyRepository {
         return toParameterSource(studyId, participantId)
                 .addValue("observation_id", consent.observationId())
                 ;
+    }
+
+    public Interval getInterval(Long studyId, Integer participantId, RelativeEvent event) {
+        try(var stream = jdbcTemplate.queryForStream(
+                GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
+                ((rs, rowNum) -> {
+                    Instant start = rs.getTimestamp("start").toInstant();
+                    // TODO correct sql.Date to Instant with Time 0 ?!
+                    Instant end = Optional.ofNullable(DbUtils.readDuration(rs, "duration"))
+                            .map(d -> d.getEnd(start))
+                            .orElse(Instant.ofEpochMilli(rs.getDate("endDate").getTime()));
+                    return new Interval(start, SchedulerUtils.getEnd(event, start, end));
+
+                }),
+                studyId, participantId
+        )) {
+            return stream.findFirst().orElse(null);
+        }
+    }
+
+    public Optional<StudyDurationInfo> getStudyDurationInfo(Long studyId) {
+        return jdbcTemplate.query(GET_DURATION_INFO_FOR_STUDY,
+                ((rs, rowNum) -> new StudyDurationInfo()
+                        .setEndDate(rs.getDate("enddate").toLocalDate())
+                        .setStartDate(rs.getDate("startdate").toLocalDate())
+                        .setDuration(DbUtils.readDuration(rs, "studyduration"))
+                        .addGroupDuration(Pair.of(rs.getInt("groupid"), DbUtils.readDuration(rs, "groupduration"))
+                )), studyId).stream()
+                .reduce((prev, curr) -> prev.addGroupDuration(curr.getGroupDurations().get(0)));
     }
 }

@@ -1,3 +1,11 @@
+/*
+ * Copyright LBI-DHP and/or licensed to LBI-DHP under one or more
+ * contributor license agreements (LBI-DHP: Ludwig Boltzmann Institute
+ * for Digital Health and Prevention -- A research institute of the
+ * Ludwig Boltzmann Gesellschaft, Oesterreichische Vereinigung zur
+ * Foerderung der wissenschaftlichen Forschung).
+ * Licensed under the Elastic License 2.0.
+ */
 package io.redlink.more.data.configuration;
 
 import io.redlink.more.data.service.GatewayUserDetailService;
@@ -49,6 +57,8 @@ public class SecurityConfig {
                             .permitAll();
                     //External Data Gateway
                     req.requestMatchers("/api/v1/external/bulk")
+                            .permitAll();
+                    req.requestMatchers("/api/v1/calendar/studies/*/calendar.ics")
                             .permitAll();
                     // all other apis require credentials
                     req.requestMatchers("/api/v1/**")
