@@ -70,7 +70,7 @@ public class SchedulerUtils {
                 .withMinute(date.getMinutes()).toInstant();
     }
 
-    public static List<Pair<Instant, Instant>> parseToObservationSchedulesForEvent(Event event) {
+    public static List<Pair<Instant, Instant>> parseToObservationSchedulesForEvent(Event event, Instant start, Instant end) {
         List<Pair<Instant, Instant>> observationSchedules = new ArrayList<>();
         if(event.getDateStart() != null && event.getDateEnd() != null) {
             VEvent iCalEvent = parseToICalEvent(event);
@@ -79,7 +79,9 @@ public class SchedulerUtils {
             while (it.hasNext()) {
                 Instant ostart = it.next().toInstant();
                 Instant oend = ostart.plus(eventDuration, ChronoUnit.SECONDS);
-                observationSchedules.add(Pair.of(ostart, oend));
+                if(ostart.isAfter(start) && oend.isBefore(end)) {
+                    observationSchedules.add(Pair.of(ostart, oend));
+                }
             }
         }
         // TODO edge cases if calculated days are not consecutive (e.g. first weekend -> first of month is a sunday)
@@ -88,7 +90,7 @@ public class SchedulerUtils {
 
     public static List<Pair<Instant, Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, Instant start, Instant end) {
         if(Event.class.isAssignableFrom(scheduleEvent.getClass())) {
-            return parseToObservationSchedulesForEvent((Event) scheduleEvent);
+            return parseToObservationSchedulesForEvent((Event) scheduleEvent, start, end);
         } else {
             return parseToObservationSchedulesForRelativeEvent((RelativeEvent) scheduleEvent, start, end);
         }
