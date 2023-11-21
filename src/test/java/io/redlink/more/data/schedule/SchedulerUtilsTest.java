@@ -50,7 +50,7 @@ public class SchedulerUtilsTest {
                         .setFreq("DAILY")
                         .setInterval(1)
                         .setCount(3));
-        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(eventCount, Instant.now(), Instant.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(eventCount, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2023-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());
 
@@ -62,7 +62,7 @@ public class SchedulerUtilsTest {
                         .setInterval(1)
                         .setUntil(LocalDateTime.parse("2022-11-25 14:00:00", formatter).toInstant(ZoneOffset.UTC)));
 
-        actualValues = SchedulerUtils.parseToObservationSchedules(eventUntil, Instant.now(), Instant.now());
+        actualValues = SchedulerUtils.parseToObservationSchedules(eventUntil, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2023-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -85,7 +85,7 @@ public class SchedulerUtilsTest {
                         .setFreq("DAILY")
                         .setInterval(1)
                         .setCount(3));
-        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(eventCount, Instant.now(), Instant.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(eventCount, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2023-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());
 
@@ -97,7 +97,7 @@ public class SchedulerUtilsTest {
                         .setInterval(1)
                         .setUntil(LocalDateTime.parse("2022-11-25 14:00:00", formatter).toInstant(ZoneOffset.UTC)));
 
-        actualValues = SchedulerUtils.parseToObservationSchedules(eventUntil, Instant.now(), Instant.now());
+        actualValues = SchedulerUtils.parseToObservationSchedules(eventUntil, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2023-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
     @Test
@@ -122,7 +122,7 @@ public class SchedulerUtilsTest {
                         .setBySetPos(1)
                         .setCount(3));
 
-        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2023-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -161,7 +161,7 @@ public class SchedulerUtilsTest {
                         .setByDay(List.of(new String[]{"MO", "TU", "WE"}))
                         .setBySetPos(1)
                         .setCount(9));
-        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2023-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -185,7 +185,7 @@ public class SchedulerUtilsTest {
                         .setInterval(1)
                         .setByDay(List.of(new String[]{"WE"}))
                         .setCount(3));
-        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2023-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -210,7 +210,7 @@ public class SchedulerUtilsTest {
                         .setByMonthDay(5)
                         .setByMonth(12)
                         .setCount(3));
-        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2030-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -236,7 +236,7 @@ public class SchedulerUtilsTest {
                         .setByDay(List.of(new String[]{"MO"}))
                         .setByMonth(12)
                         .setCount(3));
-        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2030-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());    }
 
@@ -270,7 +270,7 @@ public class SchedulerUtilsTest {
                         .setByDay(List.of(new String[]{"MO", "TU"}))
                         .setByMonth(12)
                         .setCount(6));
-        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2030-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());
     }
@@ -294,7 +294,7 @@ public class SchedulerUtilsTest {
                         .setFreq("HOURLY")
                         .setInterval(2)
                         .setUntil(LocalDateTime.parse("2022-12-05 20:00:00", formatter).toInstant(ZoneOffset.UTC)));
-        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.now(), Instant.now());
+        List<Pair<Instant, Instant>> actualValues = SchedulerUtils.parseToObservationSchedules(event, Instant.parse("2022-10-01T00:00:00.000Z"), Instant.parse("2023-10-01T00:00:00.000Z"));
         assertArrayEquals(Arrays.stream(expectedValues.toArray()).map(Object::toString).toArray(),
                 Arrays.stream(actualValues.toArray()).map(Object::toString).toArray());
     }
