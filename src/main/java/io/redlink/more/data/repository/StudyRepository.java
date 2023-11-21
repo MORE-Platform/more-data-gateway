@@ -44,7 +44,7 @@ public class StudyRepository {
             "SELECT * FROM observations WHERE study_id = ?";
 
     private static final String SQL_ROUTING_INFO_BY_REG_TOKEN =
-            "SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id, s.status = 'active' as is_active " +
+            "SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id, (s.status = 'active' AND pt.status = 'active') as is_active " +
             "FROM participants pt " +
             "  INNER JOIN registration_tokens rt ON (pt.study_id = rt.study_id and pt.participant_id = rt.participant_id) " +
             "  INNER JOIN studies s on (s.study_id = pt.study_id) " +
@@ -180,7 +180,7 @@ public class StudyRepository {
                             .map(Timestamp::toInstant).orElse(null);
                     Instant end = Optional.ofNullable(DbUtils.readDuration(rs, "duration"))
                             .map(d -> d.getEnd(start))
-                            .orElse(Instant.ofEpochMilli(rs.getDate("endDate").getTime()));
+                            .orElse(Instant.ofEpochMilli(rs.getDate("planned_end_date").getTime()));
                     return new SimpleParticipant(
                             rs.getInt("participant_id"),
                             rs.getString("alias"),
@@ -390,7 +390,7 @@ public class StudyRepository {
                     // TODO correct sql.Date to Instant with Time 0 ?!
                     Instant end = Optional.ofNullable(DbUtils.readDuration(rs, "duration"))
                             .map(d -> d.getEnd(start))
-                            .orElse(Instant.ofEpochMilli(rs.getDate("endDate").getTime()));
+                            .orElse(Instant.ofEpochMilli(rs.getDate("planned_end_date").getTime()));
                     return new Interval(start, SchedulerUtils.getEnd(event, start, end));
 
                 }),
