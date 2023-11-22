@@ -32,8 +32,8 @@ public class CalendarService {
             VEvent iCalEvent = new VEvent();
             iCalEvent.addCategories("General");
             iCalEvent.setSummary("Study: " + study.title());
-            iCalEvent.setDateStart(Date.from(study.plannedStartDate().atStartOfDay(TimeZone.getDefault().toZoneId()).toInstant()));
-            iCalEvent.setDateEnd(Date.from(study.endDate().atStartOfDay(TimeZone.getDefault().toZoneId()).toInstant()));
+            iCalEvent.setDateStart(Date.from(study.plannedStartDate().atStartOfDay(TimeZone.getDefault().toZoneId()).toInstant()), false);
+            iCalEvent.setDateEnd(Date.from(study.endDate().atStartOfDay(TimeZone.getDefault().toZoneId()).toInstant()), false);
             ical.addEvent(iCalEvent);
 
             Instant start = study.plannedStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
