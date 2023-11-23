@@ -6,6 +6,7 @@ import biweekly.component.VEvent;
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.model.StudyDurationInfo;
+import io.redlink.more.data.model.scheduler.Event;
 import io.redlink.more.data.repository.StudyRepository;
 import io.redlink.more.data.schedule.SchedulerUtils;
 import org.springframework.stereotype.Service;
@@ -42,12 +43,13 @@ public class CalendarService {
                     .orElseThrow(() -> new RuntimeException("Cannot create calendar"));
 
             study.observations().forEach(o -> {
+                String type = getTpeFor(o);
                 SchedulerUtils.parseToObservationSchedules(
                         o.observationSchedule(), start, info.getDurationFor(o.groupId()).getEnd(start)
                 ).forEach(p -> {
                     VEvent oEvent = new VEvent();
                     oEvent.addCategories("Observation", o.groupId() != null ? ("Group" + o.groupId()) : "NoGroup");
-                    oEvent.setSummary(getSummaryFor(o));
+                    oEvent.setSummary(getSummaryFor(o, type));
                     oEvent.setDateStart(Date.from(p.getLeft()));
                     oEvent.setDateEnd(Date.from(p.getRight()));
                     ical.addEvent(oEvent);
@@ -57,7 +59,14 @@ public class CalendarService {
         });
     }
 
-    private String getSummaryFor(Observation o) {
-        return "(O" + o.observationId()+"G"+o.groupId()+")" + o.title();
+    private String getTpeFor(Observation o) {
+        if(o.observationSchedule() != null && Event.class.isAssignableFrom(o.observationSchedule().getClass())) {
+            return "ABS";
+        }
+        return "REL";
+    }
+
+    private String getSummaryFor(Observation o, String t) {
+        return "(O" + o.observationId()+"G"+o.groupId()+"|"+t+") " + o.title();
     }
 }

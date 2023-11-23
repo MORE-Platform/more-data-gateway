@@ -20,10 +20,7 @@ import java.sql.Date;
 import java.time.*;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.TimeZone;
+import java.util.*;
 
 public class SchedulerUtils {
 
@@ -89,6 +86,7 @@ public class SchedulerUtils {
     }
 
     public static List<Pair<Instant, Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, Instant start, Instant end) {
+        if(scheduleEvent == null) return Collections.emptyList();
         if(Event.class.isAssignableFrom(scheduleEvent.getClass())) {
             return parseToObservationSchedulesForEvent((Event) scheduleEvent, start, end);
         } else {
