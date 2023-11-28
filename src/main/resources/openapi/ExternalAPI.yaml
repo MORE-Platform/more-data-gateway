@@ -35,6 +35,23 @@ paths:
           $ref: '#/components/responses/UnauthorizedApiKey'
         '404':
           description: not found
+  /calendar/studies/{studyId}/calendar.ics:
+    get:
+      tags:
+        - calendar
+      description: Get study calendar for study as iCal
+      operationId: getStudyCalendar
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+      responses:
+        '200':
+          description: Successfully returned study calendar
+          content:
+            text/calendar:
+              schema:
+                type: string
+        '404':
+          description: Not found
 
 components:
   schemas:
@@ -78,6 +95,28 @@ components:
       schema:
         type: string
       description: The token to authorize sending external data
+    StudyId:
+      name: studyId
+      in: path
+      schema:
+        type: integer
+        format: int64
+        readOnly: true
+      required: true
+    StudyGroupId:
+      name: studyGroupId
+      in: path
+      schema:
+        type: integer
+        format: int32
+      required: true
+    ParticipantId:
+      name: participantId
+      in: path
+      schema:
+        type: integer
+        format: int32
+      required: true
 
   responses:
     UnauthorizedApiKey:

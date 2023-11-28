@@ -6,14 +6,20 @@
  * Foerderung der wissenschaftlichen Forschung).
  * Licensed under the Elastic License 2.0.
  */
-package io.redlink.more.data.model;
-
+package io.redlink.more.data.model.scheduler;
 import java.time.Instant;
 
-public class Event {
+public class Event implements ScheduleEvent {
+    public static final String TYPE = "Event";
+    private String type;
     private Instant dateStart;
     private Instant dateEnd;
     private RecurrenceRule recurrenceRule;
+
+    @Override
+    public String getType() {
+        return TYPE;
+    }
 
     public Instant getDateStart() {
         return dateStart;
@@ -41,4 +47,6 @@ public class Event {
         this.recurrenceRule = recurrenceRule;
         return this;
     }
+
+
 }
