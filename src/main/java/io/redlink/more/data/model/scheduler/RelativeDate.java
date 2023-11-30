@@ -22,6 +22,9 @@ public class RelativeDate {
     }
 
     private int getTimeGroup(int i) {
+        if(time == null) {
+            return 0;
+        }
         Matcher m = CLOCK.matcher(time);
         if(m.find()) {
             return Integer.parseInt(m.group(i));
