@@ -23,8 +23,11 @@ public class RelativeDate {
 
     private int getTimeGroup(int i) {
         Matcher m = CLOCK.matcher(time);
-        m.find();
-        return Integer.parseInt(m.group(i));
+        if(m.find()) {
+            return Integer.parseInt(m.group(i));
+        } else {
+            return 0;
+        }
     }
 
     public Duration getOffset() {
