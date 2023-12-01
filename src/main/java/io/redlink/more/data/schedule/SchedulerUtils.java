@@ -64,7 +64,10 @@ public class SchedulerUtils {
     private static Instant toInstant(RelativeDate date, Instant start) {
         return ZonedDateTime.ofInstant(start.plus(date.getOffset().getValue() - 1L, date.getOffset().getUnit().toTemporalUnit()), ZoneId.systemDefault())
                 .withHour(date.getHours())
-                .withMinute(date.getMinutes()).toInstant();
+                .withMinute(date.getMinutes())
+                .withSecond(0)
+                .withNano(0)
+                .toInstant();
     }
 
     public static List<Pair<Instant, Instant>> parseToObservationSchedulesForEvent(Event event, Instant start, Instant end) {
