@@ -23,13 +23,13 @@ jobs:
           cat ./target/generated-sources/license/THIRD-PARTY.txt
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Test Results
           path: "**/TEST-*.xml"
       - name: Upload Licenses List
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Licenses List
           path: "./target/generated-sources/license/THIRD-PARTY.txt"
@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Event File
           path: ${{ github.event_path }}
