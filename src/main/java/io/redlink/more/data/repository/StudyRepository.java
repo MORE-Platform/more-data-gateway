@@ -9,7 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -250,16 +249,24 @@ public class StudyRepository {
 
         if (apiId != null) {
             jdbcTemplate.update(SQL_CLEAR_TOKEN, registrationToken);
-            updateParticipantStatus(routingInfo.studyId(), routingInfo.participantId(), "new", "active");
+            updateParticipantStatus(routingInfo.studyId(), routingInfo.studyGroupId().orElse(0), routingInfo.participantId(), "new", "active");
             return Optional.of(apiId);
         }
         throw new IllegalStateException("Creating API-Credentials failed!");
     }
 
-    private void updateParticipantStatus(long studyId, int particpantId, String oldStatus, String newStatus) {
+    private void updateParticipantStatus(long studyId, int groupId, int participantId, String oldStatus, String newStatus) {
+        Timestamp start = null;
+
+        if ("active".equals(newStatus)) {
+            start = Timestamp.from(
+                    SchedulerUtils.shiftStartIfObservationAlreadyStarted(Instant.now(), listObservations(studyId, groupId, participantId, true))
+            );
+        }
+
         namedTemplate.update(SQL_SET_PARTICIPANT_STATUS,
-                toParameterSource(studyId, particpantId)
-                        .addValue("start", "active".equals(newStatus) ? Timestamp.valueOf(LocalDateTime.now()) : null)
+                toParameterSource(studyId, participantId)
+                        .addValue("start", start)
                         .addValue("oldStatus", oldStatus)
                         .addValue("newStatus", newStatus)
         );
@@ -288,7 +295,7 @@ public class StudyRepository {
                     final long studyId = rs.getLong("study_id");
                     final int participantId = rs.getInt("participant_id");
                     withdrawConsent(studyId, participantId);
-                    updateParticipantStatus(studyId, participantId,
+                    updateParticipantStatus(studyId, participantId, 0,
                             "active", "abandoned");
                 }
         );

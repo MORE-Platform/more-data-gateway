@@ -1,16 +1,22 @@
 package io.redlink.more.data.model.scheduler;
 
+import java.time.ZoneId;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RelativeDate {
 
-    private static Pattern CLOCK = Pattern.compile("(\\d\\d):(\\d\\d)");
+    private static Pattern CLOCK = Pattern.compile("(\\d?\\d):(\\d\\d)");
 
     private Duration offset;
     private String time;
+    private String timezone;
 
     public RelativeDate() {
+    }
+
+    public ZoneId getZoneId() {
+        return timezone != null ? ZoneId.of(timezone) : ZoneId.of("Europe/Berlin");
     }
 
     public int getHours() {
@@ -48,6 +54,15 @@ public class RelativeDate {
 
     public RelativeDate setTime(String time) {
         this.time = time;
+        return this;
+    }
+
+    public String getTimezone() {
+        return timezone;
+    }
+
+    public RelativeDate setTimezone(String timezone) {
+        this.timezone = timezone;
         return this;
     }
 }

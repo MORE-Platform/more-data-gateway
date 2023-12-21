@@ -13,6 +13,7 @@ import biweekly.util.DayOfWeek;
 import biweekly.util.Frequency;
 import biweekly.util.Recurrence;
 import biweekly.util.com.google.ical.compat.javautil.DateIterator;
+import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.scheduler.*;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -62,7 +63,7 @@ public class SchedulerUtils {
     }
 
     private static Instant toInstant(RelativeDate date, Instant start) {
-        return ZonedDateTime.ofInstant(start.plus(date.getOffset().getValue() - 1L, date.getOffset().getUnit().toTemporalUnit()), ZoneId.systemDefault())
+        return ZonedDateTime.ofInstant(start.plus(date.getOffset().getValue() - 1L, date.getOffset().getUnit().toTemporalUnit()), date.getZoneId())
                 .withHour(date.getHours())
                 .withMinute(date.getMinutes())
                 .withSecond(0)
@@ -95,6 +96,22 @@ public class SchedulerUtils {
         } else {
             return parseToObservationSchedulesForRelativeEvent((RelativeEvent) scheduleEvent, start, end);
         }
+    }
+
+    public static Instant shiftStartIfObservationAlreadyStarted(Instant start, List<Observation> observations) {
+        // returns start date, if now event ends before, otherwise start date + 1 day
+        return observations.stream()
+                .map(Observation::observationSchedule)
+                .filter(scheduleEvent -> scheduleEvent.getType().equals(RelativeEvent.TYPE))
+                .map(r -> ((RelativeEvent) r).getDtend())
+                .filter(relativeDate -> relativeDate.getOffset().getValue() == 1)
+                .map(relativeDate -> start.atZone(relativeDate.getZoneId()).withHour(relativeDate.getHours()).withMinute(relativeDate.getMinutes()).withSecond(0).withNano(0).toInstant())
+                .filter(instant -> {
+                    return  instant.isBefore(start.plus(1, ChronoUnit.HOURS));
+                })
+                .map(instant -> start.atZone(ZoneId.systemDefault()).withHour(0).withMinute(0).plusDays(1).toInstant())
+                .findFirst()
+                .orElse(start);
     }
 
     private static long getEventTime(Event event) {
