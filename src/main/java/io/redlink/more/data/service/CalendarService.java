@@ -17,6 +17,8 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.TimeZone;
 
+import static io.redlink.more.data.schedule.SchedulerUtils.shiftStartIfObservationAlreadyStarted;
+
 @Service
 public class CalendarService {
     private final StudyRepository studyRepository;
@@ -37,7 +39,10 @@ public class CalendarService {
             iCalEvent.setDateEnd(Date.from(study.endDate().atStartOfDay(TimeZone.getDefault().toZoneId()).toInstant()), false);
             ical.addEvent(iCalEvent);
 
-            Instant start = study.plannedStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
+            final Instant start = shiftStartIfObservationAlreadyStarted(
+                    study.plannedStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                    study.observations()
+            );
 
             StudyDurationInfo info = studyRepository.getStudyDurationInfo(studyId)
                     .orElseThrow(() -> new RuntimeException("Cannot create calendar"));

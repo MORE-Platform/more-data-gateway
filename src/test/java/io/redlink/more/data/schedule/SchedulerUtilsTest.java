@@ -8,6 +8,7 @@
  */
 package io.redlink.more.data.schedule;
 
+import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.scheduler.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Assertions;
@@ -24,7 +25,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.redlink.more.data.schedule.SchedulerUtils.shiftStartIfObservationAlreadyStarted;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class SchedulerUtilsTest {
@@ -368,6 +372,34 @@ public class SchedulerUtilsTest {
 
         List<Pair<Instant, Instant>> events =  SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start, maxEnd);
         Assertions.assertEquals(5, events.size());
+    }
+
+    @Test
+    @DisplayName("Set real start date")
+    void testRelativeEventShift() {
+        Instant start = Instant.parse("2023-12-24T11:00:00.000Z");
+        Observation observationDay1At10 = mock(Observation.class);
+        Observation observationDay1At12 = mock(Observation.class);
+        Observation observationDay1At13 = mock(Observation.class);
+        Observation observationDay2At10 = mock(Observation.class);
+        ScheduleEvent day1At10 = new RelativeEvent().setDtend(new RelativeDate().setTime("10:00").setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
+        ScheduleEvent day1At12 = new RelativeEvent().setDtend(new RelativeDate().setTime("12:00").setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
+        ScheduleEvent day1At13 = new RelativeEvent().setDtend(new RelativeDate().setTime("13:00").setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
+        ScheduleEvent day2At10 = new RelativeEvent().setDtend(new RelativeDate().setTime("10:00").setTimezone("Europe/Berlin").setOffset(new Duration().setValue(2)));
+
+        when(observationDay1At10.observationSchedule()).thenReturn(day1At10);
+        when(observationDay1At12.observationSchedule()).thenReturn(day1At12);
+        when(observationDay1At13.observationSchedule()).thenReturn(day1At13);
+        when(observationDay2At10.observationSchedule()).thenReturn(day2At10);
+
+        Instant s1 = shiftStartIfObservationAlreadyStarted(start, List.of(observationDay1At10, observationDay1At12, observationDay2At10));
+        Assertions.assertNotEquals(s1.toEpochMilli(), start.toEpochMilli());
+
+        Instant s2 = shiftStartIfObservationAlreadyStarted(start, List.of(observationDay1At12, observationDay2At10));
+        Assertions.assertNotEquals(s2.toEpochMilli(), start.toEpochMilli());
+
+        Instant s3 = shiftStartIfObservationAlreadyStarted(start, List.of(observationDay1At13, observationDay2At10));
+        Assertions.assertEquals(s3.toEpochMilli(), start.toEpochMilli());
     }
 
 }
