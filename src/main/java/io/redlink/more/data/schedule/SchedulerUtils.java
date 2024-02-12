@@ -80,7 +80,7 @@ public class SchedulerUtils {
             while (it.hasNext()) {
                 Instant ostart = it.next().toInstant();
                 Instant oend = ostart.plus(eventDuration, ChronoUnit.SECONDS);
-                if(ostart.isAfter(start) && oend.isBefore(end)) {
+                if(ostart.isBefore(end) && oend.isAfter(start)) {
                     observationSchedules.add(Pair.of(ostart, oend));
                 }
             }
