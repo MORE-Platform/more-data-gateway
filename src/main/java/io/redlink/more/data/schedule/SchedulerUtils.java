@@ -35,8 +35,6 @@ public class SchedulerUtils {
 
         List<Pair<Instant, Instant>> events = new ArrayList<>();
 
-        start = shiftStartIfNecessary(start);
-
         Pair<Instant, Instant> currentEvt = Pair.of(toInstant(event.getDtstart(), start), toInstant(event.getDtend(), start));
 
         if(event.getRrrule() != null) {
@@ -55,11 +53,6 @@ public class SchedulerUtils {
         }
 
         return events;
-    }
-
-    private static Instant shiftStartIfNecessary(Instant start) {
-        // TODO
-        return start;
     }
 
     private static Instant toInstant(RelativeDate date, Instant start) {
@@ -98,7 +91,7 @@ public class SchedulerUtils {
         }
     }
 
-    public static Instant shiftStartIfObservationAlreadyStarted(Instant start, List<Observation> observations) {
+    public static Instant shiftStartIfObservationAlreadyEnded(Instant start, List<Observation> observations) {
         // returns start date, if now event ends before, otherwise start date + 1 day
         return observations.stream()
                 .map(Observation::observationSchedule)
@@ -107,7 +100,7 @@ public class SchedulerUtils {
                 .filter(relativeDate -> relativeDate.getOffset().getValue() == 1)
                 .map(relativeDate -> start.atZone(relativeDate.getZoneId()).withHour(relativeDate.getHours()).withMinute(relativeDate.getMinutes()).withSecond(0).withNano(0).toInstant())
                 .filter(instant -> {
-                    return  instant.isBefore(start.plus(1, ChronoUnit.HOURS));
+                    return  instant.isBefore(start);
                 })
                 .map(instant -> start.atZone(ZoneId.systemDefault()).withHour(0).withMinute(0).plusDays(1).toInstant())
                 .findFirst()

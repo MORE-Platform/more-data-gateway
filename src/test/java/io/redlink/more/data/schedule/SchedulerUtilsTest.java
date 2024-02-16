@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static io.redlink.more.data.schedule.SchedulerUtils.shiftStartIfObservationAlreadyStarted;
+import static io.redlink.more.data.schedule.SchedulerUtils.shiftStartIfObservationAlreadyEnded;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -392,13 +392,13 @@ public class SchedulerUtilsTest {
         when(observationDay1At13.observationSchedule()).thenReturn(day1At13);
         when(observationDay2At10.observationSchedule()).thenReturn(day2At10);
 
-        Instant s1 = shiftStartIfObservationAlreadyStarted(start, List.of(observationDay1At10, observationDay1At12, observationDay2At10));
+        Instant s1 = shiftStartIfObservationAlreadyEnded(start, List.of(observationDay1At10, observationDay1At12, observationDay2At10));
         Assertions.assertNotEquals(s1.toEpochMilli(), start.toEpochMilli());
 
-        Instant s2 = shiftStartIfObservationAlreadyStarted(start, List.of(observationDay1At12, observationDay2At10));
-        Assertions.assertNotEquals(s2.toEpochMilli(), start.toEpochMilli());
+        Instant s2 = shiftStartIfObservationAlreadyEnded(start, List.of(observationDay1At12, observationDay2At10));
+        Assertions.assertEquals(s2.toEpochMilli(), start.toEpochMilli());
 
-        Instant s3 = shiftStartIfObservationAlreadyStarted(start, List.of(observationDay1At13, observationDay2At10));
+        Instant s3 = shiftStartIfObservationAlreadyEnded(start, List.of(observationDay1At13, observationDay2At10));
         Assertions.assertEquals(s3.toEpochMilli(), start.toEpochMilli());
     }
 
