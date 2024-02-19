@@ -260,7 +260,7 @@ public class StudyRepository {
 
         if ("active".equals(newStatus)) {
             start = Timestamp.from(
-                    SchedulerUtils.shiftStartIfObservationAlreadyStarted(Instant.now(), listObservations(studyId, groupId, participantId, true))
+                    SchedulerUtils.shiftStartIfObservationAlreadyEnded(Instant.now(), listObservations(studyId, groupId, participantId, true))
             );
         }
 

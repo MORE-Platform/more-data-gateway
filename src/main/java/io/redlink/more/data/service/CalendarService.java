@@ -17,7 +17,7 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.TimeZone;
 
-import static io.redlink.more.data.schedule.SchedulerUtils.shiftStartIfObservationAlreadyStarted;
+import static io.redlink.more.data.schedule.SchedulerUtils.shiftStartIfObservationAlreadyEnded;
 
 @Service
 public class CalendarService {
@@ -39,7 +39,7 @@ public class CalendarService {
             iCalEvent.setDateEnd(Date.from(study.endDate().atStartOfDay(TimeZone.getDefault().toZoneId()).toInstant()), false);
             ical.addEvent(iCalEvent);
 
-            final Instant start = shiftStartIfObservationAlreadyStarted(
+            final Instant start = shiftStartIfObservationAlreadyEnded(
                     study.plannedStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant(),
                     study.observations()
             );
