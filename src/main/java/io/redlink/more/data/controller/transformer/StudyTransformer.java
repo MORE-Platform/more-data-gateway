@@ -4,15 +4,11 @@
 package io.redlink.more.data.controller.transformer;
 
 import io.redlink.more.data.api.app.v1.model.*;
-import io.redlink.more.data.model.Contact;
-import io.redlink.more.data.model.Observation;
-import io.redlink.more.data.model.SimpleParticipant;
-import io.redlink.more.data.model.Study;
+import io.redlink.more.data.model.*;
 import io.redlink.more.data.schedule.SchedulerUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public final class StudyTransformer {
@@ -43,6 +39,26 @@ public final class StudyTransformer {
         return new SimpleParticipantDTO()
                 .id(participant.id())
                 .alias(participant.alias());
+    }
+
+    public static List<ParticipantDTO> toDTO(List<Participant> participants) {
+        if(participants == null) {
+            return List.of();
+        }
+        return participants.stream()
+                .map(StudyTransformer::toDTO)
+                .toList();
+    }
+
+    public static ParticipantDTO toDTO(Participant participant) {
+        if(participant == null) {
+            return null;
+        }
+        return new ParticipantDTO(
+                participant.id(),
+                participant.alias(),
+                ParticipantStatusDTO.fromValue(participant.status())
+        );
     }
 
     public static ContactInfoDTO toDTO(Contact contact) {

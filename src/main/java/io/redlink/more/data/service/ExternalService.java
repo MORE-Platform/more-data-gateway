@@ -12,6 +12,7 @@ import io.redlink.more.data.configuration.CachingConfiguration;
 import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.exception.NotFoundException;
 import io.redlink.more.data.model.ApiRoutingInfo;
+import io.redlink.more.data.model.Participant;
 import io.redlink.more.data.model.scheduler.Event;
 import io.redlink.more.data.model.scheduler.Interval;
 import io.redlink.more.data.model.scheduler.RelativeEvent;
@@ -20,6 +21,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -66,5 +68,9 @@ public class ExternalService {
                     }
                 })
                 .orElseThrow(BadRequestException::TimeFrame);
+    }
+
+    public List<Participant> listParticipants(Long studyId, OptionalInt studyGroupId) {
+        return repository.listParticipants(studyId, studyGroupId.orElse(Integer.MIN_VALUE));
     }
 }

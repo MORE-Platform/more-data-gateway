@@ -35,6 +35,27 @@ paths:
           $ref: '#/components/responses/UnauthorizedApiKey'
         '404':
           description: not found
+
+  /external/participants:
+    get:
+      operationId: listParticipants
+      description: List participants for given study
+      tags:
+        - ExternalData
+      parameters:
+        - $ref: '#/components/parameters/ExternalApiToken'
+      responses:
+        '200':
+          description: Successfully returned list of participants for given study
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref : '#/components/schemas/Participant'
+        '401':
+          $ref: '#/components/responses/UnauthorizedApiKey'
+
   /calendar/studies/{studyId}/calendar.ics:
     get:
       tags:
@@ -86,6 +107,32 @@ components:
         - dataId
         - dataValue
         - timestamp
+
+    Participant:
+      type: object
+      description: A participant for a study
+      properties:
+        participantId:
+          type: integer
+          format: int32
+        alias:
+          type: string
+        status:
+          $ref: '#/components/schemas/ParticipantStatus'
+      required:
+        - participantId
+        - alias
+        - status
+
+    ParticipantStatus:
+      type: string
+      enum:
+        - new
+        - active
+        - abandoned
+        - kicked_out
+        - locked
+      default: new
 
   parameters:
     ExternalApiToken:

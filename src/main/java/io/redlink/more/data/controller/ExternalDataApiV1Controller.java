@@ -10,8 +10,10 @@ package io.redlink.more.data.controller;
 
 import io.redlink.more.data.api.app.v1.model.EndpointDataBulkDTO;
 import io.redlink.more.data.api.app.v1.model.ExternalDataDTO;
+import io.redlink.more.data.api.app.v1.model.ParticipantDTO;
 import io.redlink.more.data.api.app.v1.webservices.ExternalDataApi;
 import io.redlink.more.data.controller.transformer.DataTransformer;
+import io.redlink.more.data.controller.transformer.StudyTransformer;
 import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.model.ApiRoutingInfo;
 import io.redlink.more.data.model.RoutingInfo;
@@ -45,27 +47,26 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
     }
 
     @Override
+    public ResponseEntity<List<ParticipantDTO>> listParticipants(String moreApiToken) {
+        try {
+            ApiRoutingInfo apiRoutingInfo = getRoutingInfo(moreApiToken);
+            return ResponseEntity.ok(
+                    externalService.listParticipants(apiRoutingInfo.studyId(), apiRoutingInfo.studyGroupId())
+                            .stream()
+                            .map(StudyTransformer::toDTO)
+                            .toList()
+            );
+        } catch(IndexOutOfBoundsException | NumberFormatException e) {
+            throw new AccessDeniedException("Invalid Token");
+        }
+    }
+
+    @Override
     public ResponseEntity<Void> storeExternalBulk(String moreApiToken, EndpointDataBulkDTO endpointDataBulkDTO) {
         try {
-            String[] split = moreApiToken.split("\\.");
-            String[] primaryKey = new String(Base64.getDecoder().decode(split[0])).split("-");
-
-            Long studyId = Long.valueOf(primaryKey[0]);
-            Integer observationId = Integer.valueOf(primaryKey[1]);
+            ApiRoutingInfo apiRoutingInfo = getRoutingInfo(moreApiToken);
             Integer participantId = Integer.valueOf(endpointDataBulkDTO.getParticipantId());
-            Integer tokenId = Integer.valueOf(primaryKey[2]);
-            String secret = new String(Base64.getDecoder().decode(split[1]));
-
-            final Optional<ApiRoutingInfo> apiRoutingInfo = externalService.getRoutingInfo(
-                    studyId,
-                    observationId,
-                    tokenId,
-                    secret);
-            if(apiRoutingInfo.isEmpty()) {
-                throw new AccessDeniedException("Invalid token");
-            }
-
-            Interval interval = externalService.getIntervalForObservation(studyId, observationId, participantId);
+            Interval interval = externalService.getIntervalForObservation(apiRoutingInfo.studyId(), apiRoutingInfo.observationId(), participantId);
 
             endpointDataBulkDTO.getDataPoints().stream()
                 .map(datapoint -> datapoint.getTimestamp().toInstant())
@@ -75,13 +76,13 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
                 .orElseThrow(BadRequestException::TimeFrame);
 
             final RoutingInfo routingInfo = new RoutingInfo(
-                    externalService.validateRoutingInfo(apiRoutingInfo.get(), participantId),
+                    externalService.validateRoutingInfo(apiRoutingInfo, participantId),
                     participantId
             );
             try (LoggingUtils.LoggingContext ctx = LoggingUtils.createContext(routingInfo)) {
                 if(routingInfo.studyActive()) {
                     elasticService.storeDataPoints(
-                            DataTransformer.createDataPoints(endpointDataBulkDTO, apiRoutingInfo.get(), observationId),
+                            DataTransformer.createDataPoints(endpointDataBulkDTO, apiRoutingInfo, apiRoutingInfo.observationId()),
                             routingInfo
                     );
                 } else {
@@ -94,5 +95,25 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
         } catch(IndexOutOfBoundsException | NumberFormatException e) {
             throw new AccessDeniedException("Invalid Token");
         }
+    }
+
+    private ApiRoutingInfo getRoutingInfo(String moreApiToken) {
+        String[] split = moreApiToken.split("\\.");
+        String[] primaryKey = new String(Base64.getDecoder().decode(split[0])).split("-");
+
+        Long studyId = Long.valueOf(primaryKey[0]);
+        Integer observationId = Integer.valueOf(primaryKey[1]);
+        Integer tokenId = Integer.valueOf(primaryKey[2]);
+        String secret = new String(Base64.getDecoder().decode(split[1]));
+
+        final Optional<ApiRoutingInfo> apiRoutingInfo = externalService.getRoutingInfo(
+                studyId,
+                observationId,
+                tokenId,
+                secret);
+        if (apiRoutingInfo.isEmpty()) {
+            throw new AccessDeniedException("Invalid token");
+        }
+        return apiRoutingInfo.get();
     }
 }
