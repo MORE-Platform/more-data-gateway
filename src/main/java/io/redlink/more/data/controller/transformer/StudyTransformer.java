@@ -41,15 +41,6 @@ public final class StudyTransformer {
                 .alias(participant.alias());
     }
 
-    public static List<ParticipantDTO> toDTO(List<Participant> participants) {
-        if(participants == null) {
-            return List.of();
-        }
-        return participants.stream()
-                .map(StudyTransformer::toDTO)
-                .toList();
-    }
-
     public static ParticipantDTO toDTO(Participant participant) {
         if(participant == null) {
             return null;
