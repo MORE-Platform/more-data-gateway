@@ -29,9 +29,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -49,7 +47,7 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
     @Override
     public ResponseEntity<List<ParticipantDTO>> listParticipants(String moreApiToken) {
         try {
-            ApiRoutingInfo apiRoutingInfo = getRoutingInfo(moreApiToken);
+            ApiRoutingInfo apiRoutingInfo = externalService.getRoutingInfo(moreApiToken);
             return ResponseEntity.ok(
                     externalService.listParticipants(apiRoutingInfo.studyId(), apiRoutingInfo.studyGroupId())
                             .stream()
@@ -64,7 +62,7 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
     @Override
     public ResponseEntity<Void> storeExternalBulk(String moreApiToken, EndpointDataBulkDTO endpointDataBulkDTO) {
         try {
-            ApiRoutingInfo apiRoutingInfo = getRoutingInfo(moreApiToken);
+            ApiRoutingInfo apiRoutingInfo = externalService.getRoutingInfo(moreApiToken);
             Integer participantId = Integer.valueOf(endpointDataBulkDTO.getParticipantId());
             Interval interval = externalService.getIntervalForObservation(apiRoutingInfo.studyId(), apiRoutingInfo.observationId(), participantId);
 
@@ -95,25 +93,5 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
         } catch(IndexOutOfBoundsException | NumberFormatException e) {
             throw new AccessDeniedException("Invalid Token");
         }
-    }
-
-    private ApiRoutingInfo getRoutingInfo(String moreApiToken) {
-        String[] split = moreApiToken.split("\\.");
-        String[] primaryKey = new String(Base64.getDecoder().decode(split[0])).split("-");
-
-        Long studyId = Long.valueOf(primaryKey[0]);
-        Integer observationId = Integer.valueOf(primaryKey[1]);
-        Integer tokenId = Integer.valueOf(primaryKey[2]);
-        String secret = new String(Base64.getDecoder().decode(split[1]));
-
-        final Optional<ApiRoutingInfo> apiRoutingInfo = externalService.getRoutingInfo(
-                studyId,
-                observationId,
-                tokenId,
-                secret);
-        if (apiRoutingInfo.isEmpty()) {
-            throw new AccessDeniedException("Invalid token");
-        }
-        return apiRoutingInfo.get();
     }
 }
