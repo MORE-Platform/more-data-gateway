@@ -83,12 +83,12 @@ public class StudyRepository {
             "WHERE study_id = :study_id AND participant_id = :participant_id AND status = :oldStatus::participant_status";
 
     private static final String SQL_LIST_PARTICIPANTS_BY_STUDY =
-            "SELECT participant_id, alias, status FROM participants " +
+            "SELECT participant_id, alias, status, study_group_id, start FROM participants " +
             "WHERE study_id = ?";
 
     private static final String SQL_LIST_PARTICIPANTS_BY_STUDY_AND_GROUP =
-            "SELECT participant_id, alias, status FROM participants " +
-            "WHERE study_id = ? AND (study_group_id IS NULL OR study_group_id = ?)";
+            "SELECT participant_id, alias, status, study_group_id, start FROM participants " +
+            "WHERE study_id = ? AND study_group_id = ?";
 
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT =
             "SELECT properties FROM participant_observation_properties " +
@@ -367,7 +367,9 @@ public class StudyRepository {
         return (rs, rowNul) -> new Participant(
                 rs.getInt("participant_id"),
                 rs.getString("alias"),
-                rs.getString("status")
+                rs.getString("status"),
+                rs.getInt("study_group_id"),
+                toInstant(rs.getTimestamp("start"))
         );
     }
 

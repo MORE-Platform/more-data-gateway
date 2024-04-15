@@ -48,7 +48,9 @@ public final class StudyTransformer {
         return new ParticipantDTO(
                 participant.id(),
                 participant.alias(),
-                ParticipantStatusDTO.fromValue(participant.status())
+                ParticipantStatusDTO.fromValue(participant.status()),
+                participant.studyGroupId(),
+                BaseTransformers.toOffsetDateTime(participant.start())
         );
     }
 

@@ -119,10 +119,18 @@ components:
           type: string
         status:
           $ref: '#/components/schemas/ParticipantStatus'
+        studyGroup:
+          type: integer
+          format: int32
+        start:
+          type: string
+          format: date-time
       required:
         - participantId
         - alias
         - status
+        - studyGroup
+        - start
 
     ParticipantStatus:
       type: string
