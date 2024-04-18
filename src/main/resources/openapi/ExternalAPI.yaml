@@ -113,8 +113,7 @@ components:
       description: A participant for a study
       properties:
         participantId:
-          type: integer
-          format: int32
+          type: string
         alias:
           type: string
         status:

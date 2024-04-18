@@ -41,19 +41,6 @@ public final class StudyTransformer {
                 .alias(participant.alias());
     }
 
-    public static ParticipantDTO toDTO(Participant participant) {
-        if(participant == null) {
-            return null;
-        }
-        return new ParticipantDTO(
-                participant.id(),
-                participant.alias(),
-                ParticipantStatusDTO.fromValue(participant.status()),
-                participant.studyGroupId(),
-                BaseTransformers.toOffsetDateTime(participant.start())
-        );
-    }
-
     public static ContactInfoDTO toDTO(Contact contact) {
         return new ContactInfoDTO()
                 .institute(contact.institute())

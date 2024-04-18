@@ -84,11 +84,7 @@ public class StudyRepository {
 
     private static final String SQL_LIST_PARTICIPANTS_BY_STUDY =
             "SELECT participant_id, alias, status, study_group_id, start FROM participants " +
-            "WHERE study_id = ?";
-
-    private static final String SQL_LIST_PARTICIPANTS_BY_STUDY_AND_GROUP =
-            "SELECT participant_id, alias, status, study_group_id, start FROM participants " +
-            "WHERE study_id = ? AND study_group_id = ?";
+            "WHERE study_id = :study_id AND (study_group_id = :study_group_id OR :study_group_id::INT IS NULL)";
 
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT =
             "SELECT properties FROM participant_observation_properties " +
@@ -202,9 +198,19 @@ public class StudyRepository {
 
     public List<Participant> listParticipants(long studyId, int groupId) {
         if(groupId < 0) {
-            return jdbcTemplate.query(SQL_LIST_PARTICIPANTS_BY_STUDY, getParticipantRowMapper(), studyId);
+            return namedTemplate.query(
+                    SQL_LIST_PARTICIPANTS_BY_STUDY,
+                    new MapSqlParameterSource()
+                            .addValue("study_id", studyId)
+                            .addValue("study_group_id", null),
+                    getParticipantRowMapper());
         } else {
-            return jdbcTemplate.query(SQL_LIST_PARTICIPANTS_BY_STUDY_AND_GROUP, getParticipantRowMapper(), studyId, groupId);
+            return namedTemplate.query(
+                    SQL_LIST_PARTICIPANTS_BY_STUDY,
+                    new MapSqlParameterSource()
+                            .addValue("study_id", studyId)
+                            .addValue("study_group_id", groupId),
+                    getParticipantRowMapper());
         }
     }
 

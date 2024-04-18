@@ -13,7 +13,7 @@ import io.redlink.more.data.api.app.v1.model.ExternalDataDTO;
 import io.redlink.more.data.api.app.v1.model.ParticipantDTO;
 import io.redlink.more.data.api.app.v1.webservices.ExternalDataApi;
 import io.redlink.more.data.controller.transformer.DataTransformer;
-import io.redlink.more.data.controller.transformer.StudyTransformer;
+import io.redlink.more.data.controller.transformer.ParticipantTransformer;
 import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.model.ApiRoutingInfo;
 import io.redlink.more.data.model.RoutingInfo;
@@ -51,7 +51,7 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
             return ResponseEntity.ok(
                     externalService.listParticipants(apiRoutingInfo.studyId(), apiRoutingInfo.studyGroupId())
                             .stream()
-                            .map(StudyTransformer::toDTO)
+                            .map(ParticipantTransformer::toDTO)
                             .toList()
             );
         } catch(IndexOutOfBoundsException | NumberFormatException e) {
