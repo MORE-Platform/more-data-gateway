@@ -41,7 +41,7 @@ jobs:
   Build-and-Deploy:
     name: "Build and Push Docker Image"
     runs-on: ubuntu-latest
-    if: github.ref_name == 'main' || github.event.inputs.dockerTag != ''
+    if: contains(fromJSON('["main", "develop"]'), github.ref_name) || github.event.inputs.dockerTag != ''
     needs:
       - Compile-and-Test
     steps:
@@ -51,20 +51,34 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
+      - name: Generate additional Docker-Tags
+        run: |
+          TAGS=${BRANCH}
+          if [ "$BRANCH" == "$MAIN_BRANCH" ]; then
+            TAGS="latest,$TAGS"
+          fi
+          if [ -n "$EVENT_PARAM" ]; then
+            TAGS="$EVENT_PARAM"
+          fi
+          echo "Generated Docker-Tags: $TAGS"
+          echo "TAGS=$TAGS" >> "$GITHUB_ENV"
+        env:
+          BRANCH: ${{ github.ref_name }}
+          MAIN_BRANCH: ${{ github.event.repository.default_branch }}
+          EVENT_PARAM: ${{ github.event.inputs.dockerTag }}
       - name: Build JIB container and publish to GitHub Packages
         run:
-          TAG=${{github.event.inputs.dockerTag}} && 
           ./mvnw -B -U
-          --no-transfer-progress
-          clean verify jib:build
-          -Drevision=${{github.run_number}}
-          -Dchangelist=
-          -Dsha1=.${GITHUB_SHA:0:7}
-          -Dquick
-          -Ddocker.namespace=${DOCKER_NAMESPACE,,}
-          -Djib.to.tags=${TAG:=latest}
-          -Djib.to.auth.username=${{ github.actor }}
-          -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }}
+            --no-transfer-progress
+            clean verify jib:build
+            -Drevision=${{github.run_number}}
+            -Dchangelist=
+            -Dsha1=.${GITHUB_SHA:0:7}
+            -Dquick
+            -Ddocker.namespace=${DOCKER_NAMESPACE,,}
+            -Djib.to.tags=${TAGS}
+            -Djib.to.auth.username=${{ github.actor }}
+            -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }}
         env:
           DOCKER_NAMESPACE: ghcr.io/${{ github.repository_owner }}
 
