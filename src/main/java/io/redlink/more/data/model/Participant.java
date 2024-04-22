@@ -1,11 +1,13 @@
 package io.redlink.more.data.model;
 
 import java.time.Instant;
+import java.util.OptionalInt;
 
 public record Participant(
         int id,
         String alias,
         String status,
-        Integer studyGroupId,
+        OptionalInt studyGroupId,
+        String studyGroupTitle,
         Instant start
 ) {}

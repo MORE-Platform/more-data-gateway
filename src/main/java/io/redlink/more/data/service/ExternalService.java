@@ -36,6 +36,7 @@ public class ExternalService {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
     }
+
     public ApiRoutingInfo getRoutingInfo(
             String moreApiToken
     ) {
@@ -86,6 +87,6 @@ public class ExternalService {
     }
 
     public List<Participant> listParticipants(Long studyId, OptionalInt studyGroupId) {
-        return repository.listParticipants(studyId, studyGroupId.orElse(Integer.MIN_VALUE));
+        return repository.listParticipants(studyId, studyGroupId);
     }
 }

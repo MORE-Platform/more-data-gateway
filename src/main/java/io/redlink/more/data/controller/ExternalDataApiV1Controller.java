@@ -35,7 +35,8 @@ import java.util.List;
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ExternalDataApiV1Controller implements ExternalDataApi {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DataApiV1Controller.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExternalDataApiV1Controller.class);
+
     private final ExternalService externalService;
     private final ElasticService elasticService;
 

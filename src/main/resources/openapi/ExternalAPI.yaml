@@ -119,8 +119,16 @@ components:
         status:
           $ref: '#/components/schemas/ParticipantStatus'
         studyGroup:
-          type: integer
-          format: int32
+          type: object
+          properties:
+            groupId:
+              type: string
+            name:
+              type: string
+          required:
+            - groupId
+            - name
+          nullable: true
         start:
           type: string
           format: date-time

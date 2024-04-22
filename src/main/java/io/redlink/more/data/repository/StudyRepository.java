@@ -83,8 +83,10 @@ public class StudyRepository {
             "WHERE study_id = :study_id AND participant_id = :participant_id AND status = :oldStatus::participant_status";
 
     private static final String SQL_LIST_PARTICIPANTS_BY_STUDY =
-            "SELECT participant_id, alias, status, study_group_id, start FROM participants " +
-            "WHERE study_id = :study_id AND (study_group_id = :study_group_id OR :study_group_id::INT IS NULL)";
+            "SELECT participant_id, alias, status, sg.study_group_id, sg.title as study_group_title, start " +
+            "FROM participants p LEFT OUTER JOIN study_groups sg ON ( p.study_id = sg.study_id AND p.study_group_id = sg.study_group_id ) " +
+            "WHERE p.study_id = :study_id " +
+                "AND (p.study_group_id = :study_group_id OR :study_group_id::INT IS NULL)";
 
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT =
             "SELECT properties FROM participant_observation_properties " +
@@ -196,22 +198,13 @@ public class StudyRepository {
         }
     }
 
-    public List<Participant> listParticipants(long studyId, int groupId) {
-        if(groupId < 0) {
-            return namedTemplate.query(
-                    SQL_LIST_PARTICIPANTS_BY_STUDY,
-                    new MapSqlParameterSource()
-                            .addValue("study_id", studyId)
-                            .addValue("study_group_id", null),
-                    getParticipantRowMapper());
-        } else {
-            return namedTemplate.query(
-                    SQL_LIST_PARTICIPANTS_BY_STUDY,
-                    new MapSqlParameterSource()
-                            .addValue("study_id", studyId)
-                            .addValue("study_group_id", groupId),
-                    getParticipantRowMapper());
-        }
+    public List<Participant> listParticipants(long studyId, OptionalInt groupId) {
+        return namedTemplate.query(
+                SQL_LIST_PARTICIPANTS_BY_STUDY,
+                new MapSqlParameterSource()
+                        .addValue("study_id", studyId)
+                        .addValue("study_group_id", groupId.isPresent() ? groupId.getAsInt() : null),
+                getParticipantRowMapper());
     }
 
     private List<Observation> listObservations(long studyId, int groupId, int participantId, boolean filterByGroup) {
@@ -374,7 +367,8 @@ public class StudyRepository {
                 rs.getInt("participant_id"),
                 rs.getString("alias"),
                 rs.getString("status"),
-                rs.getInt("study_group_id"),
+                DbUtils.readOptionalInt(rs, "study_group_id"),
+                rs.getString("study_group_title"),
                 toInstant(rs.getTimestamp("start"))
         );
     }
