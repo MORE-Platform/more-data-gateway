@@ -58,6 +58,8 @@ public class SecurityConfig {
                     //External Data Gateway
                     req.requestMatchers("/api/v1/external/bulk")
                             .permitAll();
+                    req.requestMatchers("/api/v1/external/participants")
+                            .permitAll();
                     req.requestMatchers("/api/v1/calendar/studies/*/calendar.ics")
                             .permitAll();
                     // all other apis require credentials

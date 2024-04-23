@@ -12,14 +12,18 @@ import io.redlink.more.data.configuration.CachingConfiguration;
 import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.exception.NotFoundException;
 import io.redlink.more.data.model.ApiRoutingInfo;
+import io.redlink.more.data.model.Participant;
 import io.redlink.more.data.model.scheduler.Event;
 import io.redlink.more.data.model.scheduler.Interval;
 import io.redlink.more.data.model.scheduler.RelativeEvent;
 import io.redlink.more.data.repository.StudyRepository;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -32,13 +36,27 @@ public class ExternalService {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
     }
-    public Optional<ApiRoutingInfo> getRoutingInfo(
-            Long studyId, Integer observationId, Integer tokenId, String apiSecret
+
+    public ApiRoutingInfo getRoutingInfo(
+            String moreApiToken
     ) {
-        return repository.getApiRoutingInfo(studyId, observationId, tokenId)
+        String[] split = moreApiToken.split("\\.");
+        String[] primaryKey = new String(Base64.getDecoder().decode(split[0])).split("-");
+
+        Long studyId = Long.valueOf(primaryKey[0]);
+        Integer observationId = Integer.valueOf(primaryKey[1]);
+        Integer tokenId = Integer.valueOf(primaryKey[2]);
+        String secret = new String(Base64.getDecoder().decode(split[1]));
+
+
+        final Optional<ApiRoutingInfo> apiRoutingInfo = repository.getApiRoutingInfo(studyId, observationId, tokenId)
                 .stream().filter(route ->
-                        passwordEncoder.matches(apiSecret, route.secret()))
+                        passwordEncoder.matches(secret, route.secret()))
                 .findFirst();
+        if (apiRoutingInfo.isEmpty()) {
+            throw new AccessDeniedException("Invalid token");
+        }
+        return apiRoutingInfo.get();
     }
 
     public ApiRoutingInfo validateRoutingInfo(ApiRoutingInfo routingInfo, Integer participantId) {
@@ -66,5 +84,9 @@ public class ExternalService {
                     }
                 })
                 .orElseThrow(BadRequestException::TimeFrame);
+    }
+
+    public List<Participant> listParticipants(Long studyId, OptionalInt studyGroupId) {
+        return repository.listParticipants(studyId, studyGroupId);
     }
 }
