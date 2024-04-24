@@ -2,15 +2,29 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    target-branch: 'develop'
     assignees:
       - ja-fra
     schedule:
       interval: weekly
+    groups:
+      github-action:
+        patterns:
+          - "actions/*"
+      docker:
+        patterns:
+          - "docker/*"
   - package-ecosystem: maven
     directory: /
+    target-branch: 'develop'
     schedule:
       interval: daily
     ignore:
       - # We want to stay on the v5 of the openapi-generator
         dependency-name: "org.openapitools:openapi-generator-maven-plugin"
         update-types: ["version-update:semver-major"]
+    groups:
+      maven-plugin:
+        patterns:
+          - "org.apache.maven.plugins:*"
+          - "org.codehaus.mojo:*"
