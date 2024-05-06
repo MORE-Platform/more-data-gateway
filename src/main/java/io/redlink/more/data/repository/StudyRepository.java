@@ -255,7 +255,7 @@ public class StudyRepository {
         var routingInfo = ri.get();
         final String secret = passwordSupplier.get();
 
-        //storeConsent(routingInfo.studyId(), routingInfo.participantId(), consent);
+        storeConsent(routingInfo.studyId(), routingInfo.participantId(), consent);
 
         final String apiId = namedTemplate.queryForObject(SQL_INSERT_CREDENTIALS,
                 toParameterSource(routingInfo.studyId(), routingInfo.participantId())
