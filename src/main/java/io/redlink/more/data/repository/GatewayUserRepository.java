@@ -52,7 +52,8 @@ public class GatewayUserRepository {
                         rs.getLong("study_id"),
                         rs.getInt("participant_id"),
                         readOptionalInt(rs, "study_group_id"),
-                        rs.getBoolean("study_is_active")
+                        rs.getBoolean("study_is_active"),
+                        true // TODO: This could be read from the db-view, but should always be true
                 ));
     }
 }

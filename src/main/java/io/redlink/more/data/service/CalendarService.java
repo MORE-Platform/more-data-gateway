@@ -29,7 +29,7 @@ public class CalendarService {
 
     public Optional<String> getICalendarString(Long studyId) {
 
-        return studyRepository.findStudy(new RoutingInfo(studyId, -1, -1, false), false).map(study -> {
+        return studyRepository.findStudy(new RoutingInfo(studyId, -1, -1, false, false), false).map(study -> {
             ICalendar ical = new ICalendar();
 
             VEvent iCalEvent = new VEvent();

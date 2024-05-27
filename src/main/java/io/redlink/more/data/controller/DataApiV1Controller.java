@@ -56,7 +56,7 @@ public class DataApiV1Controller implements DataApi {
 
         final RoutingInfo routingInfo = userDetails.getRoutingInfo();
         try (LoggingUtils.LoggingContext ctx = LoggingUtils.createContext(userDetails.getRoutingInfo())) {
-            if (routingInfo.studyActive()) {
+            if (routingInfo.acceptData()) {
                 final List<String> storedIDs = elasticService.storeDataPoints(
                         DataTransformer.createDataPoints(dataBulkDTO), routingInfo);
                 return ResponseEntity.ok(storedIDs);
@@ -64,8 +64,8 @@ public class DataApiV1Controller implements DataApi {
                 final List<String> discardedIDs = dataBulkDTO.getDataPoints().stream()
                         .map(ObservationDataDTO::getDataId)
                         .toList();
-                LOG.info("Discarding {} observations because study_{} is not 'active'",
-                        discardedIDs.size(), routingInfo.studyId());
+                LOG.info("Discarding {} observations because study_{} or participant_{} is not 'active'",
+                        discardedIDs.size(), routingInfo.studyId(), routingInfo.participantId());
                 return ResponseEntity.ok(
                         discardedIDs
                 );
