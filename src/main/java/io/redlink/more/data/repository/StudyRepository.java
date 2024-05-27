@@ -34,7 +34,7 @@ import static io.redlink.more.data.repository.DbUtils.toLocalDate;
 public class StudyRepository {
 
     private static final String SQL_FIND_STUDY_BY_ID =
-            "SELECT * FROM studies WHERE study_id = ?";
+            "SELECT *, status IN ('active', 'preview') as study_active FROM studies WHERE study_id = ?";
 
     private static final String SQL_LIST_OBSERVATIONS_BY_STUDY =
             "SELECT * FROM observations WHERE study_id = ? AND ( study_group_id IS NULL OR study_group_id = ? )";
@@ -44,7 +44,7 @@ public class StudyRepository {
 
     private static final String SQL_ROUTING_INFO_BY_REG_TOKEN = """
             SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id,
-                s.status IN ('active', 'paused') as study_active,
+                s.status IN ('active', 'preview') as study_active,
                 pt.status = 'active' as participant_active
             FROM participants pt
                 INNER JOIN registration_tokens rt ON (pt.study_id = rt.study_id and pt.participant_id = rt.participant_id)
@@ -55,7 +55,7 @@ public class StudyRepository {
             SQL_ROUTING_INFO_BY_REG_TOKEN + " FOR UPDATE OF rt";
     private static final String GET_ROUTING_INFO = """
             SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id,
-                s.status IN ('active', 'paused') as study_active,
+                s.status IN ('active', 'preview') as study_active,
                 pt.status = 'active' as participant_active
             FROM participants pt
                 INNER JOIN studies s on (s.study_id = pt.study_id)
@@ -329,7 +329,7 @@ public class StudyRepository {
         return (rs, rowNum) -> new Study(
                 rs.getLong("study_id"),
                 rs.getString("title"),
-                "active".equalsIgnoreCase(rs.getString("status")),
+                rs.getBoolean("study_active"),
                 rs.getString("participant_info"),
                 rs.getString("finish_text"),
                 rs.getString("status"),
