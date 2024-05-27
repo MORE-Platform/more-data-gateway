@@ -10,6 +10,7 @@ package io.redlink.more.data.schedule;
 
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.scheduler.*;
+import java.time.LocalTime;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -310,11 +311,11 @@ public class SchedulerUtilsTest {
                 .setDtstart(
                     new RelativeDate()
                             .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                            .setTime("10:00")
+                            .setTime(LocalTime.parse("10:00"))
                 ).setDtend(
                     new RelativeDate()
                             .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                            .setTime("11:30")
+                            .setTime(LocalTime.parse("11:30"))
                 );
 
         Instant start = Instant.ofEpochSecond(1700118000); // Thursday, 30. November 2023 00:00:00
@@ -331,11 +332,11 @@ public class SchedulerUtilsTest {
                 .setDtstart(
                         new RelativeDate()
                                 .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                                .setTime("10:00")
+                                .setTime(LocalTime.parse("10:00"))
                 ).setDtend(
                         new RelativeDate()
                                 .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                                .setTime("11:30")
+                                .setTime(LocalTime.parse("11:30"))
                 ).setRrrule(
                         new RelativeRecurrenceRule()
                                 .setEndAfter(new Duration().setValue(10).setUnit(Duration.Unit.DAY))
@@ -356,11 +357,11 @@ public class SchedulerUtilsTest {
                 .setDtstart(
                         new RelativeDate()
                                 .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                                .setTime("10:00")
+                                .setTime(LocalTime.parse("10:00"))
                 ).setDtend(
                         new RelativeDate()
                                 .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
-                                .setTime("11:30")
+                                .setTime(LocalTime.parse("11:30"))
                 ).setRrrule(
                         new RelativeRecurrenceRule()
                                 .setEndAfter(new Duration().setValue(100).setUnit(Duration.Unit.DAY))
@@ -382,10 +383,10 @@ public class SchedulerUtilsTest {
         Observation observationDay1At12 = mock(Observation.class);
         Observation observationDay1At13 = mock(Observation.class);
         Observation observationDay2At10 = mock(Observation.class);
-        ScheduleEvent day1At10 = new RelativeEvent().setDtend(new RelativeDate().setTime("10:00").setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
-        ScheduleEvent day1At12 = new RelativeEvent().setDtend(new RelativeDate().setTime("12:00").setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
-        ScheduleEvent day1At13 = new RelativeEvent().setDtend(new RelativeDate().setTime("13:00").setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
-        ScheduleEvent day2At10 = new RelativeEvent().setDtend(new RelativeDate().setTime("10:00").setTimezone("Europe/Berlin").setOffset(new Duration().setValue(2)));
+        ScheduleEvent day1At10 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("10:00")).setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
+        ScheduleEvent day1At12 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("12:00")).setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
+        ScheduleEvent day1At13 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("13:00")).setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
+        ScheduleEvent day2At10 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("10:00")).setTimezone("Europe/Berlin").setOffset(new Duration().setValue(2)));
 
         when(observationDay1At10.observationSchedule()).thenReturn(day1At10);
         when(observationDay1At12.observationSchedule()).thenReturn(day1At12);
