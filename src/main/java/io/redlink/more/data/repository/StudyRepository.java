@@ -42,14 +42,25 @@ public class StudyRepository {
     private static final String SQL_LIST_OBSERVATIONS_BY_STUDY_WITH_ALL_OBSERVATIONS =
             "SELECT * FROM observations WHERE study_id = ?";
 
-    private static final String SQL_ROUTING_INFO_BY_REG_TOKEN =
-            "SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id, (s.status = 'active' AND pt.status = 'active') as is_active " +
-            "FROM participants pt " +
-            "  INNER JOIN registration_tokens rt ON (pt.study_id = rt.study_id and pt.participant_id = rt.participant_id) " +
-            "  INNER JOIN studies s on (s.study_id = pt.study_id) " +
-            "WHERE rt.token = ?";
+    private static final String SQL_ROUTING_INFO_BY_REG_TOKEN = """
+            SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id,
+                s.status IN ('active', 'paused') as study_active,
+                pt.status = 'active' as participant_active
+            FROM participants pt
+                INNER JOIN registration_tokens rt ON (pt.study_id = rt.study_id and pt.participant_id = rt.participant_id)
+                INNER JOIN studies s on (s.study_id = pt.study_id)
+            WHERE rt.token = ?
+            """;
     private static final String SQL_ROUTING_INFO_BY_REG_TOKEN_WITH_LOCK =
             SQL_ROUTING_INFO_BY_REG_TOKEN + " FOR UPDATE OF rt";
+    private static final String GET_ROUTING_INFO = """
+            SELECT pt.study_id as study_id, pt.participant_id as participant_id, study_group_id,
+                s.status IN ('active', 'paused') as study_active,
+                pt.status = 'active' as participant_active
+            FROM participants pt
+                INNER JOIN studies s on (s.study_id = pt.study_id)
+            WHERE pt.study_id = ? AND pt.participant_id = ?
+            """;
 
     private static final String SQL_CLEAR_TOKEN =
             "DELETE FROM registration_tokens WHERE token = ?";
@@ -92,13 +103,14 @@ public class StudyRepository {
             "SELECT properties FROM participant_observation_properties " +
             "WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
 
-    private static final String GET_API_ROUTING_INFO_BY_API_TOKEN =
-            "SELECT t.study_id, t.observation_id, o.study_group_id, o.type, t.token, s.status = 'active' AS is_active " +
-            "FROM observation_api_tokens t " +
-                "INNER JOIN observations o ON (t.study_id = o.study_id AND t.observation_id = o.observation_id) " +
-                "INNER JOIN studies s ON (t.study_id = s.study_id) " +
-            "WHERE s.study_id = ? AND o.observation_id = ? AND t.token_id = ?";
-    private static final String GET_PARTICIPANT_STUDY_GROUP = "SELECT study_group_id FROM participants WHERE study_id = ? AND participant_id = ?";
+    private static final String GET_API_ROUTING_INFO_BY_API_TOKEN = """
+            SELECT t.study_id, t.observation_id, o.study_group_id, o.type, t.token,
+                s.status IN ('active', 'preview') AS study_active
+            FROM observation_api_tokens t
+                INNER JOIN observations o ON (t.study_id = o.study_id AND t.observation_id = o.observation_id)
+                INNER JOIN studies s ON (t.study_id = s.study_id)
+            WHERE s.study_id = ? AND o.observation_id = ? AND t.token_id = ?
+            """;
 
     private static final String GET_OBSERVATION_SCHEDULE = "SELECT schedule FROM observations WHERE study_id = ? AND observation_id = ?";
 
@@ -121,6 +133,12 @@ public class StudyRepository {
         this.namedTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
     }
 
+    public Optional<RoutingInfo> getRoutingInfo(Long studyId, Integer participantId) {
+        try (var stream = jdbcTemplate.queryForStream(GET_ROUTING_INFO, getRoutingInfoMapper(), studyId, participantId)) {
+            return stream.findFirst();
+        }
+    }
+
     private Optional<RoutingInfo> getRoutingInfo(String registrationToken, boolean lock) {
         var sql = lock ? SQL_ROUTING_INFO_BY_REG_TOKEN_WITH_LOCK : SQL_ROUTING_INFO_BY_REG_TOKEN;
         try (var stream = jdbcTemplate.queryForStream(sql, getRoutingInfoMapper(), registrationToken)) {
@@ -133,16 +151,6 @@ public class StudyRepository {
                 GET_API_ROUTING_INFO_BY_API_TOKEN,
                 getApiRoutingInfoRowMapper(),
                 studyId, observationId, tokenId
-        )) {
-            return stream.findFirst();
-        }
-    }
-
-    public Optional<OptionalInt> getParticipantStudyGroupId(Long studyId, Integer participantId) {
-        try(var stream = jdbcTemplate.queryForStream(
-                GET_PARTICIPANT_STUDY_GROUP,
-                ((rs, rowNum) -> DbUtils.readOptionalInt(rs, "study_group_id")),
-                studyId, participantId
         )) {
             return stream.findFirst();
         }
@@ -379,7 +387,8 @@ public class StudyRepository {
                         row.getLong("study_id"),
                         row.getInt("participant_id"),
                         DbUtils.readOptionalInt(row, "study_group_id"),
-                        row.getBoolean("is_active")
+                        row.getBoolean("study_active"),
+                        row.getBoolean("participant_active")
                 )
         );
     }
@@ -390,7 +399,7 @@ public class StudyRepository {
                 rs.getInt("observation_id"),
                 rs.getString("type"),
                 DbUtils.readOptionalInt(rs, "study_group_id"),
-                rs.getBoolean("is_active"),
+                rs.getBoolean("study_active"),
                 rs.getString("token"))
         );
     }

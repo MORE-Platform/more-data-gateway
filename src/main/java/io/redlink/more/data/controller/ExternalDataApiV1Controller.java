@@ -74,20 +74,17 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
                 .findFirst()
                 .orElseThrow(BadRequestException::TimeFrame);
 
-            final RoutingInfo routingInfo = new RoutingInfo(
-                    externalService.validateRoutingInfo(apiRoutingInfo, participantId),
-                    participantId
-            );
+            final RoutingInfo routingInfo = externalService.validateAndCreateRoutingInfo(apiRoutingInfo, participantId);
             try (LoggingUtils.LoggingContext ctx = LoggingUtils.createContext(routingInfo)) {
-                if(routingInfo.studyActive()) {
+                if(routingInfo.acceptData()) {
                     elasticService.storeDataPoints(
                             DataTransformer.createDataPoints(endpointDataBulkDTO, apiRoutingInfo, apiRoutingInfo.observationId()),
                             routingInfo
                     );
                 } else {
                     final List<ExternalDataDTO> discardedIDs = endpointDataBulkDTO.getDataPoints();
-                    LOG.info("Discarding {} observations because study_{} is not 'active'",
-                            discardedIDs.size(), routingInfo.studyId());
+                    LOG.info("Discarding {} observations because either study_{} or participant_{} is not 'active'",
+                            discardedIDs.size(), routingInfo.studyId(), routingInfo.participantId());
                 }
                 return ResponseEntity.noContent().build();
             }

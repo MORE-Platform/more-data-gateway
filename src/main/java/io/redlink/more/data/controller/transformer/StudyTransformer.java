@@ -22,7 +22,7 @@ public final class StudyTransformer {
                 .participantInfo(study.participantInfo())
                 .consentInfo(study.consentInfo())
                 .finishText(study.finishText())
-                .studyState(StudyDTO.StudyStateEnum.fromValue(study.studyState()))
+                .studyState(toStudyStateDTO(study.studyState()))
                 .participant(toDTO(study.participant()))
                 .contact(toDTO(study.contact()))
                 .start(study.startDate())
@@ -30,6 +30,14 @@ public final class StudyTransformer {
                 .observations(toDTO(study.observations(), study.participant().start(), study.participant().end()))
                 .version(BaseTransformers.toVersionTag(study.modified()))
                 ;
+    }
+
+    private static StudyDTO.StudyStateEnum toStudyStateDTO(String studyState) {
+        return switch (studyState) {
+            case "active", "preview" -> StudyDTO.StudyStateEnum.ACTIVE;
+            case "closed" -> StudyDTO.StudyStateEnum.CLOSED;
+            default -> StudyDTO.StudyStateEnum.PAUSED;
+        };
     }
 
     public static SimpleParticipantDTO toDTO(SimpleParticipant participant) {

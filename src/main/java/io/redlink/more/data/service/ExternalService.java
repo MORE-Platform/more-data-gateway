@@ -13,6 +13,7 @@ import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.exception.NotFoundException;
 import io.redlink.more.data.model.ApiRoutingInfo;
 import io.redlink.more.data.model.Participant;
+import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.model.scheduler.Event;
 import io.redlink.more.data.model.scheduler.Interval;
 import io.redlink.more.data.model.scheduler.RelativeEvent;
@@ -59,18 +60,17 @@ public class ExternalService {
         return apiRoutingInfo.get();
     }
 
-    public ApiRoutingInfo validateRoutingInfo(ApiRoutingInfo routingInfo, Integer participantId) {
-        Optional<OptionalInt> participantOptional = repository.getParticipantStudyGroupId(routingInfo.studyId(), participantId);
-        if(participantOptional.isEmpty()) {
-            throw NotFoundException.Participant(participantId);
-        }
-        OptionalInt observationStudyGroup = routingInfo.studyGroupId();
-        OptionalInt participantStudyGroup = participantOptional.get();
+    public RoutingInfo validateAndCreateRoutingInfo(ApiRoutingInfo apiRoutingInfo, Integer participantId) {
+        RoutingInfo routingInfo = repository.getRoutingInfo(apiRoutingInfo.studyId(), participantId)
+                .orElseThrow(() -> NotFoundException.Participant(participantId));
+
+        OptionalInt observationStudyGroup = apiRoutingInfo.studyGroupId();
+        OptionalInt participantStudyGroup = routingInfo.studyGroupId();
 
         if(observationStudyGroup.isPresent() && participantStudyGroup.isPresent() && observationStudyGroup.getAsInt() != participantStudyGroup.getAsInt()){
             throw BadRequestException.StudyGroup(observationStudyGroup.getAsInt(), participantStudyGroup.getAsInt());
         }
-        return routingInfo.withParticipantStudyGroup(participantStudyGroup);
+        return routingInfo;
     }
 
     @Cacheable(CachingConfiguration.OBSERVATION_ENDINGS)
