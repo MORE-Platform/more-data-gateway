@@ -35,8 +35,8 @@ public final class StudyTransformer {
     private static StudyDTO.StudyStateEnum toStudyStateDTO(String studyState) {
         return switch (studyState) {
             case "active", "preview" -> StudyDTO.StudyStateEnum.ACTIVE;
-            case "closed" -> StudyDTO.StudyStateEnum.CLOSED;
-            default -> StudyDTO.StudyStateEnum.PAUSED;
+            case "paused", "paused-preview" -> StudyDTO.StudyStateEnum.PAUSED;
+            default -> StudyDTO.StudyStateEnum.CLOSED;
         };
     }
 
