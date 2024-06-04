@@ -6,7 +6,7 @@ package io.redlink.more.data.controller.transformer;
 import io.redlink.more.data.api.app.v1.model.*;
 import io.redlink.more.data.model.*;
 import io.redlink.more.data.schedule.SchedulerUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.Range;
 
 import java.time.Instant;
 import java.util.List;
@@ -83,10 +83,10 @@ public final class StudyTransformer {
        return dto;
     }
 
-    public static ObservationScheduleDTO toObservationScheduleDTO(Pair<Instant, Instant> schedule) {
+    public static ObservationScheduleDTO toObservationScheduleDTO(Range<Instant> schedule) {
         return new ObservationScheduleDTO()
-                .start(BaseTransformers.toOffsetDateTime(schedule.getLeft()))
-                .end(BaseTransformers.toOffsetDateTime(schedule.getRight()))
+                .start(BaseTransformers.toOffsetDateTime(schedule.getMinimum()))
+                .end(BaseTransformers.toOffsetDateTime(schedule.getMaximum()))
                 ;
     }
 

@@ -55,8 +55,8 @@ public class CalendarService {
                     VEvent oEvent = new VEvent();
                     oEvent.addCategories("Observation", o.groupId() != null ? ("Group" + o.groupId()) : "NoGroup");
                     oEvent.setSummary(getSummaryFor(o, type));
-                    oEvent.setDateStart(Date.from(p.getLeft()));
-                    oEvent.setDateEnd(Date.from(p.getRight()));
+                    oEvent.setDateStart(Date.from(p.getMinimum()));
+                    oEvent.setDateEnd(Date.from(p.getMaximum()));
                     ical.addEvent(oEvent);
                 });
             });
