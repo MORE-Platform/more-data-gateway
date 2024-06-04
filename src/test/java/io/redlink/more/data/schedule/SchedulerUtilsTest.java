@@ -384,10 +384,10 @@ public class SchedulerUtilsTest {
         Observation observationDay1At12 = mock(Observation.class);
         Observation observationDay1At13 = mock(Observation.class);
         Observation observationDay2At10 = mock(Observation.class);
-        ScheduleEvent day1At10 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("10:00")).setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
-        ScheduleEvent day1At12 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("12:00")).setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
-        ScheduleEvent day1At13 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("13:00")).setTimezone("Europe/Berlin").setOffset(new Duration().setValue(1)));
-        ScheduleEvent day2At10 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("10:00")).setTimezone("Europe/Berlin").setOffset(new Duration().setValue(2)));
+        ScheduleEvent day1At10 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("10:00")).setOffset(new Duration().setValue(1)));
+        ScheduleEvent day1At12 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("12:00")).setOffset(new Duration().setValue(1)));
+        ScheduleEvent day1At13 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("13:00")).setOffset(new Duration().setValue(1)));
+        ScheduleEvent day2At10 = new RelativeEvent().setDtend(new RelativeDate().setTime(LocalTime.parse("10:00")).setOffset(new Duration().setValue(2)));
 
         when(observationDay1At10.observationSchedule()).thenReturn(day1At10);
         when(observationDay1At12.observationSchedule()).thenReturn(day1At12);
