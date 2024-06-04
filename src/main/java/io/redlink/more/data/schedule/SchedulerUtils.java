@@ -15,11 +15,10 @@ import biweekly.util.Recurrence;
 import biweekly.util.com.google.ical.compat.javautil.DateIterator;
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.scheduler.*;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.Range;
 
 import java.sql.Date;
 import java.time.*;
-import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -27,67 +26,73 @@ public class SchedulerUtils {
 
     public static Instant getEnd(RelativeEvent event, Instant start, Instant end) {
         return parseToObservationSchedulesForRelativeEvent(event, start, end)
-                .stream().map(Pair::getRight).max(Instant::compareTo).orElse(null);
+                .stream().map(Range::getMaximum).max(Instant::compareTo).orElse(null);
     }
 
-    public static List<Pair<Instant, Instant>> parseToObservationSchedulesForRelativeEvent(
+    public static List<Range<Instant>> parseToObservationSchedulesForRelativeEvent(
             RelativeEvent event, Instant start, Instant maxEnd) {
 
-        List<Pair<Instant, Instant>> events = new ArrayList<>();
+        final List<Range<Instant>> events = new ArrayList<>();
 
-        Pair<Instant, Instant> currentEvt = Pair.of(toInstant(event.getDtstart(), start), toInstant(event.getDtend(), start));
+        Range<Instant> currentEvt = Range.of(
+                toInstantFrom(event.getDtstart(), start),
+                toInstantFrom(event.getDtend(), start)
+        );
 
-        if(event.getRrrule() != null) {
+        if (event.getRrrule() != null) {
             RelativeRecurrenceRule rrule = event.getRrrule();
-            Instant maxEndOfRule = currentEvt.getRight().plus(rrule.getEndAfter().getValue(), rrule.getEndAfter().getUnit().toTemporalUnit());
+            Instant maxEndOfRule = currentEvt.getMaximum().plus(rrule.getEndAfter().getValue(), rrule.getEndAfter().getUnit().toTemporalUnit());
             maxEnd = maxEnd.isBefore(maxEndOfRule) ? maxEnd : maxEndOfRule;
-            long durationInMs = currentEvt.getRight().toEpochMilli() - currentEvt.getLeft().toEpochMilli();
+            long durationInMs = currentEvt.getMaximum().toEpochMilli() - currentEvt.getMinimum().toEpochMilli();
 
-            while(currentEvt.getRight().isBefore(maxEnd)) {
+            while (currentEvt.getMaximum().isBefore(maxEnd)) {
                 events.add(currentEvt);
-                Instant estart = currentEvt.getLeft().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toTemporalUnit());
-                currentEvt = Pair.of(estart, estart.plusMillis(durationInMs));
+                Instant estart = currentEvt.getMinimum().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toTemporalUnit());
+                currentEvt = Range.of(estart, estart.plusMillis(durationInMs));
             }
         } else {
             events.add(currentEvt);
         }
 
-        return events;
+        return List.copyOf(events);
     }
 
-    private static Instant toInstant(RelativeDate date, Instant start) {
-        return ZonedDateTime.ofInstant(start.plus(date.getOffset().getValue() - 1L, date.getOffset().getUnit().toTemporalUnit()), date.getZoneId())
-                .withHour(date.getHours())
-                .withMinute(date.getMinutes())
-                .withSecond(0)
-                .withNano(0)
+    private static Instant toInstantFrom(RelativeDate date, Instant start) {
+        return start.atZone(ZoneId.systemDefault())
+                // FIXME: Hidden Offset-Correction
+                // Offset is 1-based, therefor we must "-1" here
+                // (fist day: 1, second day: 2, ... )
+                .plus(date.getOffset().getValue() - 1, date.getOffset().getUnit().toTemporalUnit())
+                .with(date.getTime())
                 .toInstant();
     }
 
-    public static List<Pair<Instant, Instant>> parseToObservationSchedulesForEvent(Event event, Instant start, Instant end) {
-        List<Pair<Instant, Instant>> observationSchedules = new ArrayList<>();
-        if(event.getDateStart() != null && event.getDateEnd() != null) {
-            VEvent iCalEvent = parseToICalEvent(event);
+    public static List<Range<Instant>> parseToObservationSchedulesForEvent(Event event, Instant start, Instant end) {
+        List<Range<Instant>> observationSchedules = new ArrayList<>();
+        if (event.getDateStart() != null && event.getDateEnd() != null) {
+            VEvent iCalEvent = parseToICalEvent(event, end);
             long eventDuration = getEventTime(event);
             DateIterator it = iCalEvent.getDateIterator(TimeZone.getDefault());
             while (it.hasNext()) {
                 Instant ostart = it.next().toInstant();
                 Instant oend = ostart.plus(eventDuration, ChronoUnit.SECONDS);
-                if(ostart.isBefore(end) && oend.isAfter(start)) {
-                    observationSchedules.add(Pair.of(ostart, oend));
+                if (ostart.isBefore(end) && oend.isAfter(start)) {
+                    observationSchedules.add(Range.of(ostart, oend));
                 }
             }
         }
         // TODO edge cases if calculated days are not consecutive (e.g. first weekend -> first of month is a sunday)
-        return observationSchedules;
+        return List.copyOf(observationSchedules);
     }
 
-    public static List<Pair<Instant, Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, Instant start, Instant end) {
-        if(scheduleEvent == null) return Collections.emptyList();
-        if(Event.class.isAssignableFrom(scheduleEvent.getClass())) {
-            return parseToObservationSchedulesForEvent((Event) scheduleEvent, start, end);
+    public static List<Range<Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, Instant start, Instant end) {
+        if (scheduleEvent == null) return Collections.emptyList();
+        if (scheduleEvent instanceof Event event) {
+            return parseToObservationSchedulesForEvent(event, start, end);
+        } else if (scheduleEvent instanceof RelativeEvent relativeEvent) {
+            return parseToObservationSchedulesForRelativeEvent(relativeEvent, start, end);
         } else {
-            return parseToObservationSchedulesForRelativeEvent((RelativeEvent) scheduleEvent, start, end);
+            return Collections.emptyList();
         }
     }
 
@@ -98,28 +103,27 @@ public class SchedulerUtils {
                 .filter(scheduleEvent -> scheduleEvent.getType().equals(RelativeEvent.TYPE))
                 .map(r -> ((RelativeEvent) r).getDtend())
                 .filter(relativeDate -> relativeDate.getOffset().getValue() == 1)
-                .map(relativeDate -> start.atZone(relativeDate.getZoneId()).withHour(relativeDate.getHours()).withMinute(relativeDate.getMinutes()).withSecond(0).withNano(0).toInstant())
-                .filter(instant -> {
-                    return  instant.isBefore(start);
-                })
+                .map(relativeDate -> start.atZone(ZoneId.systemDefault()).withHour(relativeDate.getHours()).withMinute(relativeDate.getMinutes()).withSecond(0).withNano(0).toInstant())
+                .filter(instant -> instant.isBefore(start))
                 .map(instant -> start.atZone(ZoneId.systemDefault()).withHour(0).withMinute(0).plusDays(1).toInstant())
                 .findFirst()
                 .orElse(start);
     }
 
     private static long getEventTime(Event event) {
-        return Duration.between(event.getDateStart(), event.getDateEnd()).getSeconds();
+        return java.time.Duration.between(event.getDateStart(), event.getDateEnd()).getSeconds();
     }
 
-    private static VEvent parseToICalEvent(Event event) {
+    private static VEvent parseToICalEvent(Event event, Instant fallBackEnd) {
         VEvent iCalEvent = new VEvent();
         iCalEvent.setDateStart(Date.from(event.getDateStart()));
         iCalEvent.setDateEnd(Date.from(event.getDateEnd()));
 
         RecurrenceRule eventRecurrence = event.getRRule();
-        if (event.getRRule() != null) {
+        if (eventRecurrence != null) {
             Recurrence.Builder recurBuilder = new Recurrence.Builder(Frequency.valueOf(eventRecurrence.getFreq()));
-            setUntil(recurBuilder, eventRecurrence.getUntil());
+
+            setUntil(recurBuilder, Objects.requireNonNullElse(eventRecurrence.getUntil(), fallBackEnd));
             setCount(recurBuilder, eventRecurrence.getCount());
             setInterval(recurBuilder, eventRecurrence.getInterval());
             setByDay(recurBuilder, eventRecurrence.getByDay(), eventRecurrence.getBySetPos());
@@ -134,38 +138,38 @@ public class SchedulerUtils {
     }
 
     private static void setByMinute(Recurrence.Builder builder, Integer minute) {
-        if(minute != null) builder.byMinute(minute);
+        if (minute != null) builder.byMinute(minute);
     }
 
     private static void setByHour(Recurrence.Builder builder, String freq, Integer hour) {
-        if(hour != null && !Objects.equals(freq, "HOURLY")) builder.byHour(hour);
+        if (hour != null && !Objects.equals(freq, "HOURLY")) builder.byHour(hour);
     }
 
     private static void setUntil(Recurrence.Builder builder, Instant until) {
-        if(until != null) builder.until(Date.from(until));
+        if (until != null) builder.until(Date.from(until));
     }
 
     private static void setCount(Recurrence.Builder builder, Integer count) {
-        if(count != null) builder.count(count);
+        if (count != null) builder.count(count);
     }
 
     private static void setInterval(Recurrence.Builder builder, Integer interval) {
-        if(interval != null) builder.interval(interval);
+        if (interval != null) builder.interval(interval);
     }
 
     private static void setByDay(Recurrence.Builder builder, List<String> byDay, Integer bySetPos) {
-        if(byDay != null && bySetPos == null)
+        if (byDay != null && bySetPos == null)
             builder.byDay(byDay.stream().map(DayOfWeek::valueOfAbbr).toList());
-        if(byDay != null && bySetPos != null)
+        if (byDay != null && bySetPos != null)
             byDay.forEach(day -> builder.byDay(bySetPos, DayOfWeek.valueOfAbbr(day)));
 
     }
 
     private static void setByMonth(Recurrence.Builder builder, Integer byMonth) {
-        if(byMonth != null) builder.byMonth(byMonth);
+        if (byMonth != null) builder.byMonth(byMonth);
     }
 
     private static void setByMonthDay(Recurrence.Builder builder, Integer byMonthDay) {
-        if(byMonthDay != null) builder.byMonthDay(byMonthDay);
+        if (byMonthDay != null) builder.byMonthDay(byMonthDay);
     }
 }

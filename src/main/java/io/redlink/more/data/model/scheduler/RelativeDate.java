@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
 import java.time.LocalTime;
-import java.time.ZoneId;
 
 public class RelativeDate {
 
@@ -15,13 +14,8 @@ public class RelativeDate {
     @JsonDeserialize(using = LocalTimeDeserializer.class)
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalTime time;
-    private String timezone;
 
     public RelativeDate() {
-    }
-
-    public ZoneId getZoneId() {
-        return timezone != null ? ZoneId.of(timezone) : ZoneId.of("Europe/Berlin");
     }
 
     public int getHours() {
@@ -50,12 +44,4 @@ public class RelativeDate {
         return this;
     }
 
-    public String getTimezone() {
-        return timezone;
-    }
-
-    public RelativeDate setTimezone(String timezone) {
-        this.timezone = timezone;
-        return this;
-    }
 }
