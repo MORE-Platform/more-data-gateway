@@ -124,7 +124,6 @@ public class SchedulerUtils {
             Recurrence.Builder recurBuilder = new Recurrence.Builder(Frequency.valueOf(eventRecurrence.getFreq()));
 
             setUntil(recurBuilder, Objects.requireNonNullElse(eventRecurrence.getUntil(), fallBackEnd));
-            setUntil(recurBuilder, eventRecurrence.getUntil());
             setCount(recurBuilder, eventRecurrence.getCount());
             setInterval(recurBuilder, eventRecurrence.getInterval());
             setByDay(recurBuilder, eventRecurrence.getByDay(), eventRecurrence.getBySetPos());
