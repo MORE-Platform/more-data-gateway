@@ -67,7 +67,7 @@ public class SchedulerUtils {
     public static List<Pair<Instant, Instant>> parseToObservationSchedulesForEvent(Event event, Instant start, Instant end) {
         List<Pair<Instant, Instant>> observationSchedules = new ArrayList<>();
         if(event.getDateStart() != null && event.getDateEnd() != null) {
-            VEvent iCalEvent = parseToICalEvent(event);
+            VEvent iCalEvent = parseToICalEvent(event, end);
             long eventDuration = getEventTime(event);
             DateIterator it = iCalEvent.getDateIterator(TimeZone.getDefault());
             while (it.hasNext()) {
@@ -111,15 +111,15 @@ public class SchedulerUtils {
         return Duration.between(event.getDateStart(), event.getDateEnd()).getSeconds();
     }
 
-    private static VEvent parseToICalEvent(Event event) {
+    private static VEvent parseToICalEvent(Event event, Instant fallBackEnd) {
         VEvent iCalEvent = new VEvent();
         iCalEvent.setDateStart(Date.from(event.getDateStart()));
         iCalEvent.setDateEnd(Date.from(event.getDateEnd()));
 
         RecurrenceRule eventRecurrence = event.getRRule();
-        if (event.getRRule() != null) {
+        if (eventRecurrence != null) {
             Recurrence.Builder recurBuilder = new Recurrence.Builder(Frequency.valueOf(eventRecurrence.getFreq()));
-            setUntil(recurBuilder, eventRecurrence.getUntil());
+            setUntil(recurBuilder, Objects.requireNonNullElse(eventRecurrence.getUntil(), fallBackEnd));
             setCount(recurBuilder, eventRecurrence.getCount());
             setInterval(recurBuilder, eventRecurrence.getInterval());
             setByDay(recurBuilder, eventRecurrence.getByDay(), eventRecurrence.getBySetPos());
