@@ -21,8 +21,8 @@ public class CalendarApiV1Controller implements CalendarApi {
 
     @Override
     public ResponseEntity<String> getStudyCalendar(Long studyId) {
-        return this.calendarService.getICalendarString(studyId)
-                .map(ResponseEntity::ok)
-                .orElseThrow(RuntimeException::new);
+        return ResponseEntity.of(
+                this.calendarService.getICalendarString(studyId)
+        );
     }
 }
