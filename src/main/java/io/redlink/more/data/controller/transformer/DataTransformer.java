@@ -26,13 +26,14 @@ public final class DataTransformer {
     }
 
     public static DataPoint createDataPoint(ObservationDataDTO dataPoint, Instant recordingTime) {
+        Instant dateTime = dataPoint.getTimestamp();
         return new DataPoint(
                 dataPoint.getDataId(),
                 dataPoint.getObservationId(),
                 dataPoint.getObservationType(),
                 dataPoint.getObservationType(),
                 recordingTime,
-                BaseTransformers.toInstant(dataPoint.getTimestamp()),
+                dateTime,
                 dataPoint.getDataValue());
     }
 
@@ -44,13 +45,14 @@ public final class DataTransformer {
     }
 
     public static DataPoint createDataPoint(ExternalDataDTO dataPoint, ApiRoutingInfo routingInfo, Instant recordingTime, Integer observationId) {
+        Instant dateTime = dataPoint.getTimestamp();
         return new DataPoint(
                 UUID.randomUUID().toString(),
                 observationId.toString(),
                 routingInfo.observationType(),
                 routingInfo.observationType(),
                 recordingTime,
-                BaseTransformers.toInstant(dataPoint.getTimestamp()),
+                dateTime,
                 dataPoint.getDataValue());
     }
 }

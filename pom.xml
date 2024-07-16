@@ -315,7 +315,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>6.6.0</version>
+                <version>7.7.0</version>
                 <executions>
                     <execution>
                         <id>data-api</id>
@@ -360,6 +360,19 @@
                     <generateModelTests>false</generateModelTests>
                     <generateSupportingFiles>false</generateSupportingFiles>
 
+                    <typeMappings>
+                        <typeMapping>string+date-time=Instant</typeMapping>
+                        <typeMapping>string+time=LocalTime</typeMapping>
+                    </typeMappings>
+                    <schemaMappings>
+                        <schemaMapping>Instant=java.time.Instant</schemaMapping>
+                        <schemaMapping>LocalTime=java.time.LocalTime</schemaMapping>
+                    </schemaMappings>
+                    <importMappings>
+                        <importMapping>Instant=java.time.Instant</importMapping>
+                        <importMapping>LocalTime=java.time.LocalTime</importMapping>
+                    </importMappings>
+
                     <configOptions>
                         <useSpringBoot3>true</useSpringBoot3>
                         <sourceFolder>src</sourceFolder>
@@ -368,6 +381,7 @@
                         <useTags>true</useTags>
                         <openApiNullable>false</openApiNullable>
                         <skipDefaultInterface>true</skipDefaultInterface>
+                        <requestMappingMode>api_interface</requestMappingMode>
                     </configOptions>
                 </configuration>
             </plugin>

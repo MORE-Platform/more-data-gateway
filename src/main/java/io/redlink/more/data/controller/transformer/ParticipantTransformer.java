@@ -18,7 +18,7 @@ public final class ParticipantTransformer {
                 participant.alias(),
                 ParticipantStatusDTO.fromValue(participant.status()),
                 toGroupDto(participant),
-                BaseTransformers.toOffsetDateTime(participant.start())
+                participant.start()
         );
     }
 

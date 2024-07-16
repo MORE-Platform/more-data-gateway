@@ -68,7 +68,7 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
             Interval interval = externalService.getIntervalForObservation(apiRoutingInfo.studyId(), apiRoutingInfo.observationId(), participantId);
 
             endpointDataBulkDTO.getDataPoints().stream()
-                .map(datapoint -> datapoint.getTimestamp().toInstant())
+                .map(ExternalDataDTO::getTimestamp)
                 .map(timestamp -> timestamp.isBefore(interval.getStart()) || timestamp.isAfter(interval.getEnd()))
                 .filter(v -> v)
                 .findFirst()
