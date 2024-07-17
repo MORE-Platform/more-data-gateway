@@ -84,9 +84,11 @@ public final class StudyTransformer {
     }
 
     public static ObservationScheduleDTO toObservationScheduleDTO(Range<Instant> schedule) {
+        Instant instant = schedule.getMaximum();
+        Instant instant1 = schedule.getMinimum();
         return new ObservationScheduleDTO()
-                .start(BaseTransformers.toOffsetDateTime(schedule.getMinimum()))
-                .end(BaseTransformers.toOffsetDateTime(schedule.getMaximum()))
+                .start(instant1)
+                .end(instant)
                 ;
     }
 
