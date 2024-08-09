@@ -15,20 +15,22 @@ public record RoutingInfo(
         long studyId,
         int participantId,
         int rawStudyGroupId,
-        boolean studyActive
+        boolean studyActive,
+        boolean participantActive
 ) implements Serializable {
 
     public RoutingInfo(long studyId,
                        int participantId,
                        @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
                        OptionalInt studyGroupId,
-                       boolean studyActive
+                       boolean studyActive,
+                       boolean participantActive
     ) {
-        this(studyId, participantId, studyGroupId.orElse(Integer.MIN_VALUE), studyActive);
+        this(studyId, participantId, studyGroupId.orElse(Integer.MIN_VALUE), studyActive, participantActive);
     }
 
-    public RoutingInfo(ApiRoutingInfo routingInfo, Integer participantId) {
-        this(routingInfo.studyId(), participantId, routingInfo.studyGroupId(), routingInfo.studyActive());
+    public RoutingInfo(ApiRoutingInfo routingInfo, Integer participantId, boolean participantActive) {
+        this(routingInfo.studyId(), participantId, routingInfo.studyGroupId(), routingInfo.studyActive(), participantActive);
     }
 
     public OptionalInt studyGroupId() {
@@ -37,5 +39,9 @@ public record RoutingInfo(
         } else {
             return OptionalInt.of(rawStudyGroupId);
         }
+    }
+
+    public boolean acceptData() {
+        return studyActive && participantActive;
     }
 }

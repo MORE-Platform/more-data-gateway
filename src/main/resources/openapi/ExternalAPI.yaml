@@ -36,6 +36,44 @@ paths:
         '404':
           description: not found
 
+  /external/participants:
+    get:
+      operationId: listParticipants
+      description: List participants for given study
+      tags:
+        - ExternalData
+      parameters:
+        - $ref: '#/components/parameters/ExternalApiToken'
+      responses:
+        '200':
+          description: Successfully returned list of participants for given study
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref : '#/components/schemas/Participant'
+        '401':
+          $ref: '#/components/responses/UnauthorizedApiKey'
+
+  /calendar/studies/{studyId}/calendar.ics:
+    get:
+      tags:
+        - calendar
+      description: Get study calendar for study as iCal
+      operationId: getStudyCalendar
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+      responses:
+        '200':
+          description: Successfully returned study calendar
+          content:
+            text/calendar:
+              schema:
+                type: string
+        '404':
+          description: Not found
+
 components:
   schemas:
     EndpointDataBulk:
@@ -70,6 +108,47 @@ components:
         - dataValue
         - timestamp
 
+    Participant:
+      type: object
+      description: A participant for a study
+      properties:
+        participantId:
+          type: string
+        alias:
+          type: string
+        status:
+          $ref: '#/components/schemas/ParticipantStatus'
+        studyGroup:
+          type: object
+          properties:
+            groupId:
+              type: string
+            name:
+              type: string
+          required:
+            - groupId
+            - name
+          nullable: true
+        start:
+          type: string
+          format: date-time
+      required:
+        - participantId
+        - alias
+        - status
+        - studyGroup
+        - start
+
+    ParticipantStatus:
+      type: string
+      enum:
+        - new
+        - active
+        - abandoned
+        - kicked_out
+        - locked
+      default: new
+
   parameters:
     ExternalApiToken:
       name: More-Api-Token
@@ -78,6 +157,28 @@ components:
       schema:
         type: string
       description: The token to authorize sending external data
+    StudyId:
+      name: studyId
+      in: path
+      schema:
+        type: integer
+        format: int64
+        readOnly: true
+      required: true
+    StudyGroupId:
+      name: studyGroupId
+      in: path
+      schema:
+        type: integer
+        format: int32
+      required: true
+    ParticipantId:
+      name: participantId
+      in: path
+      schema:
+        type: integer
+        format: int32
+      required: true
 
   responses:
     UnauthorizedApiKey:
