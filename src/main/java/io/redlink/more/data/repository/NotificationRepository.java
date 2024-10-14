@@ -11,15 +11,16 @@ package io.redlink.more.data.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.data.api.app.v1.model.PushNotificationDTO;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
 
 @Component
 public class NotificationRepository {
@@ -68,10 +69,10 @@ public class NotificationRepository {
         };
     }
 
-    private static OffsetDateTime getTimestamp(ResultSet rs) {
+    private static Instant getTimestamp(ResultSet rs) {
         try {
             return Optional.ofNullable(rs.getTimestamp("timestamp"))
-                    .map(d -> d.toInstant().atOffset(ZoneOffset.UTC))
+                    .map(Timestamp::toInstant)
                     .orElse(null);
         } catch (SQLException e) {
             return null;
