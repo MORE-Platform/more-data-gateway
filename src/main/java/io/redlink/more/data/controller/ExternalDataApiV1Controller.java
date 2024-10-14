@@ -69,7 +69,7 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
 
             endpointDataBulkDTO.getDataPoints().stream()
                 .map(ExternalDataDTO::getTimestamp)
-                .map(timestamp -> timestamp.isBefore(interval.getStart()) || timestamp.isAfter(interval.getEnd()))
+                .map(timestamp -> !(timestamp.isBefore(interval.getStart()) || timestamp.isAfter(interval.getEnd())))
                 .filter(v -> v)
                 .findFirst()
                 .orElseThrow(BadRequestException::TimeFrame);
