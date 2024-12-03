@@ -1,5 +1,5 @@
 import process from 'node:process';
-import {Client} from "node-rest-client";
+import axios from 'axios';
 import {v4 as uuidv4} from 'uuid';
 
 const baseUrl = (process.env.BASE_URL ?? "http://localhost:8085")
@@ -30,19 +30,18 @@ if (argv.indexOf('--help') !== -1) {
 const participantId = process.argv[2] ?? "1"
 const dataPoints = parseInt(process.argv[3] ?? "1000")
 
-const client = new Client()
-
 const bulk = {
     participantId: `${participantId}`,
 }
 
 const iterations = Math.ceil(dataPoints / bulkSize)
 const baseDate = new Date().getTime() //- iterations * 60 + 1000
-for (let i = 0; i < iterations; i++) {
+let itemsSent = 0
+for (let i = 1; i <= iterations; i++) {
     const id = uuidv4()
-    const date = baseDate + i * 60 * 1000
-    const c = i === (iterations-1) ? (dataPoints % bulkSize) : bulkSize
-    if (c === 0) break
+    const date = baseDate + (i-1) * 60 * 1000
+    const c = i < iterations ? bulkSize :
+        ((dataPoints % bulkSize) === 0 ? bulkSize : (dataPoints % bulkSize))
 
     const dataBulk = {
         ...bulk,
@@ -61,27 +60,30 @@ for (let i = 0; i < iterations; i++) {
             }),
     };
 
-    await client.post(endpoint,
+    itemsSent += await axios.post(
+        endpoint,
+        dataBulk,
         {
             headers: {
                 "Content-Type": "application/json",
                 "More-Api-Token": authToken,
             },
-            data: dataBulk,
-        },
-        (data, response) => {
-            if (response.status < 300) {
-                console.info(`Sent Bulk ${i} of ${iterations}`, data)
-            } else if (response.statusCode >= 400) {
-                console.error(`Sending data failed: ${response.statusCode} - ${response.statusMessage}`, data);
-                process.exit(2);
-            }
         })
-        .on("error", (err) => {
+        .then((response) => {
+            if (response.status < 300) {
+                console.info(`Sent Bulk ${i} of ${iterations} (${response.status})`, response.data);
+                return dataBulk.dataPoints.length
+            } else if (response.status >= 400) {
+                console.error(`Sending data failed: ${response.status} - ${response.statusText}`, response.data);
+            }
+            return 0
+        })
+        .catch((err) => {
             console.error(`Received ${err}`);
-            process.exit(2);
+            return 0;
         });
 }
+console.info(`Sent total of ${itemsSent} dataPoints for participant ${participantId}`);
 
 
 
