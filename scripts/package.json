@@ -4,10 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "external-api": "node external-api.js"
+    "external-api": "node external-api.js",
+    "external-api:local": "source .env && npm run external-api"
   },
   "dependencies": {
-    "axios": "^1.7.8",
+    "axios": "^1.7.9",
     "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.7"
   }
 }

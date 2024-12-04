@@ -1,6 +1,9 @@
 import process from 'node:process';
 import axios from 'axios';
 import {v4 as uuidv4} from 'uuid';
+import {config} from "dotenv";
+
+config();
 
 const baseUrl = (process.env.BASE_URL ?? "http://localhost:8085")
     .replace(/\/*$/, '')
@@ -39,7 +42,7 @@ const baseDate = new Date().getTime() //- iterations * 60 + 1000
 let itemsSent = 0
 for (let i = 1; i <= iterations; i++) {
     const id = uuidv4()
-    const date = baseDate + (i-1) * 60 * 1000
+    const date = baseDate + (i - 1) * 60 * 1000
     const c = i < iterations ? bulkSize :
         ((dataPoints % bulkSize) === 0 ? bulkSize : (dataPoints % bulkSize))
 
@@ -72,11 +75,11 @@ for (let i = 1; i <= iterations; i++) {
         .then((response) => {
             if (response.status < 300) {
                 console.info(`Sent Bulk ${i} of ${iterations} (${response.status})`, response.data);
-                return dataBulk.dataPoints.length
+                return dataBulk.dataPoints.length;
             } else if (response.status >= 400) {
                 console.error(`Sending data failed: ${response.status} - ${response.statusText}`, response.data);
             }
-            return 0
+            return 0;
         })
         .catch((err) => {
             console.error(`Received ${err}`);
