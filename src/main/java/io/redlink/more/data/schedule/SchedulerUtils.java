@@ -24,13 +24,13 @@ import java.util.*;
 
 public class SchedulerUtils {
 
-    public static Instant getEnd(RelativeEvent event, Instant start, Instant end) {
-        return parseToObservationSchedulesForRelativeEvent(event, start, end)
+    public static Instant getEnd(RelativeEvent event, Instant start) {
+        return parseToObservationSchedulesForRelativeEvent(event, start)
                 .stream().map(Range::getMaximum).max(Instant::compareTo).orElse(null);
     }
 
     public static List<Range<Instant>> parseToObservationSchedulesForRelativeEvent(
-            RelativeEvent event, Instant start, Instant maxEnd) {
+            RelativeEvent event, Instant start) {
 
         final List<Range<Instant>> events = new ArrayList<>();
 
@@ -42,13 +42,12 @@ public class SchedulerUtils {
         if (event.getRrrule() != null) {
             RelativeRecurrenceRule rrule = event.getRrrule();
             Instant maxEndOfRule = currentEvt.getMaximum().plus(rrule.getEndAfter().getValue(), rrule.getEndAfter().getUnit().toTemporalUnit());
-            maxEnd = maxEnd.isBefore(maxEndOfRule) ? maxEnd : maxEndOfRule;
             long durationInMs = currentEvt.getMaximum().toEpochMilli() - currentEvt.getMinimum().toEpochMilli();
 
-            while (currentEvt.getMaximum().isBefore(maxEnd)) {
+            while (currentEvt.getMaximum().isBefore(maxEndOfRule)) {
                 events.add(currentEvt);
-                Instant estart = currentEvt.getMinimum().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toTemporalUnit());
-                currentEvt = Range.of(estart, estart.plusMillis(durationInMs));
+                Instant eventStart = currentEvt.getMinimum().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toTemporalUnit());
+                currentEvt = Range.of(eventStart, eventStart.plusMillis(durationInMs));
             }
         } else {
             events.add(currentEvt);
@@ -90,7 +89,7 @@ public class SchedulerUtils {
         if (scheduleEvent instanceof Event event) {
             return parseToObservationSchedulesForEvent(event, start, end);
         } else if (scheduleEvent instanceof RelativeEvent relativeEvent) {
-            return parseToObservationSchedulesForRelativeEvent(relativeEvent, start, end);
+            return parseToObservationSchedulesForRelativeEvent(relativeEvent, start);
         } else {
             return Collections.emptyList();
         }
