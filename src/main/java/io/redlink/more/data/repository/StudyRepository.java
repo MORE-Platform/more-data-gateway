@@ -287,12 +287,15 @@ public class StudyRepository {
             );
         }
 
-        namedTemplate.update(SQL_SET_PARTICIPANT_STATUS,
-                toParameterSource(studyId, participantId)
-                        .addValue("start", start)
-                        .addValue("oldStatus", oldStatus)
-                        .addValue("newStatus", newStatus)
-        );
+        var parameterSource = toParameterSource(studyId, participantId)
+                .addValue("oldStatus", oldStatus)
+                .addValue("newStatus", newStatus);
+
+        if (start != null) {
+            parameterSource.addValue("start", start);
+        }
+
+        namedTemplate.update(SQL_SET_PARTICIPANT_STATUS, parameterSource);
     }
 
     private void storeConsent(long studyId, int participantId, ParticipantConsent consent) {
