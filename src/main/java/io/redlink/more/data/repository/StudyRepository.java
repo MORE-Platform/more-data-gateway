@@ -318,7 +318,7 @@ public class StudyRepository {
                     final long studyId = rs.getLong("study_id");
                     final int participantId = rs.getInt("participant_id");
                     withdrawConsent(studyId, participantId);
-                    updateParticipantStatus(studyId, participantId, 0,
+                    updateParticipantStatus(studyId, 0, participantId,
                             "active", "abandoned");
                 }
         );
