@@ -18,17 +18,12 @@ import io.redlink.more.data.model.scheduler.*;
 import org.apache.commons.lang3.Range;
 
 import java.sql.Date;
-import java.time.*;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class SchedulerUtils {
-
-    public static Instant getEnd(RelativeEvent event, Instant start) {
-        return parseToObservationSchedulesForRelativeEvent(event, start)
-                .stream().map(Range::getMaximum).max(Instant::compareTo).orElse(null);
-    }
-
     public static List<Range<Instant>> parseToObservationSchedulesForRelativeEvent(
             RelativeEvent event, Instant start) {
 
