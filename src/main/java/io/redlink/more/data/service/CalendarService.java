@@ -36,7 +36,7 @@ public class CalendarService {
             iCalEvent.addCategories("General");
             iCalEvent.setSummary("Study: " + study.title());
             iCalEvent.setDateStart(Date.from(study.plannedStartDate().atStartOfDay(TimeZone.getDefault().toZoneId()).toInstant()), false);
-            iCalEvent.setDateEnd(Date.from(study.endDate().atStartOfDay(TimeZone.getDefault().toZoneId()).toInstant()), false);
+            iCalEvent.setDateEnd(Date.from(study.endDate().atTime(23, 59).atZone(TimeZone.getDefault().toZoneId()).toInstant()), true);
             ical.addEvent(iCalEvent);
 
             final Instant start = shiftStartIfObservationAlreadyEnded(
