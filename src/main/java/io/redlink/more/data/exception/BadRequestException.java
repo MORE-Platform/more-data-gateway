@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.BAD_REQUEST)
 public class BadRequestException extends RuntimeException {
-    public BadRequestException(String cause) {
-        super(cause);
-    }
+    public BadRequestException(String cause) { super(cause); }
 
     public static BadRequestException StudyGroup(Integer observationStudyGroup, Integer participantStudyGroup) {
         return new BadRequestException(
@@ -27,9 +25,7 @@ public class BadRequestException extends RuntimeException {
         );
     }
 
-    public static BadRequestException NotFound(Long studyId, Integer observationId) {
-        return new BadRequestException(
-                String.format("No observation intervals found for studyId %s and observationId %s!", studyId, observationId)
-        );
+    public static BadRequestException TimeFrame(){
+        return new BadRequestException("DataBulk Invalid: At least one dataPoint was recorded outside of required timeframe");
     }
 }
