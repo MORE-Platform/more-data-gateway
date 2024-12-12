@@ -5,8 +5,6 @@ package io.redlink.more.data.repository;
 
 import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.model.*;
-import io.redlink.more.data.model.scheduler.Interval;
-import io.redlink.more.data.model.scheduler.RelativeEvent;
 import io.redlink.more.data.model.scheduler.ScheduleEvent;
 import io.redlink.more.data.schedule.SchedulerUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -27,8 +25,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.redlink.more.data.repository.DbUtils.toInstant;
 import static io.redlink.more.data.repository.DbUtils.toLocalDate;
@@ -169,8 +165,8 @@ public class StudyRepository {
         }
     }
 
-    public Stream<ScheduleEvent> getObservationSchedule(Long studyId, Integer observationId) {
-        return jdbcTemplate.queryForStream(
+    public ScheduleEvent getObservationSchedule(Long studyId, Integer observationId) {
+        return jdbcTemplate.queryForObject(
                 GET_OBSERVATION_SCHEDULE,
                 getObservationScheduleRowMapper(),
                 studyId, observationId
@@ -435,20 +431,13 @@ public class StudyRepository {
     }
 
 
-    public List<Interval> getIntervals(Long studyId, Integer participantId, RelativeEvent event) {
-        try (var stream = jdbcTemplate.queryForStream(
-                GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
-                (rs, rowNum) -> {
-                    Instant start = rs.getTimestamp("start").toInstant();
-                    return Interval.fromRanges(SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start));
-                },
-                studyId, participantId
-        )) {
-            var intervalList = stream
-                    .flatMap(List::stream)
-                    .collect(Collectors.toList());
-            stream.close();
-            return intervalList;
+    public Instant getStudyStartFor(Long studyId, Integer participantId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                    GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
+                    (rs, rowNum) -> rs.getTimestamp("start").toInstant(),
+                    studyId, participantId
+            );
         } catch (Exception e) {
             throw new BadRequestException("Failed to retrieve intervals for studyId: " + studyId + " and participantId: " + participantId);
         }
