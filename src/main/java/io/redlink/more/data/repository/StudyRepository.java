@@ -3,6 +3,7 @@
  */
 package io.redlink.more.data.repository;
 
+import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.model.*;
 import io.redlink.more.data.model.scheduler.Interval;
 import io.redlink.more.data.model.scheduler.RelativeEvent;
@@ -26,6 +27,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.redlink.more.data.repository.DbUtils.toInstant;
 import static io.redlink.more.data.repository.DbUtils.toLocalDate;
@@ -166,14 +169,12 @@ public class StudyRepository {
         }
     }
 
-    public Optional<ScheduleEvent> getObservationSchedule(Long studyId, Integer observationId) {
-        try (var stream = jdbcTemplate.queryForStream(
+    public Stream<ScheduleEvent> getObservationSchedule(Long studyId, Integer observationId) {
+        return jdbcTemplate.queryForStream(
                 GET_OBSERVATION_SCHEDULE,
                 getObservationScheduleRowMapper(),
                 studyId, observationId
-        )) {
-            return stream.findFirst();
-        }
+        );
     }
 
     public Optional<Study> findByRegistrationToken(String registrationToken) {
@@ -434,16 +435,21 @@ public class StudyRepository {
                 ;
     }
 
-    public Interval getInterval(Long studyId, Integer participantId, RelativeEvent event) {
+
+    public List<Interval> getIntervals(Long studyId, Integer participantId, RelativeEvent event) {
         try (var stream = jdbcTemplate.queryForStream(
                 GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
-                ((rs, rowNum) -> {
+                (rs, rowNum) -> {
                     Instant start = rs.getTimestamp("start").toInstant();
-                    return new Interval(start, SchedulerUtils.getEnd(event, start));
-                }),
+                    return Interval.fromRanges(SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start));
+                },
                 studyId, participantId
         )) {
-            return stream.findFirst().orElse(null);
+            return stream
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new BadRequestException("Failed to retrieve intervals for studyId: " + studyId + " and participantId: " + participantId);
         }
     }
 

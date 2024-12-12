@@ -18,23 +18,64 @@ paths:
   /external/bulk:
     post:
       operationId: storeExternalBulk
-      description: Send data to given observation endpoint
+      description: Send data to the given observation endpoint. Validates participant data and timestamps before processing.
       tags:
         - ExternalData
       parameters:
         - $ref: '#/components/parameters/ExternalApiToken'
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/EndpointDataBulk'
       responses:
-        '200':
-          description: ok
-        '401':
-          $ref: '#/components/responses/UnauthorizedApiKey'
+        '202':
+          description: Data has been successfully processed.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Data successfully processed!"
+        '403':
+          description: Token is invalid.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Invalid token!"
+        '409':
+          description: Conflict (e.g., study or participant is not active).
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Study or participant is not active"
+        '422':
+          description: Unprocessable Entity (e.g., malformed participant ID or invalid data points).
+          content:
+            application/json:
+              examples:
+                malformedId:
+                  summary: Malformed participant ID
+                  value: "Malformed participant id!"
+                invalidDataPoints:
+                  summary: Invalid Data Points
+                  value: "Data points are outside the acceptable timeframe."
         '404':
-          description: not found
+          description: Not Found (e.g., interval for observation not found).
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "TimeFrame not found."
+        '400':
+          description: Bad Request (Any unhandled exception).
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "An unexpected error occurred."
 
   /external/participants:
     get:
@@ -52,7 +93,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref : '#/components/schemas/Participant'
+                  $ref: '#/components/schemas/Participant'
         '401':
           $ref: '#/components/responses/UnauthorizedApiKey'
 
