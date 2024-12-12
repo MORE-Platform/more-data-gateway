@@ -97,24 +97,6 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedApiKey'
 
-  /calendar/studies/{studyId}/calendar.ics:
-    get:
-      tags:
-        - calendar
-      description: Get study calendar for study as iCal
-      operationId: getStudyCalendar
-      parameters:
-        - $ref: '#/components/parameters/StudyId'
-      responses:
-        '200':
-          description: Successfully returned study calendar
-          content:
-            text/calendar:
-              schema:
-                type: string
-        '404':
-          description: Not found
-
 components:
   schemas:
     EndpointDataBulk:
