@@ -66,7 +66,7 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
             ApiRoutingInfo apiRoutingInfo = externalService.getRoutingInfo(moreApiToken);
             Integer participantId = Integer.valueOf(endpointDataBulkDTO.getParticipantId());
 
-            externalService.allTimestampsInBulkAreValid(apiRoutingInfo.studyId(), apiRoutingInfo.observationId(), participantId, endpointDataBulkDTO);
+            externalService.assertTimestampsInBulk(apiRoutingInfo.studyId(), apiRoutingInfo.observationId(), participantId, endpointDataBulkDTO);
 
             final RoutingInfo routingInfo = externalService.validateAndCreateRoutingInfo(apiRoutingInfo, participantId);
             LoggingUtils.createContext(routingInfo);
@@ -81,7 +81,7 @@ public class ExternalDataApiV1Controller implements ExternalDataApi {
                         numberOfDiscardedIds, routingInfo.studyId(), routingInfo.participantId());
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Study or participant is not active");
             }
-            return ResponseEntity.accepted().body("Data has been successfully processed.");
+            return ResponseEntity.accepted().body("%d data-points have been successfully processed".formatted(endpointDataBulkDTO.getDataPoints().size()));
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid token!");
         } catch (NumberFormatException e) {

@@ -32,8 +32,8 @@ public class Interval {
         return end;
     }
 
-    public boolean containsTimestamp(Instant timestamp) {
-        return !timestamp.isBefore(start) && !timestamp.isAfter(end);
+    public boolean contains(Instant instant) {
+        return !instant.isBefore(start) && !instant.isAfter(end);
     }
 
 
