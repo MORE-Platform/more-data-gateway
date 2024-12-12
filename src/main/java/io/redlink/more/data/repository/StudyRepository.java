@@ -431,8 +431,7 @@ public class StudyRepository {
 
     private static MapSqlParameterSource toParameterSource(long studyId, int participantId, ParticipantConsent.ObservationConsent consent) {
         return toParameterSource(studyId, participantId)
-                .addValue("observation_id", consent.observationId())
-                ;
+                .addValue("observation_id", consent.observationId());
     }
 
 
@@ -445,9 +444,11 @@ public class StudyRepository {
                 },
                 studyId, participantId
         )) {
-            return stream
+            var intervalList = stream
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
+            stream.close();
+            return intervalList;
         } catch (Exception e) {
             throw new BadRequestException("Failed to retrieve intervals for studyId: " + studyId + " and participantId: " + participantId);
         }

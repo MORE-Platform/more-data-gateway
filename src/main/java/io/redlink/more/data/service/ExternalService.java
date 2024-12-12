@@ -83,7 +83,7 @@ public class ExternalService {
     }
 
     @Cacheable(CachingConfiguration.OBSERVATION_ENDINGS)
-    public void allTimestampsInBulkAreValid(Long studyId, Integer observationId, Integer participantId, EndpointDataBulkDTO dataBulkDTO) {
+    public void assertTimestampsInBulk(Long studyId, Integer observationId, Integer participantId, EndpointDataBulkDTO dataBulkDTO) {
         Stream<ScheduleEvent> scheduleEvents = Optional.ofNullable(repository.getObservationSchedule(studyId, observationId))
                 .orElseThrow(() -> BadRequestException.NotFound(studyId, observationId));
 
@@ -98,6 +98,7 @@ public class ExternalService {
                     }
                 })
                 .toList();
+        scheduleEvents.close();
 
         if (intervalList.isEmpty()) {
             throw BadRequestException.NotFound(studyId, observationId);
@@ -106,7 +107,7 @@ public class ExternalService {
         boolean allValid = dataBulkDTO.getDataPoints().stream()
                 .map(ExternalDataDTO::getTimestamp)
                 .allMatch(timestamp -> intervalList.stream()
-                        .anyMatch(interval -> interval.containsTimestamp(timestamp))
+                        .anyMatch(interval -> interval.contains(timestamp))
                 );
         if (!allValid) {
             throw TimeFrameException.InvalidDataPointInterval(dataBulkDTO.getParticipantId(), intervalList);
