@@ -83,14 +83,14 @@ public class ExternalService {
     @Cacheable(CachingConfiguration.OBSERVATION_ENDINGS)
     public void assertTimestampsInBulk(Long studyId, Integer observationId, Integer participantId, EndpointDataBulkDTO dataBulkDTO) {
         try {
-            ScheduleEvent scheduleEvent = repository.getObservationSchedule(studyId, observationId);
+            ScheduleEvent scheduleEvent = repository.getObservationSchedule(studyId, observationId).orElseThrow(() -> BadRequestException.NotFound(studyId, observationId));
 
             List<Interval> intervalList = new ArrayList<>();
             if (scheduleEvent instanceof Event) {
                 intervalList.add(Interval.from((Event) scheduleEvent));
             } else if (scheduleEvent instanceof RelativeEvent) {
-                Instant studyStart = repository.getStudyStartFor(studyId, participantId);
-                intervalList.addAll(createSchedulesFromRelativeEvent((RelativeEvent) scheduleEvent, studyStart));
+                Optional<Instant> studyStart = repository.getStudyStartFor(studyId, participantId);
+                studyStart.ifPresent(instant -> intervalList.addAll(createSchedulesFromRelativeEvent((RelativeEvent) scheduleEvent, instant)));
             } else {
                 throw new BadRequestException("Unsupported ScheduleEvent type: " + scheduleEvent.getClass());
             }

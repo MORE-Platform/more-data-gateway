@@ -3,11 +3,11 @@
  */
 package io.redlink.more.data.repository;
 
-import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.model.*;
 import io.redlink.more.data.model.scheduler.ScheduleEvent;
 import io.redlink.more.data.schedule.SchedulerUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -165,12 +165,16 @@ public class StudyRepository {
         }
     }
 
-    public ScheduleEvent getObservationSchedule(Long studyId, Integer observationId) {
-        return jdbcTemplate.queryForObject(
-                GET_OBSERVATION_SCHEDULE,
-                getObservationScheduleRowMapper(),
-                studyId, observationId
-        );
+    public Optional<ScheduleEvent> getObservationSchedule(Long studyId, Integer observationId) {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(
+                    GET_OBSERVATION_SCHEDULE,
+                    getObservationScheduleRowMapper(),
+                    studyId, observationId
+            ));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
     public Optional<Study> findByRegistrationToken(String registrationToken) {
@@ -431,15 +435,15 @@ public class StudyRepository {
     }
 
 
-    public Instant getStudyStartFor(Long studyId, Integer participantId) {
+    public Optional<Instant> getStudyStartFor(Long studyId, Integer participantId) {
         try {
-            return jdbcTemplate.queryForObject(
+            return Optional.ofNullable(jdbcTemplate.queryForObject(
                     GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
                     (rs, rowNum) -> rs.getTimestamp("start").toInstant(),
                     studyId, participantId
-            );
-        } catch (Exception e) {
-            throw new BadRequestException("Failed to retrieve intervals for studyId: " + studyId + " and participantId: " + participantId);
+            ));
+        } catch (DataAccessException e) {
+            return Optional.empty();
         }
     }
 
