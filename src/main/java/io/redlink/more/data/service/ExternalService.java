@@ -22,16 +22,14 @@ import io.redlink.more.data.model.scheduler.Interval;
 import io.redlink.more.data.model.scheduler.RelativeEvent;
 import io.redlink.more.data.model.scheduler.ScheduleEvent;
 import io.redlink.more.data.repository.StudyRepository;
+import io.redlink.more.data.schedule.SchedulerUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.stream.Stream;
+import java.time.Instant;
+import java.util.*;
 
 @Service
 public class ExternalService {
@@ -83,37 +81,44 @@ public class ExternalService {
     }
 
     @Cacheable(CachingConfiguration.OBSERVATION_ENDINGS)
-    public void allTimestampsInBulkAreValid(Long studyId, Integer observationId, Integer participantId, EndpointDataBulkDTO dataBulkDTO) {
-        Stream<ScheduleEvent> scheduleEvents = Optional.ofNullable(repository.getObservationSchedule(studyId, observationId))
-                .orElseThrow(() -> BadRequestException.NotFound(studyId, observationId));
+    public void assertTimestampsInBulk(Long studyId, Integer observationId, Integer participantId, EndpointDataBulkDTO dataBulkDTO) {
+        try {
+            ScheduleEvent scheduleEvent = repository.getObservationSchedule(studyId, observationId).orElseThrow(() -> BadRequestException.NotFound(studyId, observationId));
 
-        List<Interval> intervalList = scheduleEvents
-                .flatMap(scheduleEvent -> {
-                    if (scheduleEvent instanceof Event) {
-                        return Stream.of(Interval.from((Event) scheduleEvent));
-                    } else if (scheduleEvent instanceof RelativeEvent) {
-                        return repository.getIntervals(studyId, participantId, (RelativeEvent) scheduleEvent).stream();
-                    } else {
-                        throw new BadRequestException("Unsupported ScheduleEvent type: " + scheduleEvent.getClass());
-                    }
-                })
-                .toList();
+            List<Interval> intervalList = new ArrayList<>();
+            if (scheduleEvent instanceof Event) {
+                intervalList.add(Interval.from((Event) scheduleEvent));
+            } else if (scheduleEvent instanceof RelativeEvent) {
+                Optional<Instant> studyStart = repository.getStudyStartFor(studyId, participantId);
+                studyStart.ifPresent(instant -> intervalList.addAll(createSchedulesFromRelativeEvent((RelativeEvent) scheduleEvent, instant)));
+            } else {
+                throw new BadRequestException("Unsupported ScheduleEvent type: " + scheduleEvent.getClass());
+            }
 
-        if (intervalList.isEmpty()) {
+            if (intervalList.isEmpty()) {
+                throw BadRequestException.NotFound(studyId, observationId);
+            }
+
+            boolean allValid = dataBulkDTO.getDataPoints().stream()
+                    .map(ExternalDataDTO::getTimestamp)
+                    .allMatch(timestamp -> intervalList.stream()
+                            .anyMatch(interval -> interval.contains(timestamp))
+                    );
+            if (!allValid) {
+                throw TimeFrameException.InvalidDataPointInterval(dataBulkDTO.getParticipantId(), intervalList);
+            }
+        } catch (BadRequestException e) {
+            throw e;
+        } catch (Exception e) {
             throw BadRequestException.NotFound(studyId, observationId);
-        }
-
-        boolean allValid = dataBulkDTO.getDataPoints().stream()
-                .map(ExternalDataDTO::getTimestamp)
-                .allMatch(timestamp -> intervalList.stream()
-                        .anyMatch(interval -> interval.containsTimestamp(timestamp))
-                );
-        if (!allValid) {
-            throw TimeFrameException.InvalidDataPointInterval(dataBulkDTO.getParticipantId(), intervalList);
         }
     }
 
     public List<Participant> listParticipants(Long studyId, OptionalInt studyGroupId) {
         return repository.listParticipants(studyId, studyGroupId);
+    }
+
+    private List<Interval> createSchedulesFromRelativeEvent(RelativeEvent event, Instant start) {
+        return Interval.fromRanges(SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start));
     }
 }

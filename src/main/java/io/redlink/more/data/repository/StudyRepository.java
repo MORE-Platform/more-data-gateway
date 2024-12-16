@@ -3,13 +3,11 @@
  */
 package io.redlink.more.data.repository;
 
-import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.model.*;
-import io.redlink.more.data.model.scheduler.Interval;
-import io.redlink.more.data.model.scheduler.RelativeEvent;
 import io.redlink.more.data.model.scheduler.ScheduleEvent;
 import io.redlink.more.data.schedule.SchedulerUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -27,8 +25,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.redlink.more.data.repository.DbUtils.toInstant;
 import static io.redlink.more.data.repository.DbUtils.toLocalDate;
@@ -169,12 +165,16 @@ public class StudyRepository {
         }
     }
 
-    public Stream<ScheduleEvent> getObservationSchedule(Long studyId, Integer observationId) {
-        return jdbcTemplate.queryForStream(
-                GET_OBSERVATION_SCHEDULE,
-                getObservationScheduleRowMapper(),
-                studyId, observationId
-        );
+    public Optional<ScheduleEvent> getObservationSchedule(Long studyId, Integer observationId) {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(
+                    GET_OBSERVATION_SCHEDULE,
+                    getObservationScheduleRowMapper(),
+                    studyId, observationId
+            ));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
     public Optional<Study> findByRegistrationToken(String registrationToken) {
@@ -431,25 +431,19 @@ public class StudyRepository {
 
     private static MapSqlParameterSource toParameterSource(long studyId, int participantId, ParticipantConsent.ObservationConsent consent) {
         return toParameterSource(studyId, participantId)
-                .addValue("observation_id", consent.observationId())
-                ;
+                .addValue("observation_id", consent.observationId());
     }
 
 
-    public List<Interval> getIntervals(Long studyId, Integer participantId, RelativeEvent event) {
-        try (var stream = jdbcTemplate.queryForStream(
-                GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
-                (rs, rowNum) -> {
-                    Instant start = rs.getTimestamp("start").toInstant();
-                    return Interval.fromRanges(SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start));
-                },
-                studyId, participantId
-        )) {
-            return stream
-                    .flatMap(List::stream)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            throw new BadRequestException("Failed to retrieve intervals for studyId: " + studyId + " and participantId: " + participantId);
+    public Optional<Instant> getStudyStartFor(Long studyId, Integer participantId) {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(
+                    GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
+                    (rs, rowNum) -> rs.getTimestamp("start").toInstant(),
+                    studyId, participantId
+            ));
+        } catch (DataAccessException e) {
+            return Optional.empty();
         }
     }
 
