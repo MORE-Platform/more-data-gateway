@@ -18,6 +18,7 @@ import io.redlink.more.data.elastic.model.ElasticDataPoint;
 import io.redlink.more.data.model.DataPoint;
 import io.redlink.more.data.model.RoutingInfo;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -42,13 +43,33 @@ public class ElasticService implements StorageService {
     public List<String> storeDataPoints(final List<DataPoint> dataBulk, final RoutingInfo routingInfo) {
         final String indexName = getElasticIndexName(routingInfo);
         final String uidPrefix = generateUidPrefix(routingInfo);
-
+        Boolean is_exploded = false;
+        List<String> exploded_returnId = new ArrayList<>() ;
         try {
             final BulkRequest.Builder br = new BulkRequest.Builder()
                     .index(indexName);
 
             for (DataPoint dataPoint : dataBulk) {
                 final var uid = uidPrefix + dataPoint.datapointId();
+                if(dataPoint.data().containsKey("explode")){
+                    is_exploded = true;
+                    exploded_returnId.add(dataPoint.datapointId()) ;
+                    int counter = 0;
+                    final List<ElasticDataPoint> elasticItems = ElasticDataPoint.explode_toElastic(dataPoint, routingInfo);
+                    for (ElasticDataPoint e : elasticItems) {
+                    final String explodedId = uid + "-" + counter++;
+                    br.operations(op -> op
+                    .index(idx -> idx
+                        .index(indexName)
+                        .id(explodedId)      // <-- Maybe should be uid + "-" + something??
+                        .document(e)
+                    )
+                    );  // <--- MISSING SEMICOLON FIXED
+                    }
+                }
+                else{
+
+               
                 final ElasticDataPoint elasticDoc = ElasticDataPoint.toElastic(dataPoint, routingInfo);
                 br.operations(op -> op
                         .index(idx -> idx
@@ -56,7 +77,7 @@ public class ElasticService implements StorageService {
                                 .id(uid)
                                 .document(elasticDoc)
                         )
-                );
+                ); }
             }
 
             LOG.debug("Sending {} data-points to {}", dataBulk.size(), indexName);
@@ -71,13 +92,17 @@ public class ElasticService implements StorageService {
                     }
                 }
             }
-
+            if (is_exploded) {
+                return exploded_returnId;
+            }
+            else{
             return result.items().stream()
                     .filter(i -> i.error() == null)
                     .map(BulkResponseItem::id)
                     .filter(StringUtils::isNotBlank)
                     .map(i -> i.substring(uidPrefix.length()))
                     .toList();
+            }
         } catch (IOException | ElasticsearchException e) {
             LOG.warn("Error when sending data bulk to elastic index. Error message: ", e);
             return List.of();
