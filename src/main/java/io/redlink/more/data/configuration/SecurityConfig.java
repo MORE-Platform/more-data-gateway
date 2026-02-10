@@ -65,6 +65,9 @@ public class SecurityConfig {
                             .permitAll();
                     req.requestMatchers("/api/v1/calendar/studies/*/calendar.ics")
                             .permitAll();
+                    // External trigger proxy (token auth handled by studymanager)
+                    req.requestMatchers("/api/v1/trigger/external")
+                            .permitAll();
                     // all other apis require credentials
                     req.requestMatchers("/api/v1/**")
                             .authenticated();
