@@ -105,6 +105,7 @@ public record ElasticDataPoint(
                 if(hrRaw != null && !hrRaw.isEmpty()){
                 
                         List<HrData> hrList = hrRaw.stream()
+                                .filter(m -> m.get("timestamp") != null && m.get("hr") != null)
                                 .map(m -> {
                                     long nanos = ((Number) m.get("timestamp")).longValue();
                                     Instant ts = POLAR_EPOCH.plusNanos(nanos);
@@ -167,6 +168,7 @@ public record ElasticDataPoint(
                 if (accRaw!= null && !accRaw.isEmpty()) {
 
                         List<AccData> accList = accRaw.stream()
+                                 .filter(m -> m.get("timestamp") != null && m.get("x") != null && m.get("y") != null && m.get("z") != null)
                                  .map(m -> {
                                      long nanos = ((Number) m.get("timestamp")).longValue();
                                      Instant ts = POLAR_EPOCH.plusNanos(nanos);
@@ -233,6 +235,7 @@ public record ElasticDataPoint(
                 List<Map<String, Object>> tempRaw =(List<Map<String, Object>>) dataPoint.data().get("temp_data");
                 if (tempRaw!=null && !tempRaw.isEmpty()) {
                         List<TempData> tempList = tempRaw.stream()
+                                .filter(m -> m.get("timestamp") != null && m.get("temp") != null)
                                 .map(m -> {
                                     long nanos = ((Number) m.get("timestamp")).longValue();
                                     Instant ts = POLAR_EPOCH.plusNanos(nanos);
@@ -292,6 +295,7 @@ public record ElasticDataPoint(
                 List<Map<String, Object>> ppiRaw =(List<Map<String, Object>>) dataPoint.data().get("ppi_data");
                 if (ppiRaw!= null && !ppiRaw.isEmpty()) {
                          List<PpiData> ppiList = ppiRaw.stream()
+                                .filter(m -> m.get("timestamp") != null && m.get("hr") != null && m.get("ppiInMs") != null && m.get("ppiErrorEstimate") != null)
                                 .map(m -> {
                                     long nanos = ((Number) m.get("timestamp")).longValue();
                                     Instant ts = POLAR_EPOCH.plusNanos(nanos);
