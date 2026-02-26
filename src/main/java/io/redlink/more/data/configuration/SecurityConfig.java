@@ -61,12 +61,11 @@ public class SecurityConfig {
                     //External Data Gateway
                     req.requestMatchers("/api/v1/external/bulk")
                             .permitAll();
+                    req.requestMatchers("/api/v1/trigger/external")
+                            .permitAll();
                     req.requestMatchers("/api/v1/external/participants")
                             .permitAll();
                     req.requestMatchers("/api/v1/calendar/studies/*/calendar.ics")
-                            .permitAll();
-                    // External trigger proxy (token auth handled by studymanager)
-                    req.requestMatchers("/api/v1/trigger/external")
                             .permitAll();
                     // all other apis require credentials
                     req.requestMatchers("/api/v1/**")

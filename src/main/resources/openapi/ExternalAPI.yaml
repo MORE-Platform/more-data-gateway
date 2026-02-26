@@ -76,6 +76,66 @@ paths:
               schema:
                 type: string
                 example: "An unexpected error occurred."
+  
+  /trigger/external:
+    post:
+      operationId: triggerExternal
+      description: Trigger observation for specific participiants 
+      tags:
+        - External trigger
+      parameters:
+        - $ref: '#/components/parameters/ExternalApiToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerRequest'
+      responses:
+        '202':
+          description: Trigger sent .
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Trigger sent to the backend."
+        '403':
+          description: Token is invalid.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Invalid token!"
+        '409':
+          description: Conflict (e.g., study or participant is not active).
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Study or participant is not active"
+        '422':
+          description: Unprocessable Entity (e.g., malformed participant ID ).
+          content:
+            application/json:
+              examples:
+                malformedId:
+                  summary: Malformed participant ID
+                  value: "Malformed participant id!"
+    
+        '404':
+          description: Not Found (e.g., interval for observation not found).
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "TimeFrame not found."
+        '400':
+          description: Bad Request (Any unhandled exception).
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "An unexpected error occurred."
 
   /external/participants:
     get:
@@ -161,6 +221,19 @@ components:
         - status
         - studyGroup
         - start
+
+    TriggerRequest:
+      type: object
+      required:
+        - participantIds
+      properties:
+        participantIds:
+          type: array
+          items:
+            type: integer
+          description: List of participant IDs to trigger
+          example: [1, 2, 3]
+        
 
     ParticipantStatus:
       type: string
