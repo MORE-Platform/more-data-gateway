@@ -326,6 +326,14 @@ public class StudyRepository {
 
     private static final String GET_OBSERVATION_GROUP_BY_IDS = "SELECT * FROM observation_groups WHERE study_id = ? AND observation_group_id = ?";
 
+     private static final String GET_INTERVENTION_TOKEN_SECRET = """
+            SELECT t.study_id, t.intervention_id, t.token,
+                s.status IN ('active', 'preview') AS study_active
+            FROM intervention_api_tokens t
+                INNER JOIN interventions i ON (t.study_id = i.study_id AND t.intervention_id = i.intervention_id)
+                INNER JOIN studies s ON (t.study_id = s.study_id)
+            WHERE t.study_id = ? AND t.intervention_id = ? AND t.token_id = ?
+            """;
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -695,6 +703,23 @@ public class StudyRepository {
                     observationId));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
+        }
+    }
+
+    public record InterventionTokenInfo(Long studyId, Integer interventionId, boolean studyActive, String secret) {}
+
+    public Optional<InterventionTokenInfo> getInterventionTokenInfo(Long studyId, Integer interventionId, Integer tokenId) {
+        try (var stream = jdbcTemplate.queryForStream(
+                GET_INTERVENTION_TOKEN_SECRET,
+                (rs, rowNum) -> new InterventionTokenInfo(
+                        rs.getLong("study_id"),
+                        rs.getInt("intervention_id"),
+                        rs.getBoolean("study_active"),
+                        rs.getString("token")
+                ),
+                studyId, interventionId, tokenId
+        )) {
+            return stream.findFirst();
         }
     }
 

@@ -22,6 +22,7 @@ import io.redlink.more.data.model.scheduler.Event;
 import io.redlink.more.data.model.scheduler.Interval;
 import io.redlink.more.data.model.scheduler.RelativeEvent;
 import io.redlink.more.data.model.scheduler.ScheduleEvent;
+import io.redlink.more.data.model.ResolvedInterventionToken;
 import io.redlink.more.data.repository.StudyRepository;
 import io.redlink.more.data.util.RandomSchedulerUtils;
 import io.redlink.more.data.util.SchedulerUtils;
@@ -120,6 +121,31 @@ public class ExternalService {
             throw e;
         } catch (Exception e) {
             throw BadRequestException.NotFound(studyId, observationId);
+        }
+    }
+    public ResolvedInterventionToken validateInterventionToken(String moreApiToken) {
+        try {
+            String[] split = moreApiToken.split("\\.");
+            String[] primaryKey = new String(Base64.getDecoder().decode(split[0])).split("-");
+
+            Long studyId = Long.valueOf(primaryKey[0]);
+            Integer interventionId = Integer.valueOf(primaryKey[1]);
+            Integer tokenId = Integer.valueOf(primaryKey[2]);
+            String secret = new String(Base64.getDecoder().decode(split[1]));
+
+            final Optional<StudyRepository.InterventionTokenInfo> tokenInfo =
+                    repository.getInterventionTokenInfo(studyId, interventionId, tokenId)
+                            .stream().filter(info ->
+                                    passwordEncoder.matches(secret, info.secret()))
+                            .findFirst();
+            if (tokenInfo.isEmpty()) {
+                throw new AccessDeniedException("Invalid token");
+            }
+            return new ResolvedInterventionToken(tokenInfo.get().studyId(), tokenInfo.get().interventionId(), tokenInfo.get().studyActive());
+        } catch (AccessDeniedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AccessDeniedException("Invalid token");
         }
     }
 

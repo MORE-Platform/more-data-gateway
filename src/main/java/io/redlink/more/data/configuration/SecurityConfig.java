@@ -69,6 +69,8 @@ public class SecurityConfig {
                             .permitAll();
                     req.requestMatchers("/api/v1/calendar/studies/*/calendar.ics")
                             .permitAll();
+                    req.requestMatchers("/api/v1/trigger/external")
+                            .permitAll();
                     // Data sent from Garmin Connect
                     req.requestMatchers(
                             "/api/v1/integrations/garmin/user",
