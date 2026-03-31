@@ -31,8 +31,8 @@ class ElasticDataPointExplodeTest {
     }
 
     /** HR raw item – note the field is "ts", not "timestamp" */
-    private Map<String, Object> hrEntry(long nanos, int hr) {
-        return Map.of("ts", nanos, "hr", hr);
+    private Map<String, Object> hrEntry(long nanos, int hr, boolean skinContact) {
+        return Map.of("ts", nanos, "hr", hr, "skinContact", skinContact);
     }
 
     private Map<String, Object> accEntry(long nanos, int x, int y, int z) {
@@ -43,8 +43,8 @@ class ElasticDataPointExplodeTest {
         return Map.of("timestamp", nanos, "temp", temp);
     }
 
-    private Map<String, Object> ppiEntry(long nanos, int hr, int ppiMs, int ppiErr) {
-        return Map.of("timestamp", nanos, "hr", hr, "ppiInMs", ppiMs, "ppiErrorEstimate", ppiErr);
+    private Map<String, Object> ppiEntry(long nanos, int hr, int ppiMs, int ppiErr, boolean skinContact) {
+        return Map.of("timestamp", nanos, "hr", hr, "ppiInMs", ppiMs, "ppiErrorEstimate", ppiErr, "skinContact", skinContact);
     }
 
     // -----------------------------------------------------------------------
@@ -54,7 +54,7 @@ class ElasticDataPointExplodeTest {
     @Test
     @DisplayName("explode_toElastic: returns empty list when no key contains 'polar360'")
     void returnsEmpty_whenNoPolar360Key() {
-        DataPoint dp = makeDataPoint("dp-1", Map.of("hr_data", List.of(hrEntry(0L, 70))));
+        DataPoint dp = makeDataPoint("dp-1", Map.of("hr_data", List.of(hrEntry(0L, 70, true))));
         List<ElasticDataPoint> result = ElasticDataPoint.explode_toElastic(dp, routingWithGroup);
         assertThat(result).isEmpty();
     }
@@ -70,7 +70,7 @@ class ElasticDataPointExplodeTest {
         long nanos2 = 2_000_000_000L;
 
         DataPoint dp = makeDataPoint("dp-hr", Map.of(
-                "polar360hrdata", List.of(hrEntry(nanos1, 72), hrEntry(nanos2, 75))
+                "polar360hrdata", List.of(hrEntry(nanos1, 72, true), hrEntry(nanos2, 75, false))
         ));
 
         List<ElasticDataPoint> result = ElasticDataPoint.explode_toElastic(dp, routingWithGroup);
@@ -85,7 +85,7 @@ class ElasticDataPointExplodeTest {
     @DisplayName("explode_toElastic: HR – data map contains 'hr' value")
     void hrData_containsHrField() {
         DataPoint dp = makeDataPoint("dp-hr", Map.of(
-                "polar360hrdata", List.of(hrEntry(500_000_000L, 80))
+                "polar360hrdata", List.of(hrEntry(500_000_000L, 80, true))
         ));
 
         List<ElasticDataPoint> result = ElasticDataPoint.explode_toElastic(dp, routingWithGroup);
@@ -101,7 +101,7 @@ class ElasticDataPointExplodeTest {
         Instant expectedTs = POLAR_EPOCH.plusNanos(nanos);
 
         DataPoint dp = makeDataPoint("dp-ts", Map.of(
-                "polar360hrdata", List.of(hrEntry(nanos, 65))
+                "polar360hrdata", List.of(hrEntry(nanos, 65, true))
         ));
 
         List<ElasticDataPoint> result = ElasticDataPoint.explode_toElastic(dp, routingWithGroup);
@@ -115,7 +115,7 @@ class ElasticDataPointExplodeTest {
     @DisplayName("explode_toElastic: HR – routing fields are set correctly")
     void hrData_routingFieldsCorrect() {
         DataPoint dp = makeDataPoint("dp-r", Map.of(
-                "polar360hrdata", List.of(hrEntry(0L, 60))
+                "polar360hrdata", List.of(hrEntry(0L, 60, true))
         ));
 
         List<ElasticDataPoint> result = ElasticDataPoint.explode_toElastic(dp, routingWithGroup);
@@ -131,7 +131,7 @@ class ElasticDataPointExplodeTest {
     @DisplayName("explode_toElastic: HR – studyGroupId is null when routingInfo has no group")
     void hrData_studyGroupNullWhenNoGroup() {
         DataPoint dp = makeDataPoint("dp-ng", Map.of(
-                "polar360hrdata", List.of(hrEntry(0L, 60))
+                "polar360hrdata", List.of(hrEntry(0L, 60, true))
         ));
 
         List<ElasticDataPoint> result = ElasticDataPoint.explode_toElastic(dp, routingNoGroup);
@@ -151,7 +151,7 @@ class ElasticDataPointExplodeTest {
         missingTs.put("hr", 70);
 
         DataPoint dp = makeDataPoint("dp-filter", Map.of(
-                "polar360hrdata", List.of(missingHr, missingTs, hrEntry(100L, 90))
+                "polar360hrdata", List.of(missingHr, missingTs, hrEntry(100L, 90, true))
         ));
 
         List<ElasticDataPoint> result = ElasticDataPoint.explode_toElastic(dp, routingWithGroup);
@@ -163,7 +163,7 @@ class ElasticDataPointExplodeTest {
     @DisplayName("explode_toElastic: HR – observation metadata preserved on each point")
     void hrData_observationMetadataPreserved() {
         DataPoint dp = makeDataPoint("dp-meta", Map.of(
-                "polar360hrdata", List.of(hrEntry(0L, 70))
+                "polar360hrdata", List.of(hrEntry(0L, 70, true))
         ));
 
         List<ElasticDataPoint> result = ElasticDataPoint.explode_toElastic(dp, routingWithGroup);
@@ -252,7 +252,7 @@ class ElasticDataPointExplodeTest {
     @DisplayName("explode_toElastic: PPI – data map contains hr, ppiInMs, ppiErrorEstimate")
     void ppiData_containsAllFields() {
         DataPoint dp = makeDataPoint("dp-ppi", Map.of(
-                "polar360ppidata", List.of(ppiEntry(0L, 65, 900, 15))
+                "polar360ppidata", List.of(ppiEntry(0L, 65, 900, 15, true))
         ));
 
         List<ElasticDataPoint> result = ElasticDataPoint.explode_toElastic(dp, routingWithGroup);
@@ -273,7 +273,7 @@ class ElasticDataPointExplodeTest {
         missingErr.put("ppiInMs", 900);
 
         DataPoint dp = makeDataPoint("dp-ppi-f", Map.of(
-                "polar360ppidata", List.of(missingErr, ppiEntry(2L, 70, 800, 10))
+                "polar360ppidata", List.of(missingErr, ppiEntry(2L, 70, 800, 10, false))
         ));
 
         List<ElasticDataPoint> result = ElasticDataPoint.explode_toElastic(dp, routingWithGroup);
@@ -288,7 +288,7 @@ class ElasticDataPointExplodeTest {
     @DisplayName("explode_toElastic: mixed HR + ACC – all points returned, first overall keeps original id")
     void mixed_hrAndAcc_allPointsReturned() {
         DataPoint dp = makeDataPoint("dp-mix", Map.of(
-                "polar360hrdata",  List.of(hrEntry(100L, 72), hrEntry(200L, 74)),
+                "polar360hrdata",  List.of(hrEntry(100L, 72, true), hrEntry(200L, 74, false)),
                 "polar360accdata", List.of(accEntry(300L, 0, 1, 2))
         ));
 
