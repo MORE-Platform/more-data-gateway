@@ -91,9 +91,9 @@ public record ElasticDataPoint(
         );
     }
 
-    private record HrData(Instant timestamp, int hr){}
+    private record HrData(Instant timestamp, int hr, Boolean skinContact){}
     private record AccData(int x, int y, int z , Instant timestamp){}
-    private record PpiData(int hr, Instant timestamp,int ppiInMs, int ppiErrorEstimate){}
+    private record PpiData(int hr, Instant timestamp,int ppiInMs, int ppiErrorEstimate, Boolean skinContact){}
     private record TempData(float temp,Instant timestamp){}
 
     public static List<ElasticDataPoint> explode_toElastic(DataPoint dataPoint,RoutingInfo elasticInfo){
@@ -110,10 +110,11 @@ public record ElasticDataPoint(
                                 .map(m -> {
                                     long nanos = ((Number) m.get("ts")).longValue();
                                     Instant ts = POLAR_EPOCH.plusNanos(nanos);
-                                    return new HrData(ts, ((Number) m.get("hr")).intValue());
+                                    return new HrData(ts, ((Number) m.get("hr")).intValue(),(Boolean) m.get("skinContact"));
                                 })
                                 .toList();
-                                 
+                                  
+                                
                         for(HrData h : hrList){
                                 if(!idcheck_set){
                                         items.add(
@@ -131,7 +132,8 @@ public record ElasticDataPoint(
                                         h.timestamp(),
                                         h.timestamp(),
                                         Map.of(
-                                                "hr",h.hr
+                                                "hr",h.hr,
+                                                "skinContact" ,h.skinContact
                                         )
                                         )
                                                 );
@@ -154,7 +156,8 @@ public record ElasticDataPoint(
                                         h.timestamp(),
                                         h.timestamp(),
                                         Map.of(
-                                                "hr",h.hr
+                                                "hr",h.hr,
+                                                "skinContact" ,h.skinContact
                                         )
                                         )
                                                 );
@@ -305,7 +308,8 @@ public record ElasticDataPoint(
                                             ((Number) m.get("hr")).intValue(),
                                             ts,
                                             ((Number) m.get("ppiInMs")).intValue(),
-                                            ((Number) m.get("ppiErrorEstimate")).intValue()
+                                            ((Number) m.get("ppiErrorEstimate")).intValue(),
+                                            ((Boolean)m.get("skinContact"))
                                     );
                                 })
                                 .toList();
@@ -329,7 +333,8 @@ public record ElasticDataPoint(
                                         Map.of(
                                                "hr", p.hr,
                                                 "ppiInMs",p.ppiInMs,
-                                                "ppiErrorEstimate",p.ppiErrorEstimate
+                                                "ppiErrorEstimate",p.ppiErrorEstimate,
+                                                "skinContact" ,p.skinContact
                                         )
                                         )
                                         );
@@ -353,7 +358,8 @@ public record ElasticDataPoint(
                                         Map.of(
                                                "hr", p.hr,
                                                 "ppiInMs",p.ppiInMs,
-                                                "ppiErrorEstimate",p.ppiErrorEstimate
+                                                "ppiErrorEstimate",p.ppiErrorEstimate,
+                                                "skinContact",p.skinContact
                                         )
                                         )
                                 );
