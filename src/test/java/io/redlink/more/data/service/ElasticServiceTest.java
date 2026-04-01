@@ -144,7 +144,7 @@ class ElasticServiceTest {
     void storeDataPoints_polar360Data_returnsOriginalIds() throws Exception {
         DataPoint dp = mock(DataPoint.class);
         // Any key containing "polar360" triggers the explode path
-        Map<String, Object> data = Map.of("polar360hrdata", List.of(Map.of("ts", 0L, "hr", 70, "skinContact", true)));
+        Map<String, Object> data = Map.of("polar360hrdata", List.of(Map.of("timestamp", 0L, "hr", 70, "skinContact", true)));
         when(dp.data()).thenReturn(data);
         when(dp.datapointId()).thenReturn("polar-dp-1");
 

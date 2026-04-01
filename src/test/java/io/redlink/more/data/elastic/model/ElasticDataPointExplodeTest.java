@@ -30,9 +30,8 @@ class ElasticDataPointExplodeTest {
                 Instant.now(), Instant.now(), data);
     }
 
-    /** HR raw item – note the field is "ts", not "timestamp" */
     private Map<String, Object> hrEntry(long nanos, int hr, boolean skinContact) {
-        return Map.of("ts", nanos, "hr", hr, "skinContact", skinContact);
+        return Map.of("timestamp", nanos, "hr", hr, "skinContact", skinContact);
     }
 
     private Map<String, Object> accEntry(long nanos, int x, int y, int z) {
@@ -141,11 +140,11 @@ class ElasticDataPointExplodeTest {
     }
 
     @Test
-    @DisplayName("explode_toElastic: HR – filters entries missing ts or hr")
+    @DisplayName("explode_toElastic: HR – filters entries missing timestamp or hr")
     void hrData_filtersIncompleteEntries() {
         // HashMap needed because Map.of disallows null values
         Map<String, Object> missingHr = new HashMap<>();
-        missingHr.put("ts", 1L);
+        missingHr.put("timestamp", 1L);
 
         Map<String, Object> missingTs = new HashMap<>();
         missingTs.put("hr", 70);

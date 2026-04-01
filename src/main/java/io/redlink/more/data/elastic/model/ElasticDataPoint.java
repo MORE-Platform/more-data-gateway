@@ -106,9 +106,9 @@ public record ElasticDataPoint(
                 if(hrRaw != null && !hrRaw.isEmpty()){
 
                         List<HrData> hrList = hrRaw.stream()
-                                .filter(m -> m.get("ts") != null && m.get("hr") != null)
+                                .filter(m -> m.get("timestamp") != null && m.get("hr") != null)
                                 .map(m -> {
-                                    long nanos = ((Number) m.get("ts")).longValue();
+                                    long nanos = ((Number) m.get("timestamp")).longValue();
                                     Instant ts = POLAR_EPOCH.plusNanos(nanos);
                                     return new HrData(ts, ((Number) m.get("hr")).intValue(),(Boolean) m.get("skinContact"));
                                 })
