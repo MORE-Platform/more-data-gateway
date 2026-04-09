@@ -24,7 +24,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.UUID;
 
-import org.apache.velocity.tools.config.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public record ElasticDataPoint(
         @JsonProperty("datapoint_id")
@@ -50,6 +51,7 @@ public record ElasticDataPoint(
 ) {
 
     private static final String DATA_FIELD_PREFIX = "data_";
+    private static final Logger LOG = LoggerFactory.getLogger(ElasticDataPoint.class);
 
     @JsonCreator
     public ElasticDataPoint {
@@ -101,9 +103,11 @@ public record ElasticDataPoint(
         Boolean idcheck_set = false;
         if(dataPoint.data().keySet().stream().anyMatch(key -> key.toLowerCase().contains("polar360")))
         {
+                LOG.info("Exploding polar360 data point {}: keys={}", dataPoint.datapointId(), dataPoint.data().keySet());
                 Instant POLAR_EPOCH = Instant.parse("2000-01-01T00:00:00Z");
                 List<Map<String, Object>> hrRaw =(List<Map<String, Object>>) dataPoint.data().get("polar360hrdata");
                 if(hrRaw != null && !hrRaw.isEmpty()){
+                        LOG.info("polar360 HR raw data: {} samples: {}", hrRaw.size(), hrRaw);
 
                         List<HrData> hrList = hrRaw.stream()
                                 .filter(m -> m.get("timestamp") != null && m.get("hr") != null)
@@ -113,8 +117,8 @@ public record ElasticDataPoint(
                                     return new HrData(ts, ((Number) m.get("hr")).intValue(),(Boolean) m.get("skinContact"));
                                 })
                                 .toList();
-                                  
-                                
+                        LOG.info("polar360 HR after filter: {}/{} samples", hrList.size(), hrRaw.size());
+
                         for(HrData h : hrList){
                                 if(!idcheck_set){
                                         items.add(
@@ -170,6 +174,7 @@ public record ElasticDataPoint(
 
                 List<Map<String, Object>> accRaw = (List<Map<String, Object>>) dataPoint.data().get("polar360accdata");
                 if (accRaw!= null && !accRaw.isEmpty()) {
+                        LOG.info("polar360 ACC raw data: {} samples: {}", accRaw.size(), accRaw);
 
                         List<AccData> accList = accRaw.stream()
                                  .filter(m -> m.get("timestamp") != null && m.get("x") != null && m.get("y") != null && m.get("z") != null)
@@ -184,6 +189,8 @@ public record ElasticDataPoint(
                                      );
                                  })
                                  .toList();
+                        LOG.info("polar360 ACC after filter: {}/{} samples", accList.size(), accRaw.size());
+
                         for(AccData a : accList){
                                 if (!idcheck_set) {
                                         items.add(
@@ -238,6 +245,8 @@ public record ElasticDataPoint(
                 }
                 List<Map<String, Object>> tempRaw =(List<Map<String, Object>>) dataPoint.data().get("polar360tempdata");
                 if (tempRaw!=null && !tempRaw.isEmpty()) {
+                        LOG.info("polar360 Temp raw data: {} samples: {}", tempRaw.size(), tempRaw);
+
                         List<TempData> tempList = tempRaw.stream()
                                 .filter(m -> m.get("timestamp") != null && m.get("temp") != null)
                                 .map(m -> {
@@ -247,7 +256,7 @@ public record ElasticDataPoint(
                                     return new TempData(((Number) m.get("temp")).floatValue(), ts);
                                 })
                                 .toList();
-
+                        LOG.info("polar360 Temp after filter: {}/{} samples", tempList.size(), tempRaw.size());
 
                         for(TempData t : tempList){
                                 if (!idcheck_set) {
@@ -298,22 +307,27 @@ public record ElasticDataPoint(
                 }
                 List<Map<String, Object>> ppiRaw =(List<Map<String, Object>>) dataPoint.data().get("polar360ppidata");
                 if (ppiRaw!= null && !ppiRaw.isEmpty()) {
+                        LOG.info("polar360 PPI raw data: {} samples: {}", ppiRaw.size(), ppiRaw);
+
                          List<PpiData> ppiList = ppiRaw.stream()
-                                .filter(m -> m.get("timestamp") != null && m.get("hr") != null && m.get("ppiInMs") != null && m.get("ppiErrorEstimate") != null)
+                                .filter(m -> m.get("timestamp") != null && m.get("hr") != null && m.get("ppiInMs") != null && m.get("ppiErrorEstimate") != null && m.get("skinContact") != null)
                                 .map(m -> {
                                     long nanos = ((Number) m.get("timestamp")).longValue();
                                     Instant ts = POLAR_EPOCH.plusNanos(nanos);
+                                    Object sc = m.get("skinContact");
+                                    Boolean skinContact = sc instanceof Boolean b ? b : sc instanceof Number n ? n.intValue() != 0 : null;
 
                                     return new PpiData(
                                             ((Number) m.get("hr")).intValue(),
                                             ts,
                                             ((Number) m.get("ppiInMs")).intValue(),
                                             ((Number) m.get("ppiErrorEstimate")).intValue(),
-                                            ((Boolean)m.get("skinContact"))
+                                            skinContact
                                     );
                                 })
                                 .toList();
-                        
+                        LOG.info("polar360 PPI after filter: {}/{} samples", ppiList.size(), ppiRaw.size());
+
                         for(PpiData p : ppiList){
                                 if(!idcheck_set){
                                         items.add(
@@ -334,7 +348,7 @@ public record ElasticDataPoint(
                                                "hr", p.hr,
                                                 "ppiInMs",p.ppiInMs,
                                                 "ppiErrorEstimate",p.ppiErrorEstimate,
-                                                "skinContact" ,p.skinContact
+                                                "skinContact", Boolean.TRUE.equals(p.skinContact)
                                         )
                                         )
                                         );
@@ -359,7 +373,7 @@ public record ElasticDataPoint(
                                                "hr", p.hr,
                                                 "ppiInMs",p.ppiInMs,
                                                 "ppiErrorEstimate",p.ppiErrorEstimate,
-                                                "skinContact",p.skinContact
+                                                "skinContact", Boolean.TRUE.equals(p.skinContact)
                                         )
                                         )
                                 );
