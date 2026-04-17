@@ -19,6 +19,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.SerializationUtils;
+
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -334,6 +339,12 @@ public class StudyRepository {
                 INNER JOIN studies s ON (t.study_id = s.study_id)
             WHERE t.study_id = ? AND t.intervention_id = ? AND t.token_id = ?
             """;
+
+    private static final String GET_PENDING_TRIGGER_PARTICIPANTS =
+            "SELECT value FROM nvpairs_triggers WHERE study_id = ? AND intervention_id = ? AND name = ? LIMIT 1 FOR UPDATE";
+    private static final String UPSERT_PENDING_TRIGGER_PARTICIPANTS =
+            "INSERT INTO nvpairs_triggers(study_id, intervention_id, name, value) VALUES (?,?,?,?) " +
+            "ON CONFLICT(study_id, intervention_id, name) DO UPDATE SET value = EXCLUDED.value";
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -721,6 +732,20 @@ public class StudyRepository {
         )) {
             return stream.findFirst();
         }
+    }
+
+    @Transactional
+    @SuppressWarnings("unchecked")
+    public void addPendingTriggerParticipants(Long studyId, Integer interventionId, String key, List<Integer> participantIds) {
+        Set<Integer> pending;
+        try {
+            byte[] raw = jdbcTemplate.queryForObject(GET_PENDING_TRIGGER_PARTICIPANTS, byte[].class, studyId, interventionId, key);
+            pending = raw != null ? (HashSet<Integer>) SerializationUtils.deserialize(raw) : new HashSet<>();
+        } catch (EmptyResultDataAccessException e) {
+            pending = new HashSet<>();
+        }
+        pending.addAll(participantIds);
+        jdbcTemplate.update(UPSERT_PENDING_TRIGGER_PARTICIPANTS, studyId, interventionId, key, SerializationUtils.serialize((Serializable) pending));
     }
 
     public List<ParticipantWithObservationProperties> getParticipantObservationPropertiesByObservationTypeLike(String observationType) {
