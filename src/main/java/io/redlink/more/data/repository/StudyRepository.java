@@ -403,8 +403,15 @@ public class StudyRepository {
         return findStudy(routingInfo, true);
     }
 
+    public Optional<Study> getStudy(long studyId) {
+        final List<Observation> observations = listObservations(studyId, -1, null, -1, false);
+        try (var stream = jdbcTemplate.queryForStream(SQL_FIND_STUDY_BY_ID, getStudyRowMapper(observations, null), studyId)) {
+            return stream.findFirst();
+        }
+    }
+
     public Optional<Study> findStudy(RoutingInfo routingInfo, boolean filterObservationsByGroup) {
-        final SimpleParticipant participant = findParticipant(routingInfo).orElse(null);
+        final SimpleParticipant participant = findParticipant(routingInfo.studyId(), routingInfo.participantId()).orElse(null);
 
         final List<Observation> observations = listObservations(
                 routingInfo.studyId(),
@@ -422,7 +429,7 @@ public class StudyRepository {
         }
     }
 
-    public Optional<SimpleParticipant> findParticipant(RoutingInfo routingInfo) {
+    public Optional<SimpleParticipant> findParticipant(long studyId, int participantId) {
         try (var stream = jdbcTemplate.queryForStream(GET_PARTICIPANT_INFO_AND_START_DURATION_END_FOR_STUDY_AND_PARTICIPANT,
                 (rs, rowNum) -> {
                     Instant start = Optional.ofNullable(rs.getTimestamp("start"))
@@ -437,7 +444,7 @@ public class StudyRepository {
                             end
                     );
                 }
-                , routingInfo.studyId(), routingInfo.participantId())) {
+                , studyId, participantId)) {
             return stream.findFirst();
         }
     }

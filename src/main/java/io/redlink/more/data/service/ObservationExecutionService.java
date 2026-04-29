@@ -3,14 +3,17 @@ package io.redlink.more.data.service;
 import io.redlink.more.data.exception.ForbiddenException;
 import io.redlink.more.data.exception.NotFoundException;
 import io.redlink.more.data.model.ActiveObservation;
+import io.redlink.more.data.model.CallbackData;
 import io.redlink.more.data.model.CompletedData;
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.ParticipantObservationSeed;
 import io.redlink.more.data.model.RoutingInfo;
+import io.redlink.more.data.model.SimpleParticipant;
 import io.redlink.more.data.model.Study;
 import io.redlink.more.data.service.observations.ObservationComponent;
 import io.redlink.more.data.store.observationCallback.ObservationCallbackStore;
 import io.redlink.more.data.util.SchedulerUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -23,6 +26,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -121,46 +125,24 @@ public class ObservationExecutionService {
         return Optional.of(uri);
     }
 
-    public Optional<URI> processCallback(String observationId, Optional<RoutingInfo> routingInfo, Map<String, String> parameters) {
-        LOG.info("process callback for observation {}, routingInfo: {}, params: {}", observationId, routingInfo, parameters);
+    public Optional<URI> processCallback(Map<String, String> parsedParameters) {
+        LOG.info("process callback for params: {}", parsedParameters);
+        CallbackData callbackData = toCallbackData(parsedParameters);
+        LOG.info("processCallback: {}", callbackData);
         Optional<Pair<RoutingInfo, Integer>> cbResult = Optional.empty();
-        if (routingInfo.isEmpty() || observationId == null) {
-            for (ObservationComponent component : observationComponents.values()) {
-                var result = component.processCallback(parameters, null, null);
-                if (result.isPresent()) {
-                    LOG.info("mapped to {} with result: {}", component.getClass().getSimpleName(), result);
-                    cbResult = result;
-                    break;
-                }
-            }
-        } else {
-            Optional<Pair<Study, List<ParticipantObservationSeed>>> studyResult = studyService.getStudy(routingInfo.get());
-            if (studyResult.isEmpty()) {
-                return Optional.empty();
-            }
-            Study study = studyResult.get().getLeft();
 
-            Optional<Observation> studyObservation = study.observations().stream()
-                    .filter(o -> String.valueOf(o.observationId()).equals(observationId))
-                    .findFirst();
-            if (studyObservation.isPresent()) {
-                Observation observation = studyObservation.get();
-                ObservationComponent component = observationComponents.get(observation.type());
-                if (component != null) {
-                    LOG.info("mapped to study {}, observation {},  component: {}", study.studyId(), observation.observationId(), component.getClass().getSimpleName());
-                    cbResult = component.processCallback(parameters, routingInfo.get(), observation);
-                } else {
-                    LOG.warn("ObservationComponent for Observation-type: {} not found (study {}, observation: {})", observation.type(), study.studyId(), observation.observationId());
-                }
-            } else  {
-                LOG.warn("Observation with id: {} not found in Study {} ", observationId, study.studyId());
-            }
+        ObservationComponent component = observationComponents.get(callbackData.getObservation().type());
+        if (component != null) {
+            LOG.info("mapped to study {}, observation {},  component: {}", callbackData.studyId(), callbackData.observationId(), component.getClass().getSimpleName());
+            cbResult = component.processCallback(callbackData.getRoutingInfo(), callbackData.getObservation(), callbackData.getParams());
+        } else {
+            LOG.warn("ObservationComponent for Observation-type: {} not found (study {}, observation: {})", callbackData.getObservation().type(), callbackData.studyId(), callbackData.observationId());
         }
 
         if (cbResult.isPresent()) {
             return callbackStore.pullRedirect(cbResult.get().getLeft(), cbResult.get().getRight());
         } else {
-            LOG.warn("No callback result generated for observation {}, routingInfo: {}, params: {}", observationId, routingInfo, parameters);
+            LOG.warn("No callback result generated for: {}", callbackData);
         }
 
         return Optional.empty();
@@ -169,4 +151,54 @@ public class ObservationExecutionService {
     public List<CompletedData> getCompletedData(RoutingInfo routingInfo) {
         return callbackStore.getCompletedData(routingInfo);
     }
+
+    /**
+     * Validates the data provided by the callback parameters
+     * @param parsedParameters the parameters
+     * @return the parsed and validated callback data
+     */
+    //NOTE: This should be replaced by a key based solution, where the backend creates a callback key and the gateway
+    //      uses this key to lookup studyId, observationId and participantId from the database. This would avoid
+    //      sharing internal Ids with external applications. In this case this Method would use the key and a
+    //      callback repository to retrieve the CallbackData from the key!
+    private CallbackData toCallbackData(Map<String, String> parsedParameters) {
+        final Map<String, String> params = new HashMap<>(parsedParameters); //do not modify parsed parameter map
+        long studyId = consumeParams(params,"studyId", "studyid", "study_id", "study-id")
+                .map(Long::parseLong)
+                .orElseThrow(() -> new IllegalArgumentException("Missing required Parameter studyId"));
+        int participantId = consumeParams(params, "participantId", "participantid", "participant_id", "participant-id")
+                .map(Integer::parseInt)
+                .orElseThrow(() -> new IllegalArgumentException("Missing required Parameter participantId"));
+        int observationId = consumeParams(params, "observationId", "observationid", "observation_id", "observation-id")
+                .map(Integer::parseInt)
+                .orElseThrow(() -> new IllegalArgumentException("Missing required Parameter participantId"));
+
+        Study study = studyService.getStudy(studyId)
+                .orElseThrow(() -> new IllegalArgumentException("Study with id: " + studyId + " not found"));
+        Observation observation = study.observations().stream()
+                .filter(o -> o.observationId() ==observationId)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Observation with id: " + observationId + " not found in Study " + studyId));
+        SimpleParticipant participant = studyService.getParticipant(studyId, participantId)
+                .orElseThrow(() -> new IllegalArgumentException("Participant with id: " + participantId + " not found in Study " + studyId));
+        return new CallbackData(study, observation, participant, params);
+    }
+
+    /**
+     * Removes all params for the parsed keys and returns the first value or empty if none is present
+     * @param parameters the map with the parameters
+     * @param keys the keys to consume
+     * @return the first value or empty if none
+     */
+    private Optional<String> consumeParams(Map<String, String> parameters, String... keys) {
+        String value = null;
+        for(String key : keys) {
+            String v = parameters.remove(key);
+            if(value == null) {
+                value = v;
+            }
+        }
+        return Optional.ofNullable(value);
+    }
+
 }
