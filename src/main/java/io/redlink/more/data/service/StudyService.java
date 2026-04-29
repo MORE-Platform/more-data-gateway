@@ -3,6 +3,7 @@ package io.redlink.more.data.service;
 import io.redlink.more.data.controller.transformer.StudyTransformer;
 import io.redlink.more.data.model.ParticipantObservationSeed;
 import io.redlink.more.data.model.RoutingInfo;
+import io.redlink.more.data.model.SimpleParticipant;
 import io.redlink.more.data.model.Study;
 import io.redlink.more.data.repository.StudyRepository;
 import org.apache.commons.lang3.tuple.Pair;
@@ -37,6 +38,13 @@ public class StudyService {
 
     public Optional<String> getStudyState(long studyId) {
         return studyRepository.getStudyState(studyId);
+    }
+
+    public Optional<Study> getStudy(long studyId) {
+        return studyRepository.getStudy(studyId);
+    }
+    public Optional<SimpleParticipant> getParticipant(long studyId, int participantId) {
+        return studyRepository.findParticipant(studyId, participantId);
     }
 
     public Optional<Pair<Study, List<ParticipantObservationSeed>>> getStudy(RoutingInfo routingInfo) {

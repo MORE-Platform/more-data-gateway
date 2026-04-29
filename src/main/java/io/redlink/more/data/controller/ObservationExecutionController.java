@@ -96,15 +96,6 @@ public class ObservationExecutionController implements ExecutionApi {
                 builder.replaceQueryParam(k, v);
             }
         });
-        String observationId = params.get("observationId");
-
-        if (observationId == null) {
-            observationId = params.get("observationid");
-        }
-        if (observationId == null) {
-            observationId = params.get("observation-id");
-        }
-
         URI redirectUrl = builder.build().toUri();
         
         LOG.info("process callback: pathVars: {}, params: {}, redirect to: {}", pathVars, params, redirectUrl);
@@ -112,7 +103,7 @@ public class ObservationExecutionController implements ExecutionApi {
         int status = HttpStatus.OK.value();
 
         try {
-            var redirect = observationExecutionService.processCallback(observationId, getRoutingInfo(), params);
+            var redirect = observationExecutionService.processCallback(params);
 
             if (redirect.isPresent()) {
                 UriComponentsBuilder redirectBuilder = UriComponentsBuilder.fromUri(redirect.get());

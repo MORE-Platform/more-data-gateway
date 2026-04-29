@@ -56,40 +56,19 @@ public class LimeSurveyComponent implements ObservationComponent {
     }
 
     @Override
-    public Optional<Pair<RoutingInfo, Integer>> processCallback(Map<String, String> parameters, RoutingInfo routingInfo, Observation observation) {
-        Optional<Integer> observationId = observation != null
-                ? Optional.of(observation.observationId())
-                : Optional
-                  .ofNullable(getParameter(parameters, "observationId", "observation-id", "observationid"))
-                  .map(Integer::parseInt);
-        if (observationId.isEmpty()) {
-            return Optional.empty();
-        }
-        if (routingInfo == null) {
-            String studyIdParam = getParameter(parameters, "studyid", "studyId");
-            String tokenParam = getParameter(parameters, "token");
-            if (studyIdParam != null && tokenParam != null) {
-                routingInfo = studyService.getRoutingInfoByToken(Long.parseLong(studyIdParam), observationId.get(), tokenParam)
-                        .orElse(null);
-            }
-        }
-        if (routingInfo == null) {
-            return Optional.empty();
-        }
-
+    public Optional<Pair<RoutingInfo, Integer>> processCallback(RoutingInfo routingInfo, Observation observation, Map<String, String> parameters) {
         String token = getParameter(parameters, LIME_SURVEY_TOKEN_KEY, LIME_SURVEY_ID_KEY);
         String savedId = getParameter(parameters, LIME_SAVE_ID, LIME_SAVE_ID_ALT, LIME_SAVE_ID_SHORT);
         String surveyIdParam = getParameter(parameters, LIME_RESPONSE_SURVEY_ID);
 
         if (token == null || savedId == null || surveyIdParam == null) {
-            LOG.debug("RoutingInfo: {}; parameters: {}; observation: {}", routingInfo, parameters, observation);
+            LOG.warn("missing required parameter for callback with routingInfo: {}; observation: {}; parameters: {}", routingInfo, observation.observationId(), parameters);
             throw new IllegalArgumentException("Necessary parameter not provided! Please provide all of these: token, savedId, surveyId!");
         }
         Integer saveId = Integer.parseInt(savedId);
         Integer surveyId = Integer.parseInt(surveyIdParam);
-        int currentObservationId = observation != null ? observation.observationId() : observationId.get();
-        if (storeAnswer(surveyId, saveId, token, routingInfo, Integer.toString(currentObservationId))) {
-            return Optional.of(Pair.of(routingInfo, currentObservationId));
+        if (storeAnswer(surveyId, saveId, token, routingInfo, Integer.toString(observation.observationId()))) {
+            return Optional.of(Pair.of(routingInfo, observation.observationId()));
         }
         return Optional.empty();
     }

@@ -2,6 +2,7 @@ package io.redlink.more.data.service.observations;
 
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.RoutingInfo;
+import io.redlink.more.data.model.Study;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -22,5 +23,5 @@ public interface ObservationComponent {
      * @param observation The observation that was completed. May be null and set using the request parameters.
      * @return An optional pair containing the updated routing information and the observation ID.
      */
-    Optional<Pair<RoutingInfo, Integer>> processCallback(Map<String, String> parameters, @Nullable RoutingInfo routingInfo, @Nullable Observation observation);
+    Optional<Pair<RoutingInfo, Integer>> processCallback(RoutingInfo routingInfo, Observation observation, Map<String, String> parameters);
 }

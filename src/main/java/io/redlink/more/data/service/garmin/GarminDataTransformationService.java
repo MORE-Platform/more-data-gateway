@@ -88,7 +88,7 @@ public class GarminDataTransformationService {
     }
 
     private Range<Instant> getParticipantTimeRange(RoutingInfo routingInfo) {
-        var simpleParticipant = studyRepository.findParticipant(routingInfo);
+        var simpleParticipant = studyRepository.findParticipant(routingInfo.studyId(),  routingInfo.participantId());
         if (simpleParticipant.isEmpty()) {
             LOG.warn("No participant found for {}", routingInfo);
             return null;
