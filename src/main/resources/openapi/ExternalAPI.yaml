@@ -235,6 +235,28 @@ components:
           example: [1, 2, 3]
         
 
+    ExternalTriggerRequest:
+      type: object
+      required:
+        - studyId
+        - interventionId
+        - participantIds
+      properties:
+        studyId:
+          type: integer
+          format: int64
+          description: The study ID extracted from the token
+        interventionId:
+          type: integer
+          format: int32
+          description: The intervention ID extracted from the token
+        participantIds:
+          type: array
+          items:
+            type: integer
+          description: List of participant IDs to trigger
+          example: [1, 2, 3]
+
     ParticipantStatus:
       type: string
       enum:
