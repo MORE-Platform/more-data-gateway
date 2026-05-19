@@ -103,11 +103,9 @@ public record ElasticDataPoint(
         Boolean idcheck_set = false;
         if(dataPoint.data().keySet().stream().anyMatch(key -> key.toLowerCase().contains("polar360")))
         {
-                LOG.info("Exploding polar360 data point {}: keys={}", dataPoint.datapointId(), dataPoint.data().keySet());
                 Instant POLAR_EPOCH = Instant.parse("2000-01-01T00:00:00Z");
                 List<Map<String, Object>> hrRaw =(List<Map<String, Object>>) dataPoint.data().get("polar360hrdata");
                 if(hrRaw != null && !hrRaw.isEmpty()){
-                        LOG.info("polar360 HR raw data: {} samples: {}", hrRaw.size(), hrRaw);
 
                         List<HrData> hrList = hrRaw.stream()
                                 .filter(m -> m.get("timestamp") != null && m.get("hr") != null)
@@ -166,15 +164,14 @@ public record ElasticDataPoint(
                                         )
                                                 );
                                 }
-                                
-                        }
 
+                        }
+                        LOG.info("polar360 HR parsing successful: {} items added", hrList.size());
 
                 }
 
                 List<Map<String, Object>> accRaw = (List<Map<String, Object>>) dataPoint.data().get("polar360accdata");
                 if (accRaw!= null && !accRaw.isEmpty()) {
-                        LOG.info("polar360 ACC raw data: {} samples: {}", accRaw.size(), accRaw);
 
                         List<AccData> accList = accRaw.stream()
                                  .filter(m -> m.get("timestamp") != null && m.get("x") != null && m.get("y") != null && m.get("z") != null)
@@ -239,13 +236,12 @@ public record ElasticDataPoint(
                                         )
                                 );
                                 }
-                                
+
                         }
-                        
+                        LOG.info("polar360 ACC parsing successful: {} items added", accList.size());
                 }
                 List<Map<String, Object>> tempRaw =(List<Map<String, Object>>) dataPoint.data().get("polar360tempdata");
                 if (tempRaw!=null && !tempRaw.isEmpty()) {
-                        LOG.info("polar360 Temp raw data: {} samples: {}", tempRaw.size(), tempRaw);
 
                         List<TempData> tempList = tempRaw.stream()
                                 .filter(m -> m.get("timestamp") != null && m.get("temp") != null)
@@ -302,12 +298,12 @@ public record ElasticDataPoint(
                                         )
                                 );
                                 }
-                               
+
                         }
+                        LOG.info("polar360 Temp parsing successful: {} items added", tempList.size());
                 }
                 List<Map<String, Object>> ppiRaw =(List<Map<String, Object>>) dataPoint.data().get("polar360ppidata");
                 if (ppiRaw!= null && !ppiRaw.isEmpty()) {
-                        LOG.info("polar360 PPI raw data: {} samples: {}", ppiRaw.size(), ppiRaw);
 
                          List<PpiData> ppiList = ppiRaw.stream()
                                 .filter(m -> m.get("timestamp") != null && m.get("hr") != null && m.get("ppiInMs") != null && m.get("ppiErrorEstimate") != null && m.get("skinContact") != null)
@@ -378,8 +374,9 @@ public record ElasticDataPoint(
                                         )
                                 );
                                 }
-                                
+
                         }
+                        LOG.info("polar360 PPI parsing successful: {} items added", ppiList.size());
                 }
 
 
