@@ -15,6 +15,7 @@ import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import io.redlink.more.data.api.StorageService;
 import io.redlink.more.data.elastic.model.ElasticDataPoint;
@@ -37,6 +38,12 @@ import java.util.Set;
 public class ElasticService implements StorageService {
     private static final Logger LOG = LoggerFactory.getLogger(ElasticService.class);
 
+    // Max number of bulk operations sent to Elasticsearch in a single _bulk request.
+    // Exploded polar360 data points can produce tens of thousands of operations from a
+    // single upload; sending them all at once exceeds http.max_content_length (413) and
+    // indexing-pressure limits (429). Flushing in fixed-size chunks keeps each request small.
+    private static final int BULK_CHUNK_SIZE = 2000;
+
     private final ElasticsearchClient client;
 
     ElasticService(ElasticsearchClient elasticsearchClient) {
@@ -51,79 +58,93 @@ public class ElasticService implements StorageService {
     public List<String> storeDataPoints(final List<DataPoint> dataBulk, final RoutingInfo routingInfo) throws IOException {
         final String indexName = getElasticIndexName(routingInfo);
         final String uidPrefix = generateUidPrefix(routingInfo);
-        Boolean is_exploded = false;
-        List<String> exploded_returnId = new ArrayList<>() ;
-        try {
-            final BulkRequest.Builder br = new BulkRequest.Builder()
-                    .index(indexName);
+        boolean is_exploded = false;
+        final List<String> exploded_returnId = new ArrayList<>();
+        // Collect every operation first, then flush to Elasticsearch in fixed-size chunks
+        // (see BULK_CHUNK_SIZE) rather than building one unbounded _bulk request.
+        final List<BulkOperation> operations = new ArrayList<>();
 
-            for (DataPoint dataPoint : dataBulk) {
-                final var uid = uidPrefix + dataPoint.datapointId();
-                //TODO create transformer so its cleaner mapping solution bulk request operations fails
-                if(dataPoint.data().keySet().stream().anyMatch(key -> key.toLowerCase().contains("polar360"))){
-                    is_exploded = true;
-                    final List<ElasticDataPoint> elasticItems = ElasticDataPoint.explode_toElastic(dataPoint, routingInfo);
-                    if (elasticItems.isEmpty()) {
-                        LOG.warn("polar360 data point {} produced no exploded items, skipping", dataPoint.datapointId());
-                        continue;
-                    }
-                    exploded_returnId.add(dataPoint.datapointId());
-                    int counter = 0;
-                    for (ElasticDataPoint e : elasticItems) {
-                    final String explodedId = uid + "-" + counter++;
-                    br.operations(op -> op
-                    .index(idx -> idx
-                        .index(indexName)
-                        .id(explodedId)      // <-- Maybe should be uid + "-" + something??
-                        .document(e)
-                    )
-                    );  // <--- MISSING SEMICOLON FIXED
-                    }
+        for (DataPoint dataPoint : dataBulk) {
+            final var uid = uidPrefix + dataPoint.datapointId();
+            //TODO create transformer so its cleaner mapping solution bulk request operations fails
+            if (dataPoint.data().keySet().stream().anyMatch(key -> key.toLowerCase().contains("polar360"))) {
+                is_exploded = true;
+                final List<ElasticDataPoint> elasticItems = ElasticDataPoint.explode_toElastic(dataPoint, routingInfo);
+                if (elasticItems.isEmpty()) {
+                    LOG.warn("polar360 data point {} produced no exploded items, skipping", dataPoint.datapointId());
+                    continue;
                 }
-                else{
-
-               
+                exploded_returnId.add(dataPoint.datapointId());
+                int counter = 0;
+                for (ElasticDataPoint e : elasticItems) {
+                    final String explodedId = uid + "-" + counter++;
+                    operations.add(BulkOperation.of(op -> op
+                            .index(idx -> idx
+                                    .index(indexName)
+                                    .id(explodedId)
+                                    .document(e)
+                            )
+                    ));
+                }
+            } else {
                 final ElasticDataPoint elasticDoc = ElasticDataPoint.toElastic(dataPoint, routingInfo);
-                br.operations(op -> op
+                operations.add(BulkOperation.of(op -> op
                         .index(idx -> idx
                                 .index(indexName)
                                 .id(uid)
                                 .document(elasticDoc)
                         )
-                ); }
+                ));
             }
+        }
 
-            if (exploded_returnId.isEmpty() && is_exploded) {
-                LOG.warn("All polar360 data points produced no exploded items, nothing to store");
-                return List.of();
-            }
-            LOG.debug("Sending {} data-points to {}", dataBulk.size(), indexName);
-            final BulkResponse result = client.bulk(br.build());
+        if (exploded_returnId.isEmpty() && is_exploded) {
+            LOG.warn("All polar360 data points produced no exploded items, nothing to store");
+            return List.of();
+        }
+        if (operations.isEmpty()) {
+            return List.of();
+        }
 
-            // Log errors, if any
-            if (LOG.isErrorEnabled() && result.errors()) {
-                LOG.error("Bulk had errors");
-                for (BulkResponseItem item : result.items()) {
-                    if (item.error() != null) {
-                        LOG.error("{}: {}", item.id(), item.error().reason());
+        final List<String> storedIds = new ArrayList<>();
+        try {
+            for (int from = 0; from < operations.size(); from += BULK_CHUNK_SIZE) {
+                final int to = Math.min(from + BULK_CHUNK_SIZE, operations.size());
+                final List<BulkOperation> chunk = operations.subList(from, to);
+
+                final BulkRequest bulkRequest = new BulkRequest.Builder()
+                        .index(indexName)
+                        .operations(chunk)
+                        .build();
+
+                LOG.debug("Sending bulk chunk [{}-{}) of {} operations to {}", from, to, operations.size(), indexName);
+                final BulkResponse result = client.bulk(bulkRequest);
+
+                // Log errors, if any
+                if (LOG.isErrorEnabled() && result.errors()) {
+                    LOG.error("Bulk chunk [{}-{}) had errors", from, to);
+                    for (BulkResponseItem item : result.items()) {
+                        if (item.error() != null) {
+                            LOG.error("{}: {}", item.id(), item.error().reason());
+                        }
                     }
                 }
-            }
-            if (is_exploded) {
-                return exploded_returnId;
-            }
-            else{
-            return result.items().stream()
-                    .filter(i -> i.error() == null)
-                    .map(BulkResponseItem::id)
-                    .filter(StringUtils::isNotBlank)
-                    .map(i -> i.substring(uidPrefix.length()))
-                    .toList();
+
+                if (!is_exploded) {
+                    result.items().stream()
+                            .filter(i -> i.error() == null)
+                            .map(BulkResponseItem::id)
+                            .filter(StringUtils::isNotBlank)
+                            .map(i -> i.substring(uidPrefix.length()))
+                            .forEach(storedIds::add);
+                }
             }
         } catch (IOException | ElasticsearchException e) {
             LOG.warn("Error when sending data bulk to elastic index. Error message: {}", e.toString());
             throw e;
         }
+
+        return is_exploded ? exploded_returnId : storedIds;
     }
 
     public Long deleteDataPointsInTimeRanges(RoutingInfo routingInfo, String dataType, Set<Range<Instant>> effectiveDateTimes) throws IOException {
