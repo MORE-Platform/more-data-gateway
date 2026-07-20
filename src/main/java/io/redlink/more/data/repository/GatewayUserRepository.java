@@ -10,14 +10,15 @@ package io.redlink.more.data.repository;
 
 import io.redlink.more.data.model.GatewayUserDetails;
 import io.redlink.more.data.model.RoutingInfo;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Service;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Service;
 
 import static io.redlink.more.data.repository.DbUtils.readOptionalInt;
 
@@ -52,6 +53,7 @@ public class GatewayUserRepository {
                         rs.getLong("study_id"),
                         rs.getInt("participant_id"),
                         readOptionalInt(rs, "study_group_id"),
+                        DbUtils.readSet(rs, "observation_group_ids", Integer.class),
                         rs.getBoolean("study_is_active"),
                         true // TODO: This could be read from the db-view, but should always be true
                 ));

@@ -72,6 +72,7 @@ public record ElasticDataPoint(
                         .mapToObj("study_group_%d"::formatted)
                         .findFirst()
                         .orElse(null),
+                //TODO: Do we need observation groups in the Elastic index. I am not sure (westei, 18.12.2025)
                 dataPoint.observationId(),
                 dataPoint.observationType(),
                 dataPoint.dataType(),

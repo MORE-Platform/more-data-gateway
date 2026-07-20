@@ -2,19 +2,23 @@
  * Copyright LBI-DHP and/or licensed to LBI-DHP under one or more
  * contributor license agreements (LBI-DHP: Ludwig Boltzmann Institute
  * for Digital Health and Prevention -- A research institute of the
- * Ludwig Boltzmann Gesellschaft, Oesterreichische Vereinigung zur
- * Foerderung der wissenschaftlichen Forschung).
+ * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
+ * Förderung der wissenschaftlichen Forschung).
  * Licensed under the Elastic License 2.0.
  */
 package io.redlink.more.data.model.scheduler;
+
 import java.time.Instant;
+
 
 public class Event implements ScheduleEvent {
     public static final String TYPE = "Event";
     private String type;
+
     private Instant dateStart;
     private Instant dateEnd;
     private RecurrenceRule recurrenceRule;
+    private Randomization randomization;
 
     @Override
     public String getType() {
@@ -48,5 +52,12 @@ public class Event implements ScheduleEvent {
         return this;
     }
 
+    public Randomization getRandomization() {
+        return randomization;
+    }
 
+    public Event setRandomization(Randomization randomization) {
+        this.randomization = randomization;
+        return this;
+    }
 }

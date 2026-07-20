@@ -16,6 +16,11 @@ tags:
   - name: Data
     description: |
       Endpoints to **send** observation-data
+  - name: Signup
+    description: |
+      Provides information about the study signup
+  - name: GarminRegistration
+    description: Endpoints to register for Garmin Connect using OAuth
 
 externalDocs:
   url: https://github.com/MORE-Platform
@@ -24,6 +29,28 @@ security:
   - apiKey: [ ]
 
 paths:
+  /signup:
+    get:
+      operationId: getSignupInfo
+      description: Returns simple HTML study information identified by the required participant registration token
+      tags:
+        - Signup
+      parameters:
+        - $ref: '#/components/parameters/RegistrationTokenQuery'
+      responses:
+        '200':
+          description: Simple study information in HTML
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlPage'
+        '400':
+          description: bad request, token missing or invalid
+        '404':
+          $ref: '#/components/responses/NoSuchRegistrationToken'
+        '410':
+          $ref: '#/components/responses/RegistrationTokenExpired'
+
   /registration:
     get:
       operationId: getStudyRegistrationInfo
@@ -35,7 +62,7 @@ paths:
         - $ref: '#/components/parameters/RegistrationToken'
       responses:
         '200':
-          $ref: '#/components/responses/StudyInfoResponse'
+          $ref: 'BaseComponents.yaml#/components/responses/StudyInfoResponse'
         '404':
           $ref: '#/components/responses/NoSuchRegistrationToken'
         '410':
@@ -53,7 +80,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StudyConsent'
+              $ref: 'BaseComponents.yaml#/components/schemas/StudyConsent'
       responses:
         '201':
           description: Consent given and ApiKey created.
@@ -80,6 +107,59 @@ paths:
         '204':
           description: Participant left the study.
 
+  /registration/garmin:
+    get:
+      operationId: getGarminOauthUrl
+      description: redirect to the Garmin OAuth page
+      tags:
+        - GarminRegistration
+      responses:
+        '302':
+          description: redirect to Garmin OAuth
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL to the Garmin OAuth page
+        '401':
+          $ref: 'BaseComponents.yaml#/components/responses/UnauthorizedApiKey'
+
+  /registration/garmin/callback:
+    get:
+      operationId: handleGarminCallback
+      description: handle the Garmin OAuth callback with code and state parameters
+      tags:
+        - GarminRegistration
+      security: [ ]
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: OAuth authorization code from Garmin
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+          description: State parameter for CSRF protection
+      responses:
+        '200':
+          description: OAuth callback handled successfully
+        '302':
+          description: redirect after successful OAuth
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL to redirect the user after successful OAuth
+        '400':
+          description: invalid or missing parameters
+        '401':
+          $ref: 'BaseComponents.yaml#/components/responses/UnauthorizedApiKey'
+
+
   /config/study:
     get:
       operationId: getStudyConfiguration
@@ -88,9 +168,9 @@ paths:
         - Configuration
       responses:
         '200':
-          $ref: '#/components/responses/StudyInfoResponse'
+          $ref: 'BaseComponents.yaml#/components/responses/StudyInfoResponse'
         '401':
-          $ref: '#/components/responses/UnauthorizedApiKey'
+          $ref: 'BaseComponents.yaml#/components/responses/UnauthorizedApiKey'
 
   /config/notifications:
     get:
@@ -108,7 +188,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/PushNotificationServiceType'
         '401':
-          $ref: '#/components/responses/UnauthorizedApiKey'
+          $ref: 'BaseComponents.yaml#/components/responses/UnauthorizedApiKey'
 
   /config/notifications/{serviceType}:
     parameters:
@@ -130,7 +210,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PushNotificationConfig'
         '401':
-          $ref: '#/components/responses/UnauthorizedApiKey'
+          $ref: 'BaseComponents.yaml#/components/responses/UnauthorizedApiKey'
     put:
       operationId: setPushNotificationToken
       description: store the client's push-notification token
@@ -145,7 +225,7 @@ paths:
         '202':
           description: notification-token updated
         '401':
-          $ref: '#/components/responses/UnauthorizedApiKey'
+          $ref: 'BaseComponents.yaml#/components/responses/UnauthorizedApiKey'
         '404':
           description: unknown notification service
   /notifications:
@@ -198,173 +278,11 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Id'
+                  $ref: 'BaseComponents.yaml#/components/schemas/Id'
         '401':
-          $ref: '#/components/responses/UnauthorizedApiKey'
-
+          $ref: 'BaseComponents.yaml#/components/responses/UnauthorizedApiKey'
 components:
   schemas:
-    Study:
-      description:
-        The study object containing all information and observation
-        information to configure and initialize the APP
-      type: object
-      properties:
-        active:
-          description:
-            The current study-state. Mainly used during the registration process.
-          type: boolean
-          default: true
-        studyState:
-          type: string
-          enum:
-            - active
-            - paused
-            - closed
-        participant:
-          $ref: '#/components/schemas/SimpleParticipant'
-        studyTitle:
-          type: string
-        participantInfo:
-          type: string
-        consentInfo:
-          type: string
-        finishText:
-          type: string
-        contact:
-          $ref: '#/components/schemas/ContactInfo'
-        start:
-          type: string
-          format: date
-        end:
-          type: string
-          format: date
-        observations:
-          type: array
-          items:
-            $ref: '#/components/schemas/Observation'
-          minItems: 1
-        version:
-          $ref: '#/components/schemas/VersionTag'
-      required:
-        - studyTitle
-        - participantInfo
-        - consentInfo
-        - start
-        - end
-        - observations
-        - version
-
-    SimpleParticipant:
-      type: object
-      properties:
-        id:
-          type: integer
-        alias:
-          type: string
-
-    ContactInfo:
-      description: Contact-Information
-      type: object
-      properties:
-        institute:
-          type: string
-        person:
-          type: string
-        email:
-          type: string
-        phoneNumber:
-          type: string
-
-    Observation:
-      description: The configuration of an observation for the study.
-      type: object
-      properties:
-        observationId:
-          type: string
-        observationType:
-          type: string
-        observationTitle:
-          type: string
-        participantInfo:
-          type: string
-        configuration:
-          type: object
-        schedule:
-          type: array
-          items:
-            title: ObservationSchedule
-            type: object
-            properties:
-              start:
-                type: string
-                format: date-time
-              end:
-                type: string
-                format: date-time
-        required:
-          type: boolean
-          default: true
-        hidden:
-          type: boolean
-          default: false
-        noSchedule:
-          type: boolean
-          default: false
-        version:
-          $ref: '#/components/schemas/VersionTag'
-      required:
-        - observationId
-        - observationType
-        - observationTitle
-        - participantInfo
-        - schedule
-        - required
-        - version
-
-    VersionTag:
-      description:
-        A version indicator. Currently the last-modified date in EPOCH-format
-        but that's not guaranteed.
-      type: integer
-      format: int64
-
-    StudyConsent:
-      type: object
-      description: Confirms the participants consent to the study including supported observations on the device.
-      properties:
-        consent:
-          description: Explicitly state the consent of the Participant
-          type: boolean
-          default: false
-        deviceId:
-          description: Identifier of the device used to provide consent
-          type: string
-        consentInfoMD5:
-          description: |
-            MD5-Hash of the `consentInfo` (text) the participant
-            actually gave consent.
-          type: string
-        observations:
-          type: array
-          items:
-            title: ObservationConsent
-            type: object
-            properties:
-              observationId:
-                type: string
-              active:
-                type: boolean
-                default: true
-            required:
-              - observationId
-              - active
-      required:
-        - consent
-        - deviceId
-        - consentInfoMD5
-        - observations
-
     PushNotification:
       description: a push notification
       type: object
@@ -402,7 +320,7 @@ components:
           type: string
           format: uri
         credentials:
-          $ref: '#/components/schemas/ApiKey'
+          $ref: 'BaseComponents.yaml#/components/schemas/ApiKey'
       required:
         - credentials
 
@@ -458,30 +376,12 @@ components:
           externalDocs:
             url: https://firebase.google.com/docs/reference/android/com/google/firebase/FirebaseOptions
 
-
-    ApiKey:
-      description: |
-        Credentials for the App for interacting with the backends
-      type: object
-      readOnly: true
-      properties:
-        apiId:
-          type: string
-          readOnly: true
-        apiKey:
-          type: string
-          readOnly: true
-      required:
-        - apiId
-        - apiKey
-
-
     DataBulk:
       type: object
       description: A bulk of observation data containing a unique id, the API Key of the participant and the array of observation data
       properties:
         bulkId:
-          $ref: '#/components/schemas/Id'
+          $ref: 'BaseComponents.yaml#/components/schemas/Id'
         dataPoints:
           type: array
           items:
@@ -494,14 +394,13 @@ components:
       type: object
       properties:
         dataId:
-          $ref: '#/components/schemas/Id'
+          $ref: 'BaseComponents.yaml#/components/schemas/Id'
         observationId:
           type: string
         observationType:
           type: string
         dataValue:
           type: object
-          additionalProperties: true
         timestamp:
           type: string
           format: date-time
@@ -512,8 +411,16 @@ components:
         - dataValue
         - timestamp
 
-    Id:
-      type: string
+    GarminRedirect:
+      type: object
+      properties:
+        code:
+          type: string
+        state:
+          type: string
+      required:
+        - code
+        - state
 
     Error:
       description: Generic Error
@@ -524,6 +431,9 @@ components:
         msg:
           type: string
 
+    HtmlPage:
+      description: HtmlRenderedPage
+
   parameters:
     RegistrationToken:
       name: More-Registration-Token
@@ -532,15 +442,15 @@ components:
       schema:
         type: string
       description: The token to register for a study
+    RegistrationTokenQuery:
+      name: token
+      in: query
+      required: true
+      schema:
+        type: string
+      description: The registration token of a participant
 
   responses:
-    StudyInfoResponse:
-      description: The Study Info
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Study'
-
     NoSuchRegistrationToken:
       description: Invalid/Unknown Registration Token
     RegistrationTokenExpired:
@@ -549,10 +459,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    UnauthorizedApiKey:
-      description: |
-        **Authentication Required**
-        Login is performed via `basic-auth` using `apiId` as username and `apiKey` as password.
     RegistrationNotPossible:
       description: |
         Registration could not be completed:

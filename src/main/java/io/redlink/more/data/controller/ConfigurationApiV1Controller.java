@@ -11,17 +11,20 @@ import io.redlink.more.data.api.app.v1.webservices.ConfigurationApi;
 import io.redlink.more.data.configuration.AuthenticationFacade;
 import io.redlink.more.data.controller.transformer.NotificationServiceTransformer;
 import io.redlink.more.data.controller.transformer.StudyTransformer;
+import io.redlink.more.data.model.CompletedData;
 import io.redlink.more.data.model.GatewayUserDetails;
 import io.redlink.more.data.service.GatewayUserDetailService;
+import io.redlink.more.data.service.ObservationExecutionService;
 import io.redlink.more.data.service.PushNotificationService;
-import io.redlink.more.data.service.RegistrationService;
+import io.redlink.more.data.service.StudyService;
 import io.redlink.more.data.util.LoggingUtils;
-import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Controller
 @RestController
@@ -30,14 +33,17 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
 
     private final AuthenticationFacade authenticationFacade;
 
-    private final RegistrationService registrationService;
-
     private final PushNotificationService pushNotificationService;
 
-    public ConfigurationApiV1Controller(AuthenticationFacade authenticationFacade, RegistrationService registrationService, PushNotificationService pushNotificationService) {
+    private final StudyService studyService;
+
+    private final ObservationExecutionService observationExecutionService;
+
+    public ConfigurationApiV1Controller(AuthenticationFacade authenticationFacade, PushNotificationService pushNotificationService, StudyService studyService, ObservationExecutionService observationExecutionService) {
         this.authenticationFacade = authenticationFacade;
-        this.registrationService = registrationService;
         this.pushNotificationService = pushNotificationService;
+        this.studyService = studyService;
+        this.observationExecutionService = observationExecutionService;
     }
 
     @Override
@@ -45,10 +51,11 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
         final GatewayUserDetails userDetails = authenticationFacade
                 .assertAuthority(GatewayUserDetailService.APP_ROLE);
         try (LoggingUtils.LoggingContext ctx = LoggingUtils.createContext(userDetails.getRoutingInfo())) {
-            return ResponseEntity.of(
-                    registrationService.loadStudyByRoutingInfo(userDetails.getRoutingInfo())
-                            .map(StudyTransformer::toDTO)
-            );
+            var studyData = studyService.getStudy(userDetails.getRoutingInfo());
+            List<CompletedData> completedData = observationExecutionService.getCompletedData(userDetails.getRoutingInfo());
+            return studyData.map(s -> StudyTransformer.toDTO(s.getLeft(), s.getRight(), completedData))
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.notFound().build());
         }
     }
 

@@ -1,0 +1,228 @@
+openapi: 3.1.1
+info:
+  title: CustomModelAPI
+  description: |
+    API for defining custom models, which are generated and can be used in the DataGateway
+  version: '1'
+components:
+  schemas:
+    GarminDataPoint:
+      type: object
+      description: |
+        Represents a single data point from Garmin Connect.
+      properties:
+        userId:
+          type: string
+          description: The unique garmin identifier of the user
+        summaryId:
+          type: string
+          description: The unique identifier of the data point
+        startTimeInSeconds:
+          type: integer
+          format: int32
+          description: Start time of the data point as Unix timestamp
+        startTimeOffsetInSeconds:
+          type: integer
+          format: int32
+          default: 0
+          description: Timezone offset in seconds from startTimeInSeconds
+        durationInSeconds:
+          type: integer
+          format: int32
+          default: 0
+          description: Duration of the data point in seconds
+        timeOffsetHeartRateSamples:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int16
+          description: Heart rate samples keyed by time offset in seconds from startTimeInSeconds
+        activityType:
+          type: string
+          default: "GENERIC"
+          enum: [ WALKING, RUNNING, WHEELCHAIR_PUSHING, SEDENTARY, GENERIC, SLEEP ]
+        met:
+          type: number
+          format: double
+          description: Metabolic equivalent of task (MET)
+        intensity:
+          type: string
+          default: "SEDENTARY"
+          enum: [ SEDENTARY, ACTIVE, HIGHLY_ACTIVE ]
+          description: Intensity level (e.g., ACTIVE, SEDENTARY)
+        meanMotionIntensity:
+          type: number
+          format: double
+          description: Mean motion intensity
+        maxMotionIntensity:
+          type: number
+          format: double
+          description: Maximum motion intensity
+        activeTimeInSeconds:
+          type: integer
+          format: int64
+          description: Active time in seconds
+        calendarDate:
+          type: string
+          format: date
+          description: Local date in with the format (YYYY-MM-DD)
+        totalNapDurationInSeconds:
+          type: integer
+          format: int64
+          description: Total nap duration in seconds
+        unmeasurableSleepInSeconds:
+          type: integer
+          format: int64
+          description: Duration of unmeasurable sleep in seconds
+        deepSleepDurationInSeconds:
+          type: integer
+          format: int64
+          description: Deep sleep duration in seconds
+        lightSleepDurationInSeconds:
+          type: integer
+          format: int64
+          description: Light sleep duration in seconds
+        remSleepInSeconds:
+          type: integer
+          format: int64
+          description: REM sleep duration in seconds
+        awakeDurationInSeconds:
+          type: integer
+          format: int64
+          description: Awake duration in seconds
+        validation:
+          type: string
+          description: Validation type (e.g., AUTO_FINAL, MANUAL, DEVICE)
+        timeOffsetSleepSpo2:
+          type: object
+          additionalProperties:
+            type: integer
+          description: SpO2 values during sleep keyed by time offset in seconds
+        overallSleepScoreValue:
+          type: integer
+          description: Numeric overall sleep score value
+        overallSleepScore:
+          $ref: '#/components/schemas/SleepScore'
+        sleepScores:
+          $ref: '#/components/schemas/SleepScoreBreakdown'
+        naps:
+          type: array
+          items:
+            $ref: '#/components/schemas/NapData'
+          description: List of naps during the day
+        sleepLevelsMap:
+          type: object
+          description: Sleep level segments keyed by sleep level (e.g., deep, light, rem, awake)
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/SleepLevelSegment'
+        steps:
+          type: integer
+          description: Number of steps
+        distanceInMeters:
+          type: number
+          format: double
+          description: Distance traveled in meters
+        stepsGoal:
+          type: integer
+          description: Daily steps goal
+        systolic:
+          type: integer
+          format: int32
+          description: The systolic value of the blood pressure reading.
+        diastolic:
+          type: integer
+          format: int32
+          description: The diastolic value of the blood pressure reading.
+        pulse:
+          type: integer
+          format: int32
+          description: Pulse rate at the time the blood pressure reading
+        sourceType:
+          type: string
+          enum: [ MANUAL, DEVICE ]
+          default: "MANUAL"
+          description: |
+            This field is used to determine if blood pressure data was entered manually or synced from aGarmin Device. Possible values:
+            MANUAL: The user entered blood pressure information manually through a web form.
+            DEVICE: The user used a Garmin device to perform a blood pressure reading.
+      required:
+        - userId
+        - summaryId
+        - startTimeInSeconds
+        - startTimeOffsetInSeconds
+        - durationInSeconds
+
+
+    SleepScore:
+      type: object
+      properties:
+        value:
+          type: integer
+          description: Numeric sleep score value
+        qualifierKey:
+          type: string
+          enum: [ EXCELLENT, GOOD, FAIR, POOR ]
+          description: Qualitative sleep score (e.g., EXCELLENT, GOOD, FAIR, POOR)
+
+    SleepScoreBreakdown:
+      type: object
+      properties:
+        totalDuration:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        stress:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        awakeCount:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        remPercentage:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        restlessness:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        lightPercentage:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        deepPercentage:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+
+    SleepScoreQualifier:
+      type: object
+      properties:
+        qualifierKey:
+          type: string
+          description: Qualitative score (e.g., EXCELLENT, GOOD, FAIR, POOR)
+
+    SleepLevelSegment:
+      type: object
+      description: A single sleep level segment with absolute start/end times.
+      properties:
+        startTimeInSeconds:
+          type: integer
+          format: int64
+          description: Segment start time as Unix timestamp (seconds)
+        endTimeInSeconds:
+          type: integer
+          format: int64
+          description: Segment end time as Unix timestamp (seconds)
+      required:
+        - startTimeInSeconds
+        - endTimeInSeconds
+
+    NapData:
+      type: object
+      description: |
+        Information about individual naps during the day.
+      properties:
+        napStartTimeInSeconds:
+          type: integer
+          format: int64
+          description: Nap start time as Unix timestamp
+        napOffsetInSeconds:
+          type: integer
+          description: Timezone offset in seconds for the nap
+        napDurationInSeconds:
+          type: integer
+          format: int64
+          description: Nap duration in seconds
+        napValidation:
+          type: string
+          description: Validation type for the nap (e.g., MANUAL, DEVICE, AUTO_FINAL)

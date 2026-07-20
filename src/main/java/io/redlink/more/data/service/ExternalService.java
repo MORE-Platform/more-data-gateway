@@ -8,25 +8,36 @@
  */
 package io.redlink.more.data.service;
 
+import io.redlink.more.data.api.app.v1.model.EndpointDataBulkDTO;
+import io.redlink.more.data.api.app.v1.model.ExternalDataDTO;
 import io.redlink.more.data.configuration.CachingConfiguration;
 import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.exception.NotFoundException;
+import io.redlink.more.data.exception.TimeFrameException;
 import io.redlink.more.data.model.ApiRoutingInfo;
 import io.redlink.more.data.model.Participant;
+import io.redlink.more.data.model.ParticipantObservationSeed;
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.model.scheduler.Event;
 import io.redlink.more.data.model.scheduler.Interval;
 import io.redlink.more.data.model.scheduler.RelativeEvent;
+import io.redlink.more.data.model.scheduler.ScheduleEvent;
 import io.redlink.more.data.repository.StudyRepository;
+import io.redlink.more.data.util.RandomSchedulerUtils;
+import io.redlink.more.data.util.SchedulerUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 
 @Service
 public class ExternalService {
@@ -41,23 +52,27 @@ public class ExternalService {
     public ApiRoutingInfo getRoutingInfo(
             String moreApiToken
     ) {
-        String[] split = moreApiToken.split("\\.");
-        String[] primaryKey = new String(Base64.getDecoder().decode(split[0])).split("-");
+        try {
+            String[] split = moreApiToken.split("\\.");
+            String[] primaryKey = new String(Base64.getDecoder().decode(split[0])).split("-");
 
-        Long studyId = Long.valueOf(primaryKey[0]);
-        Integer observationId = Integer.valueOf(primaryKey[1]);
-        Integer tokenId = Integer.valueOf(primaryKey[2]);
-        String secret = new String(Base64.getDecoder().decode(split[1]));
+            Long studyId = Long.valueOf(primaryKey[0]);
+            Integer observationId = Integer.valueOf(primaryKey[1]);
+            Integer tokenId = Integer.valueOf(primaryKey[2]);
+            String secret = new String(Base64.getDecoder().decode(split[1]));
 
 
-        final Optional<ApiRoutingInfo> apiRoutingInfo = repository.getApiRoutingInfo(studyId, observationId, tokenId)
-                .stream().filter(route ->
-                        passwordEncoder.matches(secret, route.secret()))
-                .findFirst();
-        if (apiRoutingInfo.isEmpty()) {
+            final Optional<ApiRoutingInfo> apiRoutingInfo = repository.getApiRoutingInfo(studyId, observationId, tokenId)
+                    .stream().filter(route ->
+                            passwordEncoder.matches(secret, route.secret()))
+                    .findFirst();
+            if (apiRoutingInfo.isEmpty()) {
+                throw new AccessDeniedException("Invalid token");
+            }
+            return apiRoutingInfo.get();
+        } catch (RuntimeException e) {
             throw new AccessDeniedException("Invalid token");
         }
-        return apiRoutingInfo.get();
     }
 
     public RoutingInfo validateAndCreateRoutingInfo(ApiRoutingInfo apiRoutingInfo, Integer participantId) {
@@ -67,26 +82,55 @@ public class ExternalService {
         OptionalInt observationStudyGroup = apiRoutingInfo.studyGroupId();
         OptionalInt participantStudyGroup = routingInfo.studyGroupId();
 
-        if(observationStudyGroup.isPresent() && participantStudyGroup.isPresent() && observationStudyGroup.getAsInt() != participantStudyGroup.getAsInt()){
+        if (observationStudyGroup.isPresent() && participantStudyGroup.isPresent() && observationStudyGroup.getAsInt() != participantStudyGroup.getAsInt()) {
             throw BadRequestException.StudyGroup(observationStudyGroup.getAsInt(), participantStudyGroup.getAsInt());
         }
         return routingInfo;
     }
 
     @Cacheable(CachingConfiguration.OBSERVATION_ENDINGS)
-    public Interval getIntervalForObservation(Long studyId, Integer observationId, Integer participantId) {
-        return repository.getObservationSchedule(studyId, observationId)
-                .map(scheduleEvent -> {
-                    if(Event.class.isAssignableFrom(scheduleEvent.getClass())) {
-                        return Interval.from((Event) scheduleEvent);
-                    } else {
-                        return repository.getInterval(studyId, participantId, (RelativeEvent) scheduleEvent);
-                    }
-                })
-                .orElseThrow(BadRequestException::TimeFrame);
+    public void assertTimestampsInBulk(Long studyId, Integer observationId, Integer participantId, EndpointDataBulkDTO dataBulkDTO) {
+        try {
+            ScheduleEvent scheduleEvent = repository.getObservationSchedule(studyId, observationId).orElseThrow(() -> BadRequestException.NotFound(studyId, observationId));
+
+            List<Interval> intervalList = new ArrayList<>();
+            if (scheduleEvent instanceof Event) {
+                intervalList.add(Interval.from((Event) scheduleEvent));
+            } else if (scheduleEvent instanceof RelativeEvent) {
+                Optional<Instant> studyStart = repository.getStudyStartFor(studyId, participantId);
+                studyStart.ifPresent(instant -> intervalList.addAll(createSchedulesFromRelativeEvent((RelativeEvent) scheduleEvent, instant, studyId, participantId, observationId)));
+            } else {
+                throw new BadRequestException("Unsupported ScheduleEvent type: " + scheduleEvent.getClass());
+            }
+
+            if (intervalList.isEmpty()) {
+                throw BadRequestException.NotFound(studyId, observationId);
+            }
+
+            boolean allValid = dataBulkDTO.getDataPoints().stream()
+                    .map(ExternalDataDTO::getTimestamp)
+                    .allMatch(timestamp -> intervalList.stream()
+                            .anyMatch(interval -> interval.contains(timestamp))
+                    );
+            if (!allValid) {
+                throw TimeFrameException.InvalidDataPointInterval(dataBulkDTO.getParticipantId(), intervalList);
+            }
+        } catch (BadRequestException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw BadRequestException.NotFound(studyId, observationId);
+        }
     }
 
-    public List<Participant> listParticipants(Long studyId, OptionalInt studyGroupId) {
-        return repository.listParticipants(studyId, studyGroupId);
+    public List<Participant> listParticipants(Long studyId, OptionalInt studyGroupId, Set<Integer> observationGroupIds) {
+        return repository.listParticipants(studyId, studyGroupId, observationGroupIds);
+    }
+
+    private List<Interval> createSchedulesFromRelativeEvent(RelativeEvent event, Instant start, Long studyId, Integer participantId, Integer observationId) {
+        var properties = repository.getParticipantWithObservationProperties(studyId, participantId, observationId).orElse(Map.of());
+        var seed = new ParticipantObservationSeed(studyId, participantId, observationId, (Long) properties.getOrDefault(RandomSchedulerUtils.OBSERVATION_SCHEDULE_SEED_KEY, null));
+        var ranges = SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start);
+        var randomRanges = SchedulerUtils.randomSchedule(seed, event, ranges);
+        return Interval.fromRanges(randomRanges);
     }
 }

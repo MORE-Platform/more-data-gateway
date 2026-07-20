@@ -1,0 +1,6194 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Health API",
+    "version": "0"
+  },
+  "servers": [
+    {
+      "url": "https://apis.garmin.com/wellness-api",
+      "description": "Prod"
+    }
+  ],
+  "paths": {
+    "/rest/userMetrics": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "User Metrics are per-user calculations performed by Garmin based on the underlying data uploaded from the userâ€™s device.\nThis data can be specific to a single device and field availability is dependent on device model support\n",
+        "operationId": "GET_USER_METRICS",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientUserMetrics"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/user/permissions": {
+      "get": {
+        "tags": [
+          "User Controller"
+        ],
+        "operationId": "GET_USER_PERMISSIONS",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientConsumerPermissions"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/user/id": {
+      "get": {
+        "tags": [
+          "User API"
+        ],
+        "description": "Get the Health API ID for this user. This ID will persist across multiple User Access Tokens generated by the same user.",
+        "operationId": "USER_ID",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientUserId"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/stressDetails": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "Stress Details summaries contain the userâ€™s stress level values for a given day.\nStress levels are provided as 3-minute averages of the real-time stress scores generated on the device.\nStress values from the Health API are exactly the stress values shown on Garmin Connect.\n",
+        "operationId": "GET_STRESS_DETAILS",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientStress"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/solarIntensity": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "retrieve a list of Solar summary",
+        "operationId": "GET_SOLAR",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientSolar"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/sleeps": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "Sleep summaries are data records representing how long the user slept and the automatically classified sleep levels during that sleep event\n(e.g. light, deep periods) based on data generated by the userâ€™s device.\nUnlike Daily summaries which are associated with a given day on a midnight-to-midnight basis,\nSleep summaries are associated with a userâ€™s overnight sleep range. Most will start on one calendar day and end on the next calendar day,\nbut it is possible for two different Sleep summaries to begin on the same day if, for example,\nthe user goes to bed after midnight, wakes up, and then goes to bed prior to midnight the next evening.\n\nTip: Many Garmin devices attempt to auto-sync data during the night while the user is asleep and the smartphone is charging.\nThis may result in an incomplete Sleep summary record. It is important to update sleep data with the most recent\ndata provided on subsequent ping notifications to get an accurate and full representation of the sleep window. See the â€œvalidationâ€ parameter for more details.\n",
+        "operationId": "GET_SLEEPS",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientSleep"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/skinTemp": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "retrieve a list of skin temp summary",
+        "operationId": "GET_SKIN_TEMP",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientSkinTemp"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/respiration": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "Respiration is a feature available on some Garmin devices that tracks breathing rate throughout the day, during sleep, and during activities.",
+        "operationId": "GET_RESPIRATION",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientRespiration"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/pulseOx": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "Pulse Ox summaries contain blood oxygen saturation data.",
+        "operationId": "GET_PULSEOX",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientDailySpo2Acclimation"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/moveiq": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "Move IQ Event summaries are a feed of activities which have been automatically detected by the device based on movement patterns,\nlike running or biking. These are not activities initiated by the user. Please note that wellness data, like steps and distance,\nfrom Move IQ events are already included in the Daily and Epoch summaries.\n",
+        "operationId": "GET_MOVE_IQ",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientAutoActivityMoveIq"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/mct": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "The Menstrual Cycle Tracking feature available on some Garmin devices allows users to track information\nabout their cycle schedule and log symptoms. The MCT Summary only returns information related to cycle\nschedule and does not make the information about symptoms available.\n",
+        "operationId": "GET_MCT",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientSummarizedMenstrualCycle"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/manuallyUpdatedActivities": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "Manual activities are created or edited by the user directly on the Connect site and not uploaded from a device.\nManual activities can be identified by the property â€˜manualâ€™ = true and are separated out in to their own summary data type to allow greater control.\nThis field will only exist if the activity is manually created or edited.\n",
+        "operationId": "GET_MANUALLY_UPDATED_ACTIVITIES",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientActivity"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/hrv": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "Heart rate variability (HRV) refers to beat-to-beat variations in heart rate and is data collected during\nthe overnight sleep window for select devices. To gain a deeper understanding of your overall health,\nrecovery and training performance through heart rate variability while you sleep.\n",
+        "operationId": "GET_HRV",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientHRVSummary"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/healthSnapshot": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "The Garmin Health Snapshot is a collection of key health-related insights recorded during a two-minute session on a compatible device.\nHeart rate (HR), heart rate variability (HRV), Pulse Ox, respiration, and stress are the metrics included this summary,\nwhich collectively provide you a glimpse of your overall cardiovascular status.\n",
+        "operationId": "GET_HEALTHSNAPSHOT",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientHealthSnapshot"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/epochs": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "This service provides the ability to retrieve a list of summaries containing wellness data for a specific time range.\nEpoch summary records contain much of the same data available in Daily summaries, but with 15-minute time-slice granularity.\nThere is one record for each activity type monitored within an individual epoch.\n",
+        "operationId": "GET_EPOCHS",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientEpoch"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/dailies": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "Daily summaries offer a high-level view of the userâ€™s entire day.",
+        "operationId": "GET_DAILIES",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientDaily"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/bodyComps": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "Body Composition summaries contain information about the userâ€™s biometric data, like weight or body mass index.",
+        "operationId": "GET_BODY_COMPS",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientBodyComp"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/bloodPressures": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "retrieve a list of one or more blood pressure summaries",
+        "operationId": "GET_BLOOD_PRESSURES",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientBloodPressure"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/userMetrics": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_USER_METRICS",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/stressDetails": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_STRESS_DETAILS",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/sleeps": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_SLEEPS",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/skinTemp": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_SKIN_TEMP",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/respiration": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_RESPIRATION_EPOCH",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/pulseOx": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_PULSEOX",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/moveiq": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_AUTO_ACTIVITY_MOVEIQ",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/mct": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_MCT",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/hrv": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_HRV",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/healthSnapshot": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_HEALTH_SNAPSHOT",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/epochs": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_EPOCHS",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/dailies": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_DAILIES",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/bodyComps": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_BODYCOMPS",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/bloodPressures": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_BLOOD_PRESSURES",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/activityDetails": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_ACTIVITY_DETAILS",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/backfill/activities": {
+      "get": {
+        "tags": [
+          "Summary Backfill"
+        ],
+        "operationId": "GET_BACKFILL_ACTIVITIES",
+        "parameters": [
+          {
+            "name": "summaryStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summaryEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search. This is a required parameter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/activityFile": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "Activity details are also available as raw FIT, TCX, or GPX files. These are the actual files recorded by\nthe wearable as part of the Fitness Activity, including GPS coordinates, all recorded sensor data,\nand any product-specific data that may not be exposed as part of the parsed Activity Details.\n\nParsing of raw files is the responsibility of the partner. When deciding between Activity Details\nSummaries and Activity Files it is generally recommended to only choose Files if there are specific required fields or details in the Files that are not available in the Summaries\nUnlike normal Summaries, Activity Files are not available as a Push integration. Files are only available in response to a Ping by calling the specified callbackURL.\n",
+        "operationId": "GET_ACTIVITY_FILE",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/octet-stream": {}
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/activityDetails": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "This request is to retrieve a list of one or more fitness activity details summaries from the API.\nFitness activity details summaries represent detailed information about discrete fitness activities,\nsuch as running or swimming, that are specifically and intentionally started by the user on their device.\nActivity details summaries include all data recorded by the device as part of the Fitness Activity, including GPS coordinates and all recorded sensor data.\n",
+        "operationId": "ACTIVITY_DETAILS",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientActivityDetail"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/activities": {
+      "get": {
+        "tags": [
+          "Summary Endpoints"
+        ],
+        "description": "This request is to retrieve a list of one or more fitness activity summaries from the API.\n\nFitness activity summaries represent high-level information from discrete fitness activities,\nsuch as running or swimming, that are specifically and intentionally started by the user on their device.\nFor detailed activity information (e.g. heart rate, GPS track log, or other sensor information) see the Activity Details summary type.\n",
+        "operationId": "GET_ACTIVITIES",
+        "parameters": [
+          {
+            "name": "uploadStartTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the beginning of the time range to search.\nIf this parameter is used it must be paired with uploadEndTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadEndTimeInSeconds",
+            "in": "query",
+            "description": "A UTC timestamp representing the end of the time range to search.\nIf this parameter is used it must be paired with uploadStartTimeInSeconds only.\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Pull token required for OAuth2 integrations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientActivity"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/user/registration": {
+      "delete": {
+        "tags": [
+          "User API"
+        ],
+        "description": "Delete the provided user access token, removing the association between the user and the calling app",
+        "operationId": "DEREG",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "errorMessage": {
+            "type": "string"
+          }
+        }
+      },
+      "ClientUserMetrics": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "calendarDate": {
+            "type": "string",
+            "example": "2022-03-23"
+          },
+          "vo2Max": {
+            "type": "number",
+            "format": "double",
+            "example": 48
+          },
+          "vo2MaxCycling": {
+            "type": "number",
+            "format": "double",
+            "example": 45
+          },
+          "fitnessAge": {
+            "type": "integer",
+            "format": "int32",
+            "example": 32
+          },
+          "enhanced": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "ClientConsumerPermissions": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "permissions": {
+            "type": "array",
+            "example": "[ACTIVITY_EXPORT, WORKOUT_IMPORT, HEALTH_EXPORT, COURSE_IMPORT, MCT_EXPORT]",
+            "items": {
+              "type": "string",
+              "example": "[ACTIVITY_EXPORT, WORKOUT_IMPORT, HEALTH_EXPORT, COURSE_IMPORT, MCT_EXPORT]"
+            }
+          },
+          "changeTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1613065860
+          }
+        }
+      },
+      "ClientUserId": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          }
+        }
+      },
+      "BodyBatteryActivityEvent": {
+        "type": "object",
+        "properties": {
+          "eventType": {
+            "type": "string",
+            "description": "Event type such as sleep,activity,recovery,nap and stress",
+            "example": "activity"
+          },
+          "eventStartTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1687291752
+          },
+          "eventStartTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": -18000
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 660000
+          },
+          "bodyBatteryImpact": {
+            "type": "integer",
+            "format": "int32",
+            "example": -3
+          },
+          "activityName": {
+            "type": "string",
+            "example": "walking"
+          },
+          "activityType": {
+            "type": "string",
+            "example": "Olathe Walking"
+          },
+          "activityId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 5003836302
+          }
+        }
+      },
+      "BodyBatteryDynamicFeedbackEvent": {
+        "type": "object",
+        "properties": {
+          "eventStartTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1687291752
+          },
+          "bodyBatteryLevel": {
+            "type": "string",
+            "example": "LOW"
+          }
+        }
+      },
+      "ClientStress": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1490245200
+          },
+          "startTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 540
+          },
+          "calendarDate": {
+            "type": "string",
+            "example": "2022-03-23"
+          },
+          "maxStressLevel": {
+            "type": "integer",
+            "format": "int32",
+            "example": 51
+          },
+          "averageStressLevel": {
+            "type": "integer",
+            "format": "int32",
+            "example": 43
+          },
+          "timeOffsetStressLevelValues": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": "{0: 18, 180: 51, 360: 28, 540: 29}"
+          },
+          "timeOffsetBodyBatteryValues": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": "{0: 55, 180: 56, 360: 59}"
+          },
+          "bodyBatteryDynamicFeedbackEvent": {
+            "$ref": "#/components/schemas/BodyBatteryDynamicFeedbackEvent"
+          },
+          "bodyBatteryActivityEvents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BodyBatteryActivityEvent"
+            }
+          }
+        }
+      },
+      "ClientSolar": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "calendarDate": {
+            "type": "string",
+            "example": "2025-03-13"
+          },
+          "deviceId": {
+            "type": "string",
+            "example": "12345678"
+          },
+          "deviceTypeName": {
+            "type": "string",
+            "example": "Fennix7solar"
+          },
+          "timeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": -18000
+          },
+          "readings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientSolarReading"
+            }
+          }
+        }
+      },
+      "ClientSolarReading": {
+        "type": "object",
+        "properties": {
+          "measurementTimeInSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "solarIntensity": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ClientNaps": {
+        "type": "object",
+        "properties": {
+          "napStartTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1692116877
+          },
+          "napOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": -18000
+          },
+          "napDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 300
+          },
+          "napValidation": {
+            "type": "string",
+            "example": "device"
+          }
+        }
+      },
+      "ClientSleep": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "calendarDate": {
+            "type": "string",
+            "example": "2022-01-10"
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 15264
+          },
+          "totalNapDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 300
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1452419581
+          },
+          "startTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 7200
+          },
+          "unmeasurableSleepInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          },
+          "deepSleepDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 11231
+          },
+          "lightSleepDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3541
+          },
+          "remSleepInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          },
+          "awakeDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 492
+          },
+          "sleepLevelsMap": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "example": "deep: [{startTimeInSeconds: 1452457493, endTimeInSeconds: 1452476939}], light: [{startTimeInSeconds: 1452478725, endTimeInSeconds: 1452479725}, {startTimeInSeconds: 1452481725, endTimeInSeconds: 1452484266}],rem: [{startTimeInSeconds: 1452476940, endTimeInSeconds: 1452479082}]",
+              "items": {
+                "$ref": "#/components/schemas/TimeRange"
+              }
+            },
+            "example": "deep: [{startTimeInSeconds: 1452457493, endTimeInSeconds: 1452476939}], light: [{startTimeInSeconds: 1452478725, endTimeInSeconds: 1452479725}, {startTimeInSeconds: 1452481725, endTimeInSeconds: 1452484266}],rem: [{startTimeInSeconds: 1452476940, endTimeInSeconds: 1452479082}]"
+          },
+          "validation": {
+            "type": "string",
+            "example": "DEVICE"
+          },
+          "timeOffsetSleepSpo2": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": "0: 95, 60: 96, 120: 97, 180: 93, 240: 94, 300: 95, 360: 96"
+          },
+          "timeOffsetSleepRespiration": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "float"
+            },
+            "example": "60: 15.31, 120: 14.58, 180: 12.73, 240: 12.87"
+          },
+          "overallSleepScore": {
+            "$ref": "#/components/schemas/ClientSleepScoreItem"
+          },
+          "sleepScores": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ClientSleepScoreItem"
+            }
+          },
+          "naps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientNaps"
+            }
+          }
+        }
+      },
+      "ClientSleepScoreItem": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "format": "int32",
+            "example": 87
+          },
+          "qualifierKey": {
+            "type": "string",
+            "example": "GOOD"
+          }
+        }
+      },
+      "TimeRange": {
+        "type": "object",
+        "properties": {
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1452457493
+          },
+          "endTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1452476939
+          }
+        },
+        "example": "deep: [{startTimeInSeconds: 1452457493, endTimeInSeconds: 1452476939}], light: [{startTimeInSeconds: 1452478725, endTimeInSeconds: 1452479725}, {startTimeInSeconds: 1452481725, endTimeInSeconds: 1452484266}],rem: [{startTimeInSeconds: 1452476940, endTimeInSeconds: 1452479082}]"
+      },
+      "ClientSkinTemp": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "calendarDate": {
+            "type": "string",
+            "example": "2023-12-20"
+          },
+          "avgDeviationCelsius": {
+            "type": "number",
+            "format": "float",
+            "example": 1.2
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3820
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix epoch timestamp",
+            "format": "int32",
+            "example": 1653976004
+          },
+          "startTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": -18000
+          }
+        }
+      },
+      "ClientRespiration": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1568171700
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 900
+          },
+          "startTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": -18000
+          },
+          "timeOffsetEpochToBreaths": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "float"
+            },
+            "example": "{0: 14.63, 60: 14.4, 120: 14.38, 180: 14.38, 300: 17.1, 540: 16.61, 600: 16.14, 660: 14.59, 720: 14.65, 780: 15.09, 840: 14.88}"
+          }
+        }
+      },
+      "ClientDailySpo2Acclimation": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "calendarDate": {
+            "type": "string",
+            "example": "2022-08-27"
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1535400706
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 86400
+          },
+          "startTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3600
+          },
+          "timeOffsetSpo2Values": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": "{7140: 94, 10740: 98, 10800: 99, 10860: 98, 10920: 98, 10980: 97, 11040: 97, 11100: 98, 11160: 97, 11220: 96, 11280: 96, 11340: 97, 11400: 97, 11460: 96, 11520: 96, ..., 75540: 95, 79140: 96, 82740: 97, 86340: 96}"
+          },
+          "onDemand": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "ClientAutoActivityMoveIq": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "calendarDate": {
+            "type": "string",
+            "example": "2017-03-23"
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1490245200
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 738
+          },
+          "activityType": {
+            "type": "string",
+            "example": "Running"
+          },
+          "activitySubType": {
+            "type": "string",
+            "example": "Hurdles"
+          },
+          "offsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          }
+        }
+      },
+      "ClientBloodGlucose": {
+        "type": "object",
+        "properties": {
+          "valueInMilligramsPerDeciliter": {
+            "type": "number",
+            "format": "double",
+            "example": 97
+          },
+          "logType": {
+            "type": "string",
+            "example": "BEFOREBED"
+          },
+          "reportTimestampInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1607032403
+          }
+        }
+      },
+      "ClientPregnancySnapshot": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Pregnancy 2021"
+          },
+          "originalDueDate": {
+            "type": "string",
+            "example": "2021-07-17"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2021-07-17"
+          },
+          "pregnancyCycleStartDate": {
+            "type": "string",
+            "example": "2020-10-11"
+          },
+          "deliveryDate": {
+            "type": "string"
+          },
+          "numOfBabies": {
+            "type": "string",
+            "example": "SINGLE"
+          },
+          "hasExperiencedLoss": {
+            "type": "boolean"
+          },
+          "lossReportTimestampInSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "stopTracking": {
+            "type": "boolean"
+          },
+          "stopTrackingTimestampInSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "weightGoalUserInput": {
+            "$ref": "#/components/schemas/ClientWeightGoalUserInput"
+          },
+          "bloodGlucoseList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientBloodGlucose"
+            }
+          }
+        }
+      },
+      "ClientSummarizedMenstrualCycle": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "periodStartDate": {
+            "type": "string",
+            "example": "2021-01-04"
+          },
+          "dayInCycle": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1
+          },
+          "periodLength": {
+            "type": "integer",
+            "format": "int32",
+            "example": 5
+          },
+          "currentPhase": {
+            "type": "integer",
+            "format": "int32",
+            "deprecated": true
+          },
+          "currentPhaseType": {
+            "type": "string"
+          },
+          "lengthOfCurrentPhase": {
+            "type": "integer",
+            "format": "int32",
+            "example": 5
+          },
+          "daysUntilNextPhase": {
+            "type": "integer",
+            "format": "int32",
+            "example": 5
+          },
+          "fertileWindowStart": {
+            "type": "integer",
+            "format": "int32",
+            "example": 11
+          },
+          "lengthOfFertileWindow": {
+            "type": "integer",
+            "format": "int32",
+            "example": 7
+          },
+          "predictedCycleLength": {
+            "type": "integer",
+            "format": "int32",
+            "example": 28
+          },
+          "isPredictedCycle": {
+            "type": "boolean",
+            "example": true
+          },
+          "cycleLength": {
+            "type": "integer",
+            "format": "int32",
+            "example": 28
+          },
+          "lastUpdatedTimeInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1610150400
+          },
+          "hasSpecifiedCycleLength": {
+            "type": "boolean",
+            "example": false
+          },
+          "hasSpecifiedPeriodLength": {
+            "type": "boolean",
+            "example": false
+          },
+          "pregnancySnapshot": {
+            "$ref": "#/components/schemas/ClientPregnancySnapshot"
+          },
+          "predictedCycle": {
+            "type": "boolean",
+            "writeOnly": true
+          }
+        }
+      },
+      "ClientWeightGoalUserInput": {
+        "type": "object",
+        "properties": {
+          "heightInCentimeters": {
+            "type": "integer",
+            "format": "int32",
+            "example": 162
+          },
+          "weightInGrams": {
+            "type": "integer",
+            "format": "int32",
+            "example": 58966
+          }
+        }
+      },
+      "ClientActivity": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "activityId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 5001968355
+          },
+          "activityName": {
+            "type": "string"
+          },
+          "activityDescription": {
+            "type": "string"
+          },
+          "isParent": {
+            "type": "boolean"
+          },
+          "parentSummaryId": {
+            "type": "string"
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1789
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1512234126
+          },
+          "startTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": -25200
+          },
+          "activityType": {
+            "type": "string",
+            "example": "RUNNING"
+          },
+          "averageBikeCadenceInRoundsPerMinute": {
+            "type": "number",
+            "format": "float"
+          },
+          "averageHeartRateInBeatsPerMinute": {
+            "type": "integer",
+            "format": "int32",
+            "example": 144
+          },
+          "averageRunCadenceInStepsPerMinute": {
+            "type": "number",
+            "format": "float",
+            "example": 84
+          },
+          "averagePushCadenceInPushesPerMinute": {
+            "type": "number",
+            "format": "float",
+            "example": 80
+          },
+          "averageSpeedInMetersPerSecond": {
+            "type": "number",
+            "format": "float",
+            "example": 2.781
+          },
+          "averageSwimCadenceInStrokesPerMinute": {
+            "type": "number",
+            "format": "float"
+          },
+          "averagePaceInMinutesPerKilometer": {
+            "type": "number",
+            "format": "float",
+            "example": 15.521924
+          },
+          "activeKilocalories": {
+            "type": "integer",
+            "format": "int32",
+            "example": 367
+          },
+          "deviceName": {
+            "type": "string",
+            "example": "forerunner935"
+          },
+          "distanceInMeters": {
+            "type": "number",
+            "format": "float",
+            "example": 1976.83
+          },
+          "maxBikeCadenceInRoundsPerMinute": {
+            "type": "number",
+            "format": "float"
+          },
+          "maxHeartRateInBeatsPerMinute": {
+            "type": "integer",
+            "format": "int32",
+            "example": 159
+          },
+          "maxPaceInMinutesPerKilometer": {
+            "type": "number",
+            "format": "float",
+            "example": 10.396549
+          },
+          "maxRunCadenceInStepsPerMinute": {
+            "type": "number",
+            "format": "float",
+            "example": 106
+          },
+          "maxPushCadenceInPushesPerMinute": {
+            "type": "number",
+            "format": "float",
+            "example": 75
+          },
+          "maxSpeedInMetersPerSecond": {
+            "type": "number",
+            "format": "float",
+            "example": 4.152
+          },
+          "numberOfActiveLengths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startingLatitudeInDegree": {
+            "type": "number",
+            "format": "double",
+            "example": 51.053232522681355
+          },
+          "startingLongitudeInDegree": {
+            "type": "number",
+            "format": "double",
+            "example": -114.06880217604339
+          },
+          "steps": {
+            "type": "integer",
+            "format": "int32",
+            "example": 5022
+          },
+          "pushes": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1000
+          },
+          "totalElevationGainInMeters": {
+            "type": "number",
+            "format": "float",
+            "example": 16
+          },
+          "totalElevationLossInMeters": {
+            "type": "number",
+            "format": "float",
+            "example": 22
+          },
+          "manual": {
+            "type": "boolean",
+            "example": true
+          },
+          "isWebUpload": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "ClientHRVSummary": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "calendarDate": {
+            "type": "string",
+            "example": "2022-05-31"
+          },
+          "lastNightAvg": {
+            "type": "integer",
+            "format": "int32",
+            "example": 44
+          },
+          "lastNight5MinHigh": {
+            "type": "integer",
+            "format": "int32",
+            "example": 72
+          },
+          "startTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": -18000
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3820
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1653976004
+          },
+          "hrvValues": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": "{300: 32, 600: 24, 900: 31, 1200: 35, 1500: 39, 1800: 47, 2100: 32, 2400: 24, 2700: 31, 3000: 35, 3300: 39, 3600: 47}"
+          }
+        }
+      },
+      "ClientHealthSnapshot": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "calendarDate": {
+            "type": "string",
+            "example": "2021-08-31"
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 163049178
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 120
+          },
+          "startTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 7200
+          },
+          "summaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HealthSnapshotSummary"
+            }
+          }
+        }
+      },
+      "HealthSnapshotSummary": {
+        "type": "object",
+        "properties": {
+          "summaryType": {
+            "type": "string",
+            "example": "heart_rate"
+          },
+          "minValue": {
+            "type": "number",
+            "format": "double",
+            "example": 78
+          },
+          "maxValue": {
+            "type": "number",
+            "format": "double",
+            "example": 87
+          },
+          "avgValue": {
+            "type": "number",
+            "format": "double",
+            "example": 83
+          },
+          "epochSummaries": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "example": "0: 84.0, 1: 84.0, 2: 83.0, 3: 83.0, 4: 83.0, 5: 84.0, 115: 82.0, 116: 82.0, 117: 83.0, 118: 85.0, 119: 85.0, 120: 85.0"
+          }
+        }
+      },
+      "ClientEpoch": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "activityType": {
+            "type": "string",
+            "example": "WALKING"
+          },
+          "activeKilocalories": {
+            "type": "integer",
+            "format": "int32",
+            "example": 24
+          },
+          "steps": {
+            "type": "integer",
+            "format": "int32",
+            "example": 93
+          },
+          "pushes": {
+            "type": "integer",
+            "format": "int32",
+            "example": 73
+          },
+          "distanceInMeters": {
+            "type": "number",
+            "format": "float",
+            "example": 49.11
+          },
+          "pushDistanceInMeters": {
+            "type": "number",
+            "format": "float",
+            "example": 34.43
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 840
+          },
+          "activeTimeInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 449
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1519679700
+          },
+          "startTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": -21600
+          },
+          "met": {
+            "type": "number",
+            "format": "float",
+            "example": 3.3020337
+          },
+          "intensity": {
+            "type": "string",
+            "example": "ACTIVE"
+          },
+          "meanMotionIntensity": {
+            "type": "number",
+            "format": "double",
+            "example": 4
+          },
+          "maxMotionIntensity": {
+            "type": "number",
+            "format": "double",
+            "example": 7
+          }
+        }
+      },
+      "ClientDaily": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "calendarDate": {
+            "type": "string",
+            "example": "2022-01-11"
+          },
+          "activityType": {
+            "type": "string",
+            "example": "WALKING"
+          },
+          "activeKilocalories": {
+            "type": "integer",
+            "format": "int32",
+            "example": 321
+          },
+          "bmrKilocalories": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1731
+          },
+          "steps": {
+            "type": "integer",
+            "format": "int32",
+            "example": 4210
+          },
+          "pushes": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3088
+          },
+          "distanceInMeters": {
+            "type": "number",
+            "format": "float",
+            "example": 3146.5
+          },
+          "pushDistanceInMeters": {
+            "type": "number",
+            "format": "float",
+            "example": 2095.2
+          },
+          "durationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 86400
+          },
+          "activeTimeInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 12240
+          },
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1452470400
+          },
+          "startTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3600
+          },
+          "moderateIntensityDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 81870
+          },
+          "vigorousIntensityDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 4530
+          },
+          "floorsClimbed": {
+            "type": "integer",
+            "format": "int32",
+            "example": 8
+          },
+          "minHeartRateInBeatsPerMinute": {
+            "type": "integer",
+            "format": "int32",
+            "example": 59
+          },
+          "maxHeartRateInBeatsPerMinute": {
+            "type": "integer",
+            "format": "int32",
+            "example": 112
+          },
+          "averageHeartRateInBeatsPerMinute": {
+            "type": "integer",
+            "format": "int32",
+            "example": 64
+          },
+          "restingHeartRateInBeatsPerMinute": {
+            "type": "integer",
+            "format": "int32",
+            "example": 64
+          },
+          "timeOffsetHeartRateSamples": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": "{15: 75, 30: 75, 3180: 76, 3195: 65, 3210: 65, 3225: 73, 3240: 74, 3255: 74}"
+          },
+          "source": {
+            "type": "string"
+          },
+          "stepsGoal": {
+            "type": "integer",
+            "format": "int32",
+            "example": 4500
+          },
+          "pushesGoal": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3100
+          },
+          "intensityDurationGoalInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1500
+          },
+          "floorsClimbedGoal": {
+            "type": "integer",
+            "format": "int32",
+            "example": 18
+          },
+          "averageStressLevel": {
+            "type": "integer",
+            "format": "int32",
+            "example": 43
+          },
+          "maxStressLevel": {
+            "type": "integer",
+            "format": "int32",
+            "example": 87
+          },
+          "stressDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 13620
+          },
+          "restStressDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 7600
+          },
+          "activityStressDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3450
+          },
+          "lowStressDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 6700
+          },
+          "mediumStressDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 4350
+          },
+          "highStressDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 108000
+          },
+          "stressQualifier": {
+            "type": "string",
+            "example": "stressful_awake"
+          },
+          "bodyBatteryChargedValue": {
+            "type": "integer",
+            "format": "int32",
+            "example": 6
+          },
+          "bodyBatteryDrainedValue": {
+            "type": "integer",
+            "format": "int32",
+            "example": 18
+          }
+        }
+      },
+      "ClientBodyComp": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "muscleMassInGrams": {
+            "type": "integer",
+            "format": "int32",
+            "example": 25478
+          },
+          "boneMassInGrams": {
+            "type": "integer",
+            "format": "int32",
+            "example": 2437
+          },
+          "bodyWaterInPercent": {
+            "type": "number",
+            "format": "float",
+            "example": 59.4
+          },
+          "bodyFatInPercent": {
+            "type": "number",
+            "format": "float",
+            "example": 17.1
+          },
+          "bodyMassIndex": {
+            "type": "number",
+            "format": "float",
+            "example": 23.2
+          },
+          "weightInGrams": {
+            "type": "integer",
+            "format": "int32",
+            "example": 75450
+          },
+          "measurementTimeInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1439741130
+          },
+          "measurementTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          }
+        }
+      },
+      "ClientBloodPressure": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "systolic": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "diastolic": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pulse": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "measurementTimeInSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "measurementTimeOffsetInSeconds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ClientActivityDetail": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "4aacafe82427c251df9c9592d0c06768"
+          },
+          "summaryId": {
+            "type": "string",
+            "example": "x153a9f3-5a9478d4-6"
+          },
+          "activityId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 5001968355
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ClientActivity"
+          },
+          "samples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Sample"
+            }
+          },
+          "laps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientLap"
+            }
+          }
+        }
+      },
+      "ClientLap": {
+        "type": "object",
+        "properties": {
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1512234126
+          }
+        }
+      },
+      "Sample": {
+        "type": "object",
+        "properties": {
+          "startTimeInSeconds": {
+            "type": "integer",
+            "description": "Unix Epoch Timestamp",
+            "format": "int32",
+            "example": 1512234126
+          },
+          "latitudeInDegree": {
+            "type": "number",
+            "format": "double",
+            "example": 51.053232522681355
+          },
+          "longitudeInDegree": {
+            "type": "number",
+            "format": "double",
+            "example": -114.06880217604339
+          },
+          "elevationInMeters": {
+            "type": "number",
+            "format": "double",
+            "example": 1049.4000244140625
+          },
+          "airTemperatureCelcius": {
+            "type": "number",
+            "format": "double",
+            "example": 28
+          },
+          "heartRate": {
+            "type": "integer",
+            "format": "int32",
+            "example": 83
+          },
+          "speedMetersPerSecond": {
+            "type": "number",
+            "format": "double",
+            "example": 0
+          },
+          "stepsPerMinute": {
+            "type": "number",
+            "format": "double",
+            "example": 57
+          },
+          "totalDistanceInMeters": {
+            "type": "number",
+            "format": "double",
+            "example": 0.17000000178813934
+          },
+          "powerInWatts": {
+            "type": "number",
+            "format": "double",
+            "example": 0
+          },
+          "bikeCadenceInRPM": {
+            "type": "number",
+            "format": "double",
+            "example": 0
+          },
+          "swimCadenceInStrokesPerMinute": {
+            "type": "number",
+            "format": "double",
+            "example": 0
+          },
+          "wheelChairCadenceInPushesPerMinute": {
+            "type": "number",
+            "format": "double",
+            "example": 0
+          },
+          "timerDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          },
+          "clockDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          },
+          "movingDurationInSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          }
+        }
+      },
+      "ServiceFailure": {
+        "type": "object",
+        "properties": {
+          "errorType": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "errorId": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

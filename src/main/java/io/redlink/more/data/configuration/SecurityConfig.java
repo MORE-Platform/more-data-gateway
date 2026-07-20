@@ -9,8 +9,6 @@
 package io.redlink.more.data.configuration;
 
 import io.redlink.more.data.service.GatewayUserDetailService;
-import java.util.HashMap;
-import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -31,6 +29,9 @@ import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -55,6 +56,14 @@ public class SecurityConfig {
                     // registration-endpoints needs to be open
                     req.requestMatchers("/api/v1/registration")
                             .permitAll();
+                    req.requestMatchers("/api/v1/signup")
+                            .permitAll();
+                    req.requestMatchers("/api/v1/login/**")
+                            .permitAll();
+                    req.requestMatchers("/api/v1/execution/callback", "/api/v1/execution/callback/end.htm")
+                            .permitAll();
+                    req.requestMatchers("/participant-portal/api/v1/login/**")
+                            .permitAll();
                     //External Data Gateway
                     req.requestMatchers("/api/v1/external/bulk")
                             .permitAll();
@@ -62,8 +71,19 @@ public class SecurityConfig {
                             .permitAll();
                     req.requestMatchers("/api/v1/calendar/studies/*/calendar.ics")
                             .permitAll();
+                    // Data sent from Garmin Connect
+                    req.requestMatchers(
+                            "/api/v1/integrations/garmin/user",
+                            "/api/v1/integrations/garmin/user/permissions"
+                    ).permitAll();
+                    req.requestMatchers(
+                                    "/api/v1/integrations/garmin/summaries"
+                            )
+                            .permitAll();
                     // all other apis require credentials
                     req.requestMatchers("/api/v1/**")
+                            .authenticated();
+                    req.requestMatchers("/participant-portal/api/v1/**")
                             .authenticated();
                     // actuator only from localhost
                     req.requestMatchers(

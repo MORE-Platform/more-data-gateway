@@ -11,10 +11,12 @@ package io.redlink.more.data;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 @SpringBootApplication(
         exclude = ElasticsearchRestClientAutoConfiguration.class
 )
+@ConfigurationPropertiesScan
 public class MoreDataGatewayApplication {
 
     public static void main(String[] args) {

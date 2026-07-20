@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: LimeSurvey RemoteControl API
+  version: 1.0.0
+servers:
+  - url: /admin/remotecontrol
+
+tags:
+  - name: LimeSurveyRC
+paths:
+  "/":
+    post:
+      operationId: callMethod
+      summary: Generic Remote Control call
+      tags:
+        - LimeSurveyRC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LimeSurveyRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LimeSurveyObjectResponse'
+
+components:
+  schemas:
+    LimeSurveyMethod:
+      type: string
+      description: Supported LimeSurvey RemoteControl method names
+      enum:
+        - call_method
+        - get_session_key
+        - release_session_key
+        - activate_survey
+        - stop_survey
+        - delete_participants
+        - set_language_properties
+        - get_language_properties
+        - activate_tokens
+        - add_participants
+        - list_surveys
+        - list_participants
+        - get_participant_properties
+        - export_responses_by_token
+        - get_survey_properties
+
+    LimeSurveyRequest:
+      type: object
+      properties:
+        method:
+          $ref: '#/components/schemas/LimeSurveyMethod'
+        params:
+          type: array
+          items:
+            type: object
+        id:
+          type: integer
+        jsonrpc:
+          type: string
+          enum:
+            - "2.0"
+      required:
+        - method
+        - params
+        - id
+        - jsonrpc
+
+    LimeSurveyObjectResponse:
+      type: object
+      properties:
+        result:
+          type: object
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        id:
+          type: integer

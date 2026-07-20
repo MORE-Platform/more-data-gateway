@@ -27,18 +27,19 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <java.version>17</java.version>
-        <spring-boot.version>3.3.4</spring-boot.version>
-        <testcontainers.version>1.20.2</testcontainers.version>
+        <spring-boot.version>3.5.6</spring-boot.version>
+        <testcontainers.version>2.0.2</testcontainers.version>
 
         <docker.namespace>more-project</docker.namespace>
+        <docker.localArch>${os.arch}</docker.localArch>
 
         <start-class>io.redlink.more.data.MoreDataGatewayApplication</start-class>
     </properties>
 
     <scm>
-        <connection>https://github.com/MORE-Platform/more-dsb-gateway.git</connection>
-        <developerConnection>git@github.com:MORE-Platform/more-dsb-gateway.git</developerConnection>
-        <url>https://github.com/MORE-Platform/more-dsb-gateway</url>
+        <connection>https://github.com/MORE-Platform/more-data-gateway.git</connection>
+        <developerConnection>git@github.com:MORE-Platform/more-data-gateway.git</developerConnection>
+        <url>https://github.com/MORE-Platform/more-data-gateway</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -102,11 +103,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>2.2.25</version>
-        </dependency>
-        <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
@@ -119,6 +115,17 @@
             <groupId>net.sf.biweekly</groupId>
             <artifactId>biweekly</artifactId>
             <version>0.6.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity-engine-core</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.velocity.tools</groupId>
+            <artifactId>velocity-tools-generic</artifactId>
+            <version>3.1</version>
         </dependency>
 
         <dependency>
@@ -140,7 +147,7 @@
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>8.0</version>
+            <version>8.1</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -157,17 +164,17 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
+            <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>elasticsearch</artifactId>
+            <artifactId>testcontainers-elasticsearch</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -190,16 +197,17 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
                 <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -211,12 +219,12 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.6.0</version>
+                <version>1.7.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.14.0</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -228,7 +236,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.5.4</version>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -237,7 +245,9 @@
                 <executions>
                     <execution>
                         <id>repackage</id>
-                        <goals><goal>repackage</goal></goals>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
                         <configuration>
                             <classifier>exec</classifier>
                         </configuration>
@@ -247,12 +257,14 @@
             <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.6</version>
                 <executions>
                     <execution>
                         <id>jib-deploy</id>
                         <phase>deploy</phase>
-                        <goals><goal>build</goal></goals>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
                         <configuration>
                             <from>
                                 <platforms>
@@ -271,12 +283,26 @@
                     <execution>
                         <id>jib-install</id>
                         <phase>install</phase>
-                        <goals><goal>dockerBuild</goal></goals>
+                        <goals>
+                            <goal>dockerBuild</goal>
+                        </goals>
+                        <configuration>
+                            <from>
+                                <platforms>
+                                    <platform>
+                                        <architecture>${docker.localArch}</architecture>
+                                        <os>linux</os>
+                                    </platform>
+                                </platforms>
+                            </from>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>jib-package</id>
                         <phase>package</phase>
-                        <goals><goal>buildTar</goal></goals>
+                        <goals>
+                            <goal>buildTar</goal>
+                        </goals>
                     </execution>
                 </executions>
                 <configuration>
@@ -315,7 +341,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>7.7.0</version>
+                <version>7.13.0</version>
                 <executions>
                     <execution>
                         <id>data-api</id>
@@ -327,6 +353,7 @@
                             <output>${project.build.directory}/generated-sources/app</output>
                             <apiPackage>io.redlink.more.data.api.app.v1.webservices</apiPackage>
                             <modelPackage>io.redlink.more.data.api.app.v1.model</modelPackage>
+                            <modelNameSuffix>DTO</modelNameSuffix>
                         </configuration>
                     </execution>
                     <execution>
@@ -339,9 +366,140 @@
                             <output>${project.build.directory}/generated-sources/external</output>
                             <apiPackage>io.redlink.more.data.api.app.v1.webservices</apiPackage>
                             <modelPackage>io.redlink.more.data.api.app.v1.model</modelPackage>
+                            <modelNameSuffix>DTO</modelNameSuffix>
                         </configuration>
                     </execution>
-                </executions>
+                    <execution>
+                        <id>participant-portal-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/ParticipantPortalAPI.yaml</inputSpec>
+                            <output>${project.build.directory}/generated-sources/participant-portal</output>
+                            <apiPackage>io.redlink.more.data.api.participant.v1.webservices</apiPackage>
+                            <modelPackage>io.redlink.more.data.api.participant.v1.model</modelPackage>
+                            <modelNameSuffix>DTO</modelNameSuffix>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>observation-execution-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/ObservationExecutionAPI.yaml</inputSpec>
+                            <output>${project.build.directory}/generated-sources/observation-execution</output>
+                            <apiPackage>io.redlink.more.data.api.execution.v1.webservices</apiPackage>
+                            <modelPackage>io.redlink.more.data.api.execution.v1.model</modelPackage>
+                            <modelNameSuffix>DTO</modelNameSuffix>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>garmin-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/GarminAPI.yaml</inputSpec>
+                            <output>${project.build.directory}/generated-sources/garmin</output>
+                            <apiPackage>io.redlink.more.data.api.app.v1.webservices</apiPackage>
+                            <modelPackage>io.redlink.more.data.api.app.v1.model</modelPackage>
+                            <modelNameSuffix>DTO</modelNameSuffix>
+
+                            <configOptions>
+                              <modelMutable>true</modelMutable>
+                              <useBeanValidation>false</useBeanValidation>
+                              <openApiNullable>false</openApiNullable>
+                              <additionalModelTypeAnnotations>
+                                @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+                              </additionalModelTypeAnnotations>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>garmin-wellness-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/GarminWellnessAPI.json</inputSpec>
+                            <output>${project.build.directory}/generated-sources/garmin-wellness</output>
+                            <generatorName>java</generatorName>
+                            <library>resttemplate</library>
+                            <packageName>io.redlink.more.data.garmin.wellness</packageName>
+                            <apiPackage>io.redlink.more.data.garmin.wellness.client</apiPackage>
+                            <modelPackage>io.redlink.more.data.garmin.wellness.model</modelPackage>
+                            <generateSupportingFiles>true</generateSupportingFiles>
+                            <addCompileSourceRoot>true</addCompileSourceRoot>
+                             <modelNameSuffix>DTO</modelNameSuffix>
+
+                            <configOptions>
+                                <dateLibrary>java8</dateLibrary>
+                                <useJakartaEe>true</useJakartaEe>
+                                <serializationLibrary>jackson</serializationLibrary>
+                                <removeOperationIdPrefix>true</removeOperationIdPrefix>
+                                <legacyDiscriminatorBehavior>false</legacyDiscriminatorBehavior>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>custom-model-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/CustomModelAPI.yaml</inputSpec>
+                            <output>${project.build.directory}/generated-sources/custom-model</output>
+                            <generatorName>java</generatorName>
+                            <library>resttemplate</library>
+                            <packageName>io.redlink.more.data.custom</packageName>
+                            <apiPackage>io.redlink.more.data.custom.client</apiPackage>
+                            <modelPackage>io.redlink.more.data.custom.model</modelPackage>
+                            <generateSupportingFiles>true</generateSupportingFiles>
+                            <addCompileSourceRoot>true</addCompileSourceRoot>
+                            <configOptions>
+                                <dateLibrary>java8</dateLibrary>
+                                <useJakartaEe>true</useJakartaEe>
+                                <serializationLibrary>jackson</serializationLibrary>
+                                <removeOperationIdPrefix>true</removeOperationIdPrefix>
+                                <modelMutable>true</modelMutable>
+                              <useBeanValidation>false</useBeanValidation>
+                              <openApiNullable>false</openApiNullable>
+                              <additionalModelTypeAnnotations>
+                                @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+                              </additionalModelTypeAnnotations>
+
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>limesurvey-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/LimeSurveyRemoteControlAPI.yaml</inputSpec>
+                            <output>${project.build.directory}/generated-sources/limesurvey</output>
+                            <generatorName>java</generatorName>
+                            <library>resttemplate</library>
+                            <packageName>io.redlink.more.data.limesurvey</packageName>
+                            <apiPackage>io.redlink.more.data.limesurvey.client</apiPackage>
+                            <modelPackage>io.redlink.more.data.limesurvey.model</modelPackage>
+                            <generateSupportingFiles>true</generateSupportingFiles>
+                            <addCompileSourceRoot>true</addCompileSourceRoot>
+                            <configOptions>
+                                <dateLibrary>java8</dateLibrary>
+                                <useJakartaEe>true</useJakartaEe>
+                                <serializationLibrary>jackson</serializationLibrary>
+                                <removeOperationIdPrefix>true</removeOperationIdPrefix>
+                                <modelMutable>false</modelMutable>
+                                <useBeanValidation>false</useBeanValidation>
+                                <openApiNullable>false</openApiNullable>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                 </executions>
                 <configuration>
                     <generatorName>spring</generatorName>
                     <library>spring-boot</library>
@@ -352,8 +510,7 @@
                     <apiPackage>io.redlink.more.data.api.app.v1.webservices</apiPackage>
 
                     <generateModels>true</generateModels>
-                    <apiPackage>io.redlink.more.data.api.app.v1.model</apiPackage>
-                    <modelNameSuffix>DTO</modelNameSuffix>
+                    <modelPackage>io.redlink.more.data.api.app.v1.model</modelPackage>
 
                     <generateApiTests>false</generateApiTests>
                     <generateApiDocumentation>true</generateApiDocumentation>
@@ -367,6 +524,7 @@
                     <schemaMappings>
                         <schemaMapping>Instant=java.time.Instant</schemaMapping>
                         <schemaMapping>LocalTime=java.time.LocalTime</schemaMapping>
+                        <schemaMapping>HtmlPage=org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody</schemaMapping>
                     </schemaMappings>
                     <importMappings>
                         <importMapping>Instant=java.time.Instant</importMapping>
@@ -380,6 +538,7 @@
                         <interfaceOnly>true</interfaceOnly>
                         <useTags>true</useTags>
                         <openApiNullable>false</openApiNullable>
+                        <annotationLibrary>none</annotationLibrary>
                         <skipDefaultInterface>true</skipDefaultInterface>
                         <requestMappingMode>api_interface</requestMappingMode>
                     </configOptions>
@@ -395,7 +554,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>license-maven-plugin</artifactId>
-                    <version>2.4.0</version>
+                    <version>2.6.0</version>
                     <executions>
                         <execution>
                             <id>generate-third-party</id>
@@ -404,7 +563,8 @@
                             </goals>
                             <phase>generate-resources</phase>
                             <configuration>
-                                <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByLicense.ftl</fileTemplate>
+                                <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByLicense.ftl
+                                </fileTemplate>
                                 <failOnBlacklist>false</failOnBlacklist>
                             </configuration>
                         </execution>
@@ -566,10 +726,14 @@
                                 The 3-Clause BSD License
                                 |BSD-3-Clause
                                 |BSD 3-Clause "New" or "Revised" License
+                                |The BSD 3-Clause License
                                 |BSD License|BSD License 3|BSD New license
                                 |BSD|BSD 3-Clause License|BSD 3-clause
                                 |New BSD License|New BSD license|The New BSD License
                                 |The BSD License
+                                <!-- BSD-3-Clause is a drop-in replacement for EDL 1.0
+                                     see https://www.eclipse.org/org/documents/edl-v10.php
+                                    -->
                                 |Eclipse Distribution License 1.0
                                 |EDL 1.0
                                 |Eclipse Distribution License - v 1.0
@@ -599,7 +763,18 @@
                 <skipTests>true</skipTests>
                 <skipITs>true</skipITs>
             </properties>
-
+        </profile>
+        <profile>
+            <id>apple-silicon</id>
+            <activation>
+                <property>
+                    <name>os.arch</name>
+                    <value>aarch64</value>
+                </property>
+            </activation>
+            <properties>
+                <docker.localArch>arm64</docker.localArch>
+            </properties>
         </profile>
     </profiles>
 

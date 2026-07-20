@@ -8,9 +8,13 @@ spring:
     enabled: false
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DBNAME:more}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:123}
+    username: ${POSTGRES_USER:more}
+    password: ${POSTGRES_PASSWORD:more}
     name: ${POSTGRES_DBNAME:more}
+
+  jackson:
+    # optional properties that are not set should not be included
+    default-property-inclusion: non_null
 
   session:
     store-type: redis
@@ -30,6 +34,16 @@ more:
   gateway:
     baseUrl: ${BASE_URL:}
 
+  login-token:
+    hash-algorithm: ${LOGIN_TOKEN_HASH_ALGORITHM:SHA-256}
+  application:
+    urls:
+      PARTICIPANT_PORTAL: '${PARTICIPANT_PORTAL_URL:http://localhost:3001}'
+  limesurvey:
+    username: '${LIME_ADMIN_USER:more-admin}'
+    password: '${LIME_ADMIN_PWD:more-admin}'
+    baseUrl: '${LIME_BASE_URL:https://lime.platform-test.more.redlink.io}'
+
 elastic:
   host: ${ELASTIC_HOST:localhost}
   port: ${ELASTIC_PORT:9200}
@@ -39,3 +53,13 @@ elastic:
 push-notifications:
   fcm:
     google-service-json: classpath:google-services.json
+
+garmin:
+  oauth:
+    garmin-oauth-url: ${GARMIN_OAUTH_URL:https://connect.garmin.com/oauth2Confirm}
+    garmin-authorize-url: ${GARMIN_AUTHORIZE_URL:https://diauth.garmin.com/di-oauth2-service/oauth/token}
+    client-id: ${GARMIN_CLIENT_ID:}
+    client-secret: ${GARMIN_CLIENT_SECRET:}
+    garmin-callback-redirect-uri: ${GARMIN_CALLBACK_REDIRECT_URI:}
+    redirect-url: ${REDIRECT_URL:}
+  token-refresh: 0 5 4 1 * ? #check for tokens to be updates every first of month at 04:05

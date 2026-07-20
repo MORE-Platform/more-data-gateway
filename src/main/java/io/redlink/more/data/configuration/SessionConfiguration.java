@@ -13,7 +13,6 @@ import org.springframework.security.jackson2.SecurityJackson2Modules;
 
 @Configuration
 public class SessionConfiguration {
-
     @Bean
     public RedisSerializer<Object> springSessionRedisSerializer() {
         return new GenericJackson2JsonRedisSerializer(sessionObjectMapper());

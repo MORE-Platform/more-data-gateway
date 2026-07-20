@@ -5,8 +5,8 @@ info:
     This describes the datastructures of the TimeSeries stored in ElasticSearch
   version: v1
 
-servers: []
-paths: {}
+servers: [ ]
+paths: { }
 
 components:
   schemas:
@@ -19,11 +19,11 @@ components:
           type: string
           format: uuid
         participantId:
-          $ref: '#/components/schemas/Id'
+          $ref: 'src/main/resources/openapi/BaseComponents.yaml#/components/schemas/Id'
         studyId:
-          $ref: '#/components/schemas/Id'
+          $ref: 'src/main/resources/openapi/BaseComponents.yaml#/components/schemas/Id'
         moduleId:
-          $ref: '#/components/schemas/Id'
+          $ref: 'src/main/resources/openapi/BaseComponents.yaml#/components/schemas/Id'
         moduleType:
           type: string
         dataType:
@@ -84,7 +84,7 @@ components:
           maximum: 90
         longitude:
           description:
-            geographical longitude east or west of Greenwich, England, in `degrees`. 
+            geographical longitude east or west of Greenwich, England, in `degrees`.
             Negative values indicate `West`.
           type: number
           format: double
@@ -115,6 +115,3 @@ components:
       required: [ datetime ]
       externalDocs:
         url: https://www.openmhealth.org/documentation/#/schema-docs/schema-library/schemas/omh_date-time
-
-    Id:
-      type: string

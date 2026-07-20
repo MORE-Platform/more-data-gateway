@@ -1,0 +1,104 @@
+openapi: 3.0.3
+info:
+  title: ObservationExecutionAPI
+  description: Provides data or redirects for given observations
+  version: 1.0.0
+
+servers:
+  - url: /api/v1/execution
+
+tags:
+  - name: Execution
+
+paths:
+  /observation/{observation-id}/:
+    get:
+      operationId: execObservation
+      description: Executes provided observation and schedule, like redirecting to a lime survey
+      tags:
+        - Execution
+      parameters:
+        - $ref: '#/components/parameters/ObservationId'
+        - $ref: '#/components/parameters/ScheduleStart'
+        - $ref: '#/components/parameters/ScheduleEnd'
+        - $ref: '#/components/parameters/Redirect'
+      responses:
+        '200':
+          description: OK
+        '204':
+          description: No Content
+        '302':
+          description: Found
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '409':
+          description: Observation with schedule already done
+
+  /callback:
+    get:
+      operationId: callback
+      description: Callback route used by a service to redirect back to the initial application
+      tags:
+        - Execution
+      responses:
+        '200':
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: string
+        '302':
+          description: Found
+        '403':
+          description: Forbidden
+
+  /callback/end.htm:
+    get:
+      operationId: callbackEndHtm
+      description: Backward compatible callback route for legacy applications
+      tags:
+        - Execution
+      responses:
+        '200':
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: string
+        '302':
+          description: Found
+        '403':
+          description: Forbidden
+
+components:
+  parameters:
+    ObservationId:
+      name: observation-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The required observation id of the observation
+    ScheduleStart:
+      name: schedule-start
+      in: query
+      required: true
+      schema:
+        type: string
+      description: The start date and time of the schedule
+    ScheduleEnd:
+      name: schedule-end
+      in: query
+      required: true
+      schema:
+        type: string
+      description: The end date and time of the schedule
+    Redirect:
+      name: redirect
+      in: query
+      required: false
+      schema:
+        type: string
+      description: The redirect URL (base URI) to redirect back to

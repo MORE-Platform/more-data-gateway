@@ -6,7 +6,7 @@
  * Foerderung der wissenschaftlichen Forschung).
  * Licensed under the Elastic License 2.0.
  */
-package io.redlink.more.data.schedule;
+package io.redlink.more.data.util;
 
 import biweekly.component.VEvent;
 import biweekly.util.DayOfWeek;
@@ -14,23 +14,29 @@ import biweekly.util.Frequency;
 import biweekly.util.Recurrence;
 import biweekly.util.com.google.ical.compat.javautil.DateIterator;
 import io.redlink.more.data.model.Observation;
-import io.redlink.more.data.model.scheduler.*;
+import io.redlink.more.data.model.ParticipantObservationSeed;
+import io.redlink.more.data.model.scheduler.Event;
+import io.redlink.more.data.model.scheduler.RecurrenceRule;
+import io.redlink.more.data.model.scheduler.RelativeDate;
+import io.redlink.more.data.model.scheduler.RelativeEvent;
+import io.redlink.more.data.model.scheduler.RelativeRecurrenceRule;
+import io.redlink.more.data.model.scheduler.ScheduleEvent;
 import org.apache.commons.lang3.Range;
 
 import java.sql.Date;
-import java.time.*;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.TimeZone;
 
 public class SchedulerUtils {
 
-    public static Instant getEnd(RelativeEvent event, Instant start, Instant end) {
-        return parseToObservationSchedulesForRelativeEvent(event, start, end)
-                .stream().map(Range::getMaximum).max(Instant::compareTo).orElse(null);
-    }
-
     public static List<Range<Instant>> parseToObservationSchedulesForRelativeEvent(
-            RelativeEvent event, Instant start, Instant maxEnd) {
+            RelativeEvent event, Instant start) {
 
         final List<Range<Instant>> events = new ArrayList<>();
 
@@ -42,13 +48,12 @@ public class SchedulerUtils {
         if (event.getRrrule() != null) {
             RelativeRecurrenceRule rrule = event.getRrrule();
             Instant maxEndOfRule = currentEvt.getMaximum().plus(rrule.getEndAfter().getValue(), rrule.getEndAfter().getUnit().toTemporalUnit());
-            maxEnd = maxEnd.isBefore(maxEndOfRule) ? maxEnd : maxEndOfRule;
             long durationInMs = currentEvt.getMaximum().toEpochMilli() - currentEvt.getMinimum().toEpochMilli();
 
-            while (currentEvt.getMaximum().isBefore(maxEnd)) {
+            while (currentEvt.getMaximum().isBefore(maxEndOfRule)) {
                 events.add(currentEvt);
-                Instant estart = currentEvt.getMinimum().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toTemporalUnit());
-                currentEvt = Range.of(estart, estart.plusMillis(durationInMs));
+                Instant eventStart = currentEvt.getMinimum().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toTemporalUnit());
+                currentEvt = Range.of(eventStart, eventStart.plusMillis(durationInMs));
             }
         } else {
             events.add(currentEvt);
@@ -85,15 +90,15 @@ public class SchedulerUtils {
         return List.copyOf(observationSchedules);
     }
 
-    public static List<Range<Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, Instant start, Instant end) {
+    public static List<Range<Instant>> parseToObservationSchedules(ParticipantObservationSeed participantObservationSeed, ScheduleEvent scheduleEvent, Instant start, Instant end) {
         if (scheduleEvent == null) return Collections.emptyList();
+        List<Range<Instant>> ranges = Collections.emptyList();
         if (scheduleEvent instanceof Event event) {
-            return parseToObservationSchedulesForEvent(event, start, end);
+            ranges = parseToObservationSchedulesForEvent(event, start, end);
         } else if (scheduleEvent instanceof RelativeEvent relativeEvent) {
-            return parseToObservationSchedulesForRelativeEvent(relativeEvent, start, end);
-        } else {
-            return Collections.emptyList();
+            ranges = parseToObservationSchedulesForRelativeEvent(relativeEvent, start);
         }
+        return randomSchedule(participantObservationSeed, scheduleEvent, ranges);
     }
 
     public static Instant shiftStartIfObservationAlreadyEnded(Instant start, List<Observation> observations) {
@@ -171,5 +176,16 @@ public class SchedulerUtils {
 
     private static void setByMonthDay(Recurrence.Builder builder, Integer byMonthDay) {
         if (byMonthDay != null) builder.byMonthDay(byMonthDay);
+    }
+
+    public static List<Range<Instant>> randomSchedule(ParticipantObservationSeed participantObservationSeeds, ScheduleEvent event, List<Range<Instant>> ranges) {
+        if (participantObservationSeeds == null || participantObservationSeeds.seed() == null || event.getRandomization() == null || !event.getRandomization().state() || event.getRandomization().duration() <= 0) {
+            return ranges;
+        }
+        if (ranges == null || ranges.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Long durationInSeconds = event.getRandomization().duration() * 60L;
+        return RandomSchedulerUtils.parseScheduleWithSeed(participantObservationSeeds.seed(), ranges, durationInSeconds);
     }
 }

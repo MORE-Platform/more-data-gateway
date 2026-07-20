@@ -38,3 +38,5 @@ build/
 /loadtest/cwa-convert
 /loadtest/config.json
 /loadtest/out
+
+.env

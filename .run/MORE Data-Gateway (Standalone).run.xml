@@ -1,7 +1,11 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="MORE Data-Gateway (Standalone)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="ACTIVE_PROFILES" value="standalone" />
-    <module name="more-data-gateway" />
+    <module name="data-gateway" />
+    <option name="PASS_PARENT_ENVS" value="false" />
+    <selectedOptions>
+      <option name="environmentVariables" />
+    </selectedOptions>
     <option name="SPRING_BOOT_MAIN_CLASS" value="io.redlink.more.data.MoreDataGatewayApplication" />
     <method v="2">
       <option name="Make" enabled="true" />

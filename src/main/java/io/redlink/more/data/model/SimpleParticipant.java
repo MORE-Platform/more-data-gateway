@@ -16,4 +16,5 @@ public record SimpleParticipant(
         Instant start,
         Instant end
 ) {
+
 }

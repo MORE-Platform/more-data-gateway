@@ -1,11 +1,13 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="MORE Data-Gateway" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="ALTERNATIVE_JRE_PATH" value="homebrew-17" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <envs>
-      <env name="POSTGRES_DBNAME" value="more" />
-      <env name="POSTGRES_PASSWORD" value="more" />
-      <env name="POSTGRES_USER" value="more" />
       <env name="SERVER_PORT" value="8085" />
     </envs>
+    <option name="envFilePaths">
+      <option value="$PROJECT_DIR$/.env" />
+    </option>
     <module name="data-gateway" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="io.redlink.more.data.MoreDataGatewayApplication" />
     <extension name="net.ashald.envfile">

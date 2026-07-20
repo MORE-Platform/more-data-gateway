@@ -9,14 +9,17 @@ import io.redlink.more.data.api.app.v1.model.ExternalDataDTO;
 import io.redlink.more.data.api.app.v1.model.ObservationDataDTO;
 import io.redlink.more.data.model.ApiRoutingInfo;
 import io.redlink.more.data.model.DataPoint;
+import io.redlink.more.data.util.MapperUtils;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public final class DataTransformer {
 
-    private DataTransformer() {}
+    private DataTransformer() {
+    }
 
     public static List<DataPoint> createDataPoints(DataBulkDTO bulk) {
         final Instant recordingTime = Instant.now();
@@ -34,7 +37,8 @@ public final class DataTransformer {
                 dataPoint.getObservationType(),
                 recordingTime,
                 dateTime,
-                dataPoint.getDataValue());
+                MapperUtils.convertValue(dataPoint.getDataValue(), Map.class)
+        );
     }
 
     public static List<DataPoint> createDataPoints(EndpointDataBulkDTO bulk, ApiRoutingInfo routingInfo, Integer observationId) {

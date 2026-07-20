@@ -1,0 +1,694 @@
+openapi: 3.1.1
+info:
+  title: Garmin API
+  description: |
+    API for the Garmin Connect API to send data to the MORE platform
+    **Security:** Controller need to implement CORS, to limit the requests to `api.garmin.com`
+  version: '1'
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: GarminUserManagement
+    description: Endpoints to receive user information from Garmin Connect
+
+paths:
+  /integrations/garmin/user:
+    post:
+      operationId: deleteGarminUser
+      description: Delete a Garmin user
+      tags:
+        - GarminUserManagement
+      parameters:
+        - name: user-agent
+          in: header
+          required: false
+          schema:
+            type: string
+          description: User agent of the client making the request
+        - name: garmin-client-id
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Garmin client identifier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeregistrationRequest'
+      responses:
+        '200':
+          description: User deleted successfully
+        '400':
+          description: Invalid request
+      security: [ ]
+
+  /integrations/garmin/user/permissions:
+    post:
+      operationId: updateGarminUserPermissions
+      description: Update permissions of a Garmin user
+      tags:
+        - GarminUserManagement
+      parameters:
+        - name: user-agent
+          in: header
+          required: false
+          schema:
+            type: string
+          description: User agent of the client making the request
+        - name: garmin-client-id
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Garmin client identifier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePermissionsRequest'
+      responses:
+        '200':
+          description: Permissions updated successfully
+        '400':
+          description: Invalid request
+      security: [ ]
+
+  /integrations/garmin/summaries:
+    post:
+      operationId: submitSummaries
+      description: Submit summaries from Garmin user (dailies, epochs, hrv, sleep, pulseox, stress)
+      tags:
+        - GarminUserManagement
+      parameters:
+        - name: user-agent
+          in: header
+          required: false
+          schema:
+            type: string
+          description: User agent of the client making the request
+        - name: garmin-client-id
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Garmin client identifier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SummariesRequest'
+      responses:
+        '200':
+          description: Summaries processed successfully
+        '400':
+          description: Invalid request
+      security: [ ]
+
+components:
+  schemas:
+    DeregistrationRequest:
+      description: Deregistration of a Garmin user
+      type: object
+      properties:
+        deregistrations:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeregistrationItem'
+
+    DeregistrationItem:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The unique identifier of the user to be deregistered
+      required:
+        - userId
+
+    UpdatePermissionsRequest:
+      description: Updated permissions of a Garmin user
+      type: object
+      properties:
+        userPermissionsChange:
+          type: array
+          default: [ ]
+          items:
+            $ref: '#/components/schemas/UserPermissionChange'
+
+    UserPermissionChange:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The unique identifier of the user
+        summaryId:
+          type: string
+          description: Summary identifier
+        permissions:
+          type: array
+          items:
+            type: string
+          description: List of permission types
+          default: [ ]
+        changeTimeInSeconds:
+          type: integer
+          format: int64
+          description: Timestamp of when the permissions changed
+    SummariesRequest:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: object
+          additionalProperties:
+            type: object
+      description: |
+        Dynamic object where each property is an array of summary data.
+        Property names can be: dailies, epochs, hrv, sleeps, pulseox, stressDetails, or any other summary type.
+        Each item in the array must contain userId and can have any additional properties.
+
+    # Garmin Summary Models for future development
+    DailySummariesRequest:
+      type: object
+      properties:
+        dailies:
+          type: array
+          default: [ ]
+          items:
+            $ref: '#/components/schemas/DailySummary'
+
+    DailySummary:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The unique identifier of the user
+        summaryId:
+          type: string
+          description: Unique identifier for the daily summary
+        calendarDate:
+          type: string
+          format: date
+          description: Date of the summary (YYYY-MM-DD)
+        activityType:
+          type: string
+          default: "GENERIC"
+          enum: [ WALKING, RUNNING, WHEELCHAIR_PUSHING, SEDENTARY, GENERIC, SLEEP ]
+        activeKilocalories:
+          type: integer
+          description: Active kilocalories burned
+        bmrKilocalories:
+          type: integer
+          description: BMR (Basal Metabolic Rate) kilocalories
+        steps:
+          type: integer
+          description: Number of steps
+        pushes:
+          type: integer
+          description: Number of pushes (wheelchair)
+        distanceInMeters:
+          type: number
+          format: double
+          description: Distance traveled in meters
+        pushDistanceInMeters:
+          type: number
+          format: double
+          description: Push distance in meters (wheelchair)
+        durationInSeconds:
+          type: integer
+          format: int64
+          description: Total duration in seconds
+        activeTimeInSeconds:
+          type: integer
+          format: int64
+          description: Active time in seconds
+        startTimeInSeconds:
+          type: integer
+          format: int64
+          description: Start time as Unix timestamp
+        startTimeOffsetInSeconds:
+          type: integer
+          description: Timezone offset in seconds
+        moderateIntensityDurationInSeconds:
+          type: integer
+          format: int64
+          description: Duration of moderate intensity activity in seconds
+        vigorousIntensityDurationInSeconds:
+          type: integer
+          format: int64
+          description: Duration of vigorous intensity activity in seconds
+        floorsClimbed:
+          type: integer
+          description: Number of floors climbed
+        minHeartRateInBeatsPerMinute:
+          type: integer
+          description: Minimum heart rate in BPM
+        maxHeartRateInBeatsPerMinute:
+          type: integer
+          description: Maximum heart rate in BPM
+        averageHeartRateInBeatsPerMinute:
+          type: integer
+          description: Average heart rate in BPM
+        restingHeartRateInBeatsPerMinute:
+          type: integer
+          description: Resting heart rate in BPM
+        timeOffsetHeartRateSamples:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Heart rate samples keyed by time offset
+        stepsGoal:
+          type: integer
+          description: Daily steps goal
+        pushesGoal:
+          type: integer
+          description: Daily pushes goal
+        intensityDurationGoalInSeconds:
+          type: integer
+          format: int64
+          description: Daily intensity duration goal in seconds
+        floorsClimbedGoal:
+          type: integer
+          description: Daily floors climbed goal
+        averageStressLevel:
+          type: integer
+          description: Average stress level
+        maxStressLevel:
+          type: integer
+          description: Maximum stress level
+        stressDurationInSeconds:
+          type: integer
+          format: int64
+          description: Total stress duration in seconds
+        restStressDurationInSeconds:
+          type: integer
+          format: int64
+          description: Rest stress duration in seconds
+        activityStressDurationInSeconds:
+          type: integer
+          format: int64
+          description: Activity stress duration in seconds
+        lowStressDurationInSeconds:
+          type: integer
+          format: int64
+          description: Low stress duration in seconds
+        mediumStressDurationInSeconds:
+          type: integer
+          format: int64
+          description: Medium stress duration in seconds
+        highStressDurationInSeconds:
+          type: integer
+          format: int64
+          description: High stress duration in seconds
+        bodyBatteryChargedValue:
+          type: integer
+          description: Body battery charged value
+        bodyBatteryDrainedValue:
+          type: integer
+          description: Body battery drained value
+      required:
+        - userId
+        - summaryId
+
+    EpochSummariesRequest:
+      type: object
+      properties:
+        epochs:
+          type: array
+          items:
+            $ref: '#/components/schemas/EpochSummary'
+
+    EpochSummary:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The unique identifier of the user
+        summaryId:
+          type: string
+          description: Unique identifier for the epoch summary
+        activityType:
+          type: string
+          enum: [ WALKING, RUNNING, WHEELCHAIR_PUSHING, SEDENTARY, GENERIC, SLEEP ]
+          default: "GENERIC"
+          description: Type of activity (e.g., WHEELCHAIR_PUSHING, SEDENTARY)
+        activeKilocalories:
+          type: integer
+          description: Active kilocalories burned
+        steps:
+          type: integer
+          description: Number of steps
+        pushes:
+          type: integer
+          description: Number of pushes (wheelchair)
+        distanceInMeters:
+          type: number
+          format: double
+          description: Distance traveled in meters
+        pushDistanceInMeters:
+          type: number
+          format: double
+          description: Push distance in meters (wheelchair)
+        durationInSeconds:
+          type: integer
+          format: int64
+          description: Total duration in seconds
+        activeTimeInSeconds:
+          type: integer
+          format: int64
+          description: Active time in seconds
+        startTimeInSeconds:
+          type: integer
+          format: int64
+          description: Start time as Unix timestamp
+        startTimeOffsetInSeconds:
+          type: integer
+          description: Timezone offset in seconds
+        met:
+          type: number
+          format: double
+          description: Metabolic equivalent of task (MET)
+        intensity:
+          type: string
+          enum: [ SEDENTARY, ACTIVE, HIGHLY_ACTIVE ]
+          description: Intensity level (e.g., ACTIVE, SEDENTARY)
+        meanMotionIntensity:
+          type: number
+          format: double
+          description: Mean motion intensity
+        maxMotionIntensity:
+          type: number
+          format: double
+          description: Maximum motion intensity
+      required:
+        - userId
+        - summaryId
+
+    HrvDataRequest:
+      type: object
+      properties:
+        hrv:
+          type: array
+          items:
+            $ref: '#/components/schemas/HrvData'
+
+    HrvData:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The unique identifier of the user
+        summaryId:
+          type: string
+          description: Unique identifier for the HRV summary
+        calendarDate:
+          type: string
+          format: date
+          description: Date of the HRV data (YYYY-MM-DD)
+        lastNightAvg:
+          type: integer
+          description: Average HRV from last night
+        lastNight5MinHigh:
+          type: integer
+          description: Highest 5-minute average HRV from last night
+        startTimeOffsetInSeconds:
+          type: integer
+          description: Timezone offset in seconds
+        durationInSeconds:
+          type: integer
+          format: int64
+          description: Total duration in seconds
+        startTimeInSeconds:
+          type: integer
+          format: int64
+          description: Start time as Unix timestamp
+        hrvValues:
+          type: object
+          additionalProperties:
+            type: integer
+          description: HRV values keyed by time offset in seconds
+      required:
+        - userId
+        - summaryId
+
+    SleepSummariesRequest:
+      type: object
+      properties:
+        sleeps:
+          type: array
+          items:
+            $ref: '#/components/schemas/SleepSummary'
+
+    SleepSummary:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The unique identifier of the user
+        summaryId:
+          type: string
+          description: Unique identifier for the sleep summary
+        calendarDate:
+          type: string
+          format: date
+          description: Date of the sleep data (YYYY-MM-DD)
+        durationInSeconds:
+          type: integer
+          format: int64
+          description: Total sleep duration in seconds
+        totalNapDurationInSeconds:
+          type: integer
+          format: int64
+          description: Total nap duration in seconds
+        startTimeInSeconds:
+          type: integer
+          format: int64
+          description: Sleep start time as Unix timestamp
+        startTimeOffsetInSeconds:
+          type: integer
+          description: Timezone offset in seconds
+        unmeasurableSleepInSeconds:
+          type: integer
+          format: int64
+          description: Duration of unmeasurable sleep in seconds
+        deepSleepDurationInSeconds:
+          type: integer
+          format: int64
+          description: Deep sleep duration in seconds
+        lightSleepDurationInSeconds:
+          type: integer
+          format: int64
+          description: Light sleep duration in seconds
+        remSleepInSeconds:
+          type: integer
+          format: int64
+          description: REM sleep duration in seconds
+        awakeDurationInSeconds:
+          type: integer
+          format: int64
+          description: Awake duration in seconds
+        validation:
+          type: string
+          description: Validation type (e.g., AUTO_FINAL, MANUAL, DEVICE)
+        timeOffsetSleepSpo2:
+          type: object
+          additionalProperties:
+            type: integer
+          description: SpO2 values during sleep keyed by time offset in seconds
+        overallSleepScore:
+          $ref: '#/components/schemas/SleepScore'
+        sleepScores:
+          $ref: '#/components/schemas/SleepScoreBreakdown'
+        naps:
+          type: array
+          items:
+            $ref: '#/components/schemas/NapData'
+          description: List of naps during the day
+      required:
+        - userId
+        - summaryId
+
+    SleepScore:
+      type: object
+      properties:
+        value:
+          type: integer
+          description: Numeric sleep score value
+        qualifierKey:
+          type: string
+          enum: [ EXCELLENT, GOOD, FAIR, POOR ]
+          description: Qualitative sleep score (e.g., EXCELLENT, GOOD, FAIR, POOR)
+
+    SleepScoreBreakdown:
+      type: object
+      properties:
+        totalDuration:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        stress:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        awakeCount:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        remPercentage:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        restlessness:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        lightPercentage:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+        deepPercentage:
+          $ref: '#/components/schemas/SleepScoreQualifier'
+
+    SleepScoreQualifier:
+      type: object
+      properties:
+        qualifierKey:
+          type: string
+          description: Qualitative score (e.g., EXCELLENT, GOOD, FAIR, POOR)
+
+    NapData:
+      type: object
+      properties:
+        napStartTimeInSeconds:
+          type: integer
+          format: int64
+          description: Nap start time as Unix timestamp
+        napOffsetInSeconds:
+          type: integer
+          description: Timezone offset in seconds for the nap
+        napDurationInSeconds:
+          type: integer
+          format: int64
+          description: Nap duration in seconds
+        napValidation:
+          type: string
+          description: Validation type for the nap (e.g., MANUAL, DEVICE, AUTO_FINAL)
+
+    PulseOxSummariesRequest:
+      type: object
+      properties:
+        pulseox:
+          type: array
+          items:
+            $ref: '#/components/schemas/PulseOxSummary'
+
+    PulseOxSummary:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The unique identifier of the user
+        summaryId:
+          type: string
+          description: Unique identifier for the Pulse Ox summary
+        calendarDate:
+          type: string
+          format: date
+          description: Date of the Pulse Ox data (YYYY-MM-DD)
+        startTimeInSeconds:
+          type: integer
+          format: int64
+          description: Start time as Unix timestamp
+        durationInSeconds:
+          type: integer
+          format: int64
+          description: Total duration in seconds
+        startTimeOffsetInSeconds:
+          type: integer
+          description: Timezone offset in seconds
+        timeOffsetSpo2Values:
+          type: object
+          additionalProperties:
+            type: integer
+          description: SpO2 values keyed by time offset in seconds
+        onDemand:
+          type: boolean
+          description: Whether this was an on-demand measurement
+      required:
+        - userId
+        - summaryId
+
+    StressSummariesRequest:
+      type: object
+      properties:
+        stressDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/StressSummary'
+
+    StressSummary:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The unique identifier of the user
+        summaryId:
+          type: string
+          description: Unique identifier for the stress summary
+        startTimeInSeconds:
+          type: integer
+          format: int64
+          description: Start time as Unix timestamp
+        startTimeOffsetInSeconds:
+          type: integer
+          description: Timezone offset in seconds
+        durationInSeconds:
+          type: integer
+          format: int64
+          description: Total duration in seconds
+        calendarDate:
+          type: string
+          format: date
+          description: Date of the stress data (YYYY-MM-DD)
+        timeOffsetStressLevelValues:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Stress level values keyed by time offset in seconds
+        timeOffsetBodyBatteryValues:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Body battery values keyed by time offset in seconds
+        bodyBatteryDynamicFeedbackEvent:
+          $ref: '#/components/schemas/BodyBatteryDynamicFeedbackEvent'
+        bodyBatteryActivityEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/BodyBatteryActivityEvent'
+          description: List of body battery activity events
+      required:
+        - userId
+        - summaryId
+
+    BodyBatteryDynamicFeedbackEvent:
+      type: object
+      properties:
+        eventStartTimeInSeconds:
+          type: integer
+          format: int64
+          description: Event start time as Unix timestamp
+        bodyBatteryLevel:
+          type: string
+          description: Body battery level (e.g., LOW, MODERATE, HIGH)
+
+    BodyBatteryActivityEvent:
+      type: object
+      properties:
+        eventType:
+          type: string
+          description: Type of event (e.g., NAP, SLEEP, ACTIVITY)
+        eventStartTimeInSeconds:
+          type: integer
+          format: int64
+          description: Event start time as Unix timestamp
+        eventStartTimeOffsetInSeconds:
+          type: integer
+          description: Timezone offset in seconds for the event
+        durationInSeconds:
+          type: integer
+          format: int64
+          description: Duration of the event in seconds
+        bodyBatteryImpact:
+          type: integer
+          description: Impact on body battery (positive or negative)

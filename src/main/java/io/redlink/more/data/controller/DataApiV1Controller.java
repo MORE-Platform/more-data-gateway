@@ -19,7 +19,6 @@ import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.service.ElasticService;
 import io.redlink.more.data.service.GatewayUserDetailService;
 import io.redlink.more.data.util.LoggingUtils;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -28,6 +27,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
+import java.util.List;
 
 @Controller
 @RestController
@@ -57,9 +59,14 @@ public class DataApiV1Controller implements DataApi {
         final RoutingInfo routingInfo = userDetails.getRoutingInfo();
         try (LoggingUtils.LoggingContext ctx = LoggingUtils.createContext(userDetails.getRoutingInfo())) {
             if (routingInfo.acceptData()) {
-                final List<String> storedIDs = elasticService.storeDataPoints(
-                        DataTransformer.createDataPoints(dataBulkDTO), routingInfo);
-                return ResponseEntity.ok(storedIDs);
+                try {
+                    final List<String> storedIDs = elasticService.storeDataPoints(
+                            DataTransformer.createDataPoints(dataBulkDTO), routingInfo);
+                    return ResponseEntity.ok(storedIDs);
+                } catch (IOException e) {
+                    LOG.error("IOException storing data points: {}", e.toString());
+                    return ResponseEntity.status(500).build();
+                }
             } else {
                 final List<String> discardedIDs = dataBulkDTO.getDataPoints().stream()
                         .map(ObservationDataDTO::getDataId)

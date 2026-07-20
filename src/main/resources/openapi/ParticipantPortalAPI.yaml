@@ -1,0 +1,125 @@
+openapi: 3.0.3
+info:
+  title: Participant Portal API
+  description: Participant Portal API
+  version: 1.0.0
+servers:
+  - url: /participant-portal/api/v1
+
+tags:
+  - name: Authorization
+    description: |
+      Login endpoints to authorize the user.
+  - name: Configuration
+    description: |
+      Accessing data like study configurations, observation data and schedules
+
+paths:
+  /login/{more-study-id}/{more-user-data-reference}:
+    post:
+      operationId: participantLogin
+      description: Login the participant with the login code
+      tags:
+        - Authorization
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - $ref: '#/components/parameters/UserDataReference'
+        - $ref: '#/components/parameters/LoginCode'
+      responses:
+        '204':
+          description: Success
+        '401':
+          description: 'Unauthorized'
+  /logout:
+    post:
+      operationId: participantLogout
+      description: Logout the current participant
+      tags:
+        - Authorization
+      responses:
+        '204':
+          description: Successfully logged out
+        '403':
+          description: Forbidden
+
+  /consent:
+    get:
+      operationId: retrieveConsentData
+      description: Query study information to create consent
+      tags:
+        - Authorization
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: 'BaseComponents.yaml#/components/schemas/Study'
+        '403':
+          description: 'Forbidden'
+        '404':
+          description: 'Data not found'
+        '409':
+          description: 'Consent was already accepted'
+
+    post:
+      operationId: acceptConsent
+      description: Sends the accepted user consent and returns with a redirect
+      tags:
+        - Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'BaseComponents.yaml#/components/schemas/StudyConsent'
+      responses:
+        '204':
+          description: OK
+        '403':
+          description: 'Forbidden'
+        '409':
+          description: 'Consent was already accepted'
+
+  /config/study:
+    get:
+      operationId: getStudyConfiguration
+      description: Loads study-, observation and schedule information
+      tags:
+        - Configuration
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: 'BaseComponents.yaml#/components/schemas/Study'
+        '403':
+          description: 'Forbidden'
+        '404':
+          description: 'Study not found'
+
+components:
+  parameters:
+    LoginCode:
+      name: more-login-code
+      in: header
+      required: true
+      schema:
+        type: string
+      description: The login token encrypted in base64
+    StudyId:
+      name: more-study-id
+      in: path
+      description: The unique identifier of the study
+      required: true
+      schema:
+        type: integer
+        format: int64
+    UserDataReference:
+      name: more-user-data-reference
+      in: path
+      description: A unique identifier for an action or dataquey
+      schema:
+        type: string
+      required: true
