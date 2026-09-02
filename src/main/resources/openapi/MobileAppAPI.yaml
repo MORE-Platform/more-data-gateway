@@ -21,6 +21,11 @@ tags:
       Provides information about the study signup
   - name: GarminRegistration
     description: Endpoints to register for Garmin Connect using OAuth
+  - name: AppApplications
+    description: Endpoints to manage applications
+  - name: Milestones
+    description: |
+      Endpoints to receive participant milestones
 
 externalDocs:
   url: https://github.com/MORE-Platform
@@ -259,6 +264,18 @@ paths:
           description: deleted successfully
         '400':
           description: not found
+
+  /milestones:
+    get:
+      operationId: listMilestones
+      tags:
+        - Milestones
+      responses:
+        '200':
+          $ref: '#/components/responses/ParticipantMilestoneListResponse'
+        '401':
+          $ref: 'BaseComponents.yaml#/components/responses/UnauthorizedApiKey'
+
   /data/bulk:
     post:
       operationId: storeBulk
@@ -281,6 +298,25 @@ paths:
                   $ref: 'BaseComponents.yaml#/components/schemas/Id'
         '401':
           $ref: 'BaseComponents.yaml#/components/responses/UnauthorizedApiKey'
+  /applications/{applicationName}:
+    get:
+      operationId: getApplicationUrl
+      description: Queries the URL for a desired application
+      tags:
+        - AppApplications
+      parameters:
+        - name: applicationName
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          $ref: '#/components/responses/ApplicationAccessUrlResponse'
+        '401':
+          $ref: 'BaseComponents.yaml#/components/responses/UnauthorizedApiKey'
+        '404':
+          description: application not found
 components:
   schemas:
     PushNotification:
@@ -397,13 +433,29 @@ components:
           $ref: 'BaseComponents.yaml#/components/schemas/Id'
         observationId:
           type: string
+          pattern: '^[\w-]+$'
+          description: |
+            The id of the observation. Unique within the context of the current study.
+        instanceId:
+          type: string
+          description: |
+            The id of the instance. Only present if the user can create multiple instance of the same observation
+            and the sent data belongs to one specific of such instances.
         observationType:
           type: string
+          pattern: '^[\w-]+$'
+          description: the type of the observation
+        dataType:
+          type: string
+          pattern: '^[\w-]+$'
+          description: the type of the dataValue. Needed of a observation type defines data values of different types
         dataValue:
           type: object
+          description: the data of the observation. A JSON object specific to the obserationType and/or dataType
         timestamp:
           type: string
           format: date-time
+          description: the effective time when the observation was recorded
       required:
         - dataId
         - observationId
@@ -421,6 +473,27 @@ components:
       required:
         - code
         - state
+
+    ParticipantMilestone:
+      type: object
+      description: This shows the milestone of a single participant
+      properties:
+        participantMilestoneId:
+          type: integer
+        milestoneId:
+          type: integer
+        name:
+          type: string
+          readOnly: true
+          description: The name of the referenced Milestone
+        dateTime:
+          type: string
+          format: date-time
+      required:
+        - participantMilestoneId
+        - milestoneId
+        - name
+        - dateTime
 
     Error:
       description: Generic Error
@@ -469,6 +542,25 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+
+    ApplicationAccessUrlResponse:
+      description: The URL to access the application
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              url:
+                type: string
+
+    ParticipantMilestoneListResponse:
+      description: A list of participant milestones
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ParticipantMilestone'
 
   securitySchemes:
     apiKey:
