@@ -45,6 +45,16 @@ class ParticipantMilestoneRepositoryIT {
     @BeforeEach
     void initSchema() {
         jdbcTemplate.execute("DROP TABLE IF EXISTS participant_milestones");
+        jdbcTemplate.execute("DROP TABLE IF EXISTS milestones");
+        jdbcTemplate.execute(
+                "CREATE TABLE milestones (" +
+                        "study_id BIGINT NOT NULL, " +
+                        "milestone_id INTEGER NOT NULL, " +
+                        "name VARCHAR NOT NULL, " +
+                        "order_index INTEGER NOT NULL, " +
+                        "created TIMESTAMP NOT NULL DEFAULT now(), " +
+                        "CONSTRAINT pk_milestones PRIMARY KEY (study_id, milestone_id)" +
+                        ")");
         jdbcTemplate.execute(
                 "CREATE TABLE participant_milestones (" +
                         "study_id BIGINT NOT NULL, " +
@@ -54,7 +64,8 @@ class ParticipantMilestoneRepositoryIT {
                         "date_time TIMESTAMP NOT NULL, " +
                         "created TIMESTAMP NOT NULL DEFAULT now(), " +
                         "modified TIMESTAMP NOT NULL DEFAULT now(), " +
-                        "CONSTRAINT pk_participant_milestones PRIMARY KEY (study_id, participant_id, milestone_id)" +
+                        "CONSTRAINT pk_participant_milestones PRIMARY KEY (study_id, participant_id, milestone_id), " +
+                        "CONSTRAINT fk_participant_milestones_milestone FOREIGN KEY (study_id, milestone_id) REFERENCES milestones(study_id, milestone_id)" +
                         ")");
     }
 
@@ -64,7 +75,11 @@ class ParticipantMilestoneRepositoryIT {
         int participantId = 101;
         int milestoneId = 1;
         Instant dateTime = Instant.parse("2024-06-15T14:00:00Z");
+        String milestoneName = "Baseline";
 
+        jdbcTemplate.update(
+                "INSERT INTO milestones(study_id, milestone_id, name, order_index) VALUES (?, ?, ?, ?)",
+                studyId, milestoneId, milestoneName, 1);
         jdbcTemplate.update(
                 "INSERT INTO participant_milestones(study_id, participant_id, milestone_id, participant_milestone_id, date_time) VALUES (?, ?, ?, ?, ?)",
                 studyId, participantId, milestoneId, 1, java.sql.Timestamp.from(dateTime));
@@ -75,10 +90,71 @@ class ParticipantMilestoneRepositoryIT {
         assertThat(result.get().participantId()).isEqualTo(participantId);
         assertThat(result.get().milestoneId()).isEqualTo(milestoneId);
         assertThat(result.get().dateTime()).isEqualTo(dateTime);
+        assertThat(result.get().milestoneName()).isEqualTo(milestoneName);
     }
 
     @Test
     void getByIds_returns_empty_when_missing() {
         assertThat(repository.getByIds(999L, 999, 999)).isEmpty();
+    }
+
+    @Test
+    void listByParticipant_returns_ordered_milestones() {
+        long studyId = 1L;
+        int participantId = 101;
+        Instant baselineTime = Instant.parse("2024-06-15T14:00:00Z");
+        Instant followUpTime = Instant.parse("2024-07-15T14:00:00Z");
+
+        // Create milestones with different order_index values
+        jdbcTemplate.update(
+                "INSERT INTO milestones(study_id, milestone_id, name, order_index) VALUES (?, ?, ?, ?)",
+                studyId, 2, "Follow-up", 2);
+        jdbcTemplate.update(
+                "INSERT INTO milestones(study_id, milestone_id, name, order_index) VALUES (?, ?, ?, ?)",
+                studyId, 1, "Baseline", 1);
+
+        // Create participant milestones in non-ordered sequence
+        jdbcTemplate.update(
+                "INSERT INTO participant_milestones(study_id, participant_id, milestone_id, participant_milestone_id, date_time) VALUES (?, ?, ?, ?, ?)",
+                studyId, participantId, 2, 2, java.sql.Timestamp.from(followUpTime));
+        jdbcTemplate.update(
+                "INSERT INTO participant_milestones(study_id, participant_id, milestone_id, participant_milestone_id, date_time) VALUES (?, ?, ?, ?, ?)",
+                studyId, participantId, 1, 1, java.sql.Timestamp.from(baselineTime));
+
+        var result = repository.listByParticipant(studyId, participantId);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).milestoneId()).isEqualTo(1);
+        assertThat(result.get(0).milestoneName()).isEqualTo("Baseline");
+        assertThat(result.get(1).milestoneId()).isEqualTo(2);
+        assertThat(result.get(1).milestoneName()).isEqualTo("Follow-up");
+    }
+
+    @Test
+    void listByParticipant_returns_empty_when_no_milestones() {
+        assertThat(repository.listByParticipant(1L, 999)).isEmpty();
+    }
+
+    @Test
+    void listByParticipant_returns_only_specified_participant() {
+        long studyId = 1L;
+        Instant dateTime = Instant.parse("2024-06-15T14:00:00Z");
+
+        jdbcTemplate.update(
+                "INSERT INTO milestones(study_id, milestone_id, name, order_index) VALUES (?, ?, ?, ?)",
+                studyId, 1, "Baseline", 1);
+
+        // Insert for different participants
+        jdbcTemplate.update(
+                "INSERT INTO participant_milestones(study_id, participant_id, milestone_id, participant_milestone_id, date_time) VALUES (?, ?, ?, ?, ?)",
+                studyId, 101, 1, 1, java.sql.Timestamp.from(dateTime));
+        jdbcTemplate.update(
+                "INSERT INTO participant_milestones(study_id, participant_id, milestone_id, participant_milestone_id, date_time) VALUES (?, ?, ?, ?, ?)",
+                studyId, 102, 1, 2, java.sql.Timestamp.from(dateTime));
+
+        var result = repository.listByParticipant(studyId, 101);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).participantId()).isEqualTo(101);
     }
 }

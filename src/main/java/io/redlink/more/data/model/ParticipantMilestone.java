@@ -9,6 +9,7 @@ public record ParticipantMilestone(
         Integer participantMilestoneId,
         Instant dateTime,
         Instant created,
-        Instant modified
+        Instant modified,
+        String milestoneName
 ) {
 }

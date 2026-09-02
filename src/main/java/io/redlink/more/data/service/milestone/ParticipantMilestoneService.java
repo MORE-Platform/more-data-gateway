@@ -5,6 +5,7 @@ import io.redlink.more.data.repository.ParticipantMilestoneRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -19,5 +20,10 @@ public class ParticipantMilestoneService {
     @Transactional(readOnly = true)
     public Optional<ParticipantMilestone> findParticipantMilestone(long studyId, int participantId, int milestoneId) {
         return participantMilestoneRepository.getByIds(studyId, participantId, milestoneId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ParticipantMilestone> listParticipantMilestones(long studyId, int participantId) {
+        return participantMilestoneRepository.listByParticipant(studyId, participantId);
     }
 }
