@@ -129,7 +129,7 @@ public class ExternalService {
     private List<Interval> createSchedulesFromRelativeEvent(RelativeEvent event, Instant start, Long studyId, Integer participantId, Integer observationId) {
         var properties = repository.getParticipantWithObservationProperties(studyId, participantId, observationId).orElse(Map.of());
         var seed = new ParticipantObservationSeed(studyId, participantId, observationId, (Long) properties.getOrDefault(RandomSchedulerUtils.OBSERVATION_SCHEDULE_SEED_KEY, null));
-        var ranges = SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start);
+        var ranges = SchedulerUtils.parseToObservationSchedulesForRelativeEvent(event, start, false);
         var randomRanges = SchedulerUtils.randomSchedule(seed, event, ranges);
         return Interval.fromRanges(randomRanges);
     }

@@ -936,7 +936,8 @@ public class StudyRepository {
                 rs.getBoolean("hidden"),
                 rs.getBoolean("no_schedule"),
                 rs.getBoolean("reminder"),
-                DbUtils.readSet(rs, "observation_group_ids", Integer.class)
+                DbUtils.readSet(rs, "observation_group_ids", Integer.class),
+                rs.getObject("milestone_id", Integer.class)
         );
     }
 

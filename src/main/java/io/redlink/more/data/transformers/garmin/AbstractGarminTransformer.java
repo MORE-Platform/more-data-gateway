@@ -6,9 +6,11 @@ import io.redlink.more.data.model.DataPoint;
 import io.redlink.more.data.model.DataType;
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.ParticipantObservationSeed;
+import io.redlink.more.data.model.ParticipantMilestone;
 import io.redlink.more.data.model.garmin.GarminSummaryType;
 import io.redlink.more.data.model.garmin.transformation.GarminTimeData;
 import io.redlink.more.data.repository.StudyRepository;
+import io.redlink.more.data.service.milestone.ParticipantMilestoneService;
 import io.redlink.more.data.util.DateTimeUtils;
 import io.redlink.more.data.util.SchedulerUtils;
 import org.apache.commons.lang3.Range;
@@ -18,6 +20,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static io.redlink.more.data.util.StringUtils.sha256;
@@ -25,6 +28,9 @@ import static io.redlink.more.data.util.StringUtils.sha256;
 public abstract class AbstractGarminTransformer {
     @Autowired
     private StudyRepository studyRepository;
+
+    @Autowired
+    private ParticipantMilestoneService participantMilestoneService;
 
     public abstract GarminSummaryType getSupportedType();
 
@@ -41,7 +47,7 @@ public abstract class AbstractGarminTransformer {
     public List<DataPoint> transform(List<Observation> observations, GarminDataPoint garminDataPoint, Instant participantStart, Instant participantEnd, Long studyId, Integer participantId) {
         var participantObservationProperties = studyRepository
                 .getAllParticpantObservationProperties(studyId, participantId).stream().map(StudyTransformer::toParticipantObservationSeed).toList();
-        var validObservations = filterObservations(participantObservationProperties, observations, garminDataPoint, participantStart, participantEnd);
+        var validObservations = filterObservations(participantObservationProperties, observations, garminDataPoint, participantStart, participantEnd, studyId, participantId);
         if (validObservations.isEmpty()) {
             return Collections.emptyList();
         }
@@ -53,12 +59,7 @@ public abstract class AbstractGarminTransformer {
                             .filter(p -> p.observationId().equals(observation.observationId()))
                             .findFirst()
                             .orElse(null);
-                    return SchedulerUtils.parseToObservationSchedules(
-                            seed,
-                            observation.observationSchedule(),
-                            participantStart,
-                            participantEnd
-                    ).stream();
+                    return resolveSchedules(seed, observation, participantStart, participantEnd, studyId, participantId).stream();
                 })
                 .toList();
         var dataPoints = transformToDataPoint(validObservations, garminDataPoint);
@@ -97,7 +98,7 @@ public abstract class AbstractGarminTransformer {
         return startTime.plusSeconds(totalDuration);
     }
 
-    private List<Observation> filterObservations(List<ParticipantObservationSeed> seeds, List<Observation> observations, GarminDataPoint garminDataPoint, Instant participantStart, Instant participantEnd) {
+    private List<Observation> filterObservations(List<ParticipantObservationSeed> seeds, List<Observation> observations, GarminDataPoint garminDataPoint, Instant participantStart, Instant participantEnd, Long studyId, Integer participantId) {
         Range<Instant> garminDataTimeRange = getGarminDataPointTimeRange(garminDataPoint);
         return observations
                 .stream()
@@ -107,10 +108,24 @@ public abstract class AbstractGarminTransformer {
                             .filter(p -> p.observationId().equals(observation.observationId()))
                             .findFirst()
                             .orElse(null);
-                    var instantRanges = SchedulerUtils.parseToObservationSchedules(seed, observation.observationSchedule(), participantStart, participantEnd);
+                    var instantRanges = resolveSchedules(seed, observation, participantStart, participantEnd, studyId, participantId);
                     return instantRanges.stream().anyMatch(range -> range.isOverlappedBy(garminDataTimeRange));
                 })
                 .toList();
+    }
+
+    private List<Range<Instant>> resolveSchedules(ParticipantObservationSeed seed, Observation observation, Instant participantStart, Instant participantEnd, Long studyId, Integer participantId) {
+        if (observation.milestoneId() == null) {
+            return SchedulerUtils.parseToObservationSchedules(seed, observation.observationSchedule(), participantStart, participantEnd, false);
+        }
+        if (studyId == null || participantId == null) {
+            return Collections.emptyList();
+        }
+        Optional<ParticipantMilestone> milestone = participantMilestoneService.findParticipantMilestone(studyId, participantId, observation.milestoneId());
+        if (milestone.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return SchedulerUtils.parseToObservationSchedules(seed, observation.observationSchedule(), milestone.get().dateTime(), participantEnd, true);
     }
 
     private String uniqueSummaryId(String summaryId, DataType dataType, Instant timestamp) {

@@ -5,17 +5,20 @@ import io.redlink.more.data.api.participant.v1.model.StudyDTO;
 import io.redlink.more.data.api.participant.v1.webservices.AuthorizationApi;
 import io.redlink.more.data.api.participant.v1.webservices.ConfigurationApi;
 import io.redlink.more.data.controller.transformer.ParticipantPortalTransformer;
+import io.redlink.more.data.exception.ForbiddenException;
 import io.redlink.more.data.exception.NotAuthorizedException;
 import io.redlink.more.data.model.CompletedData;
 import io.redlink.more.data.model.DataHealth;
 import io.redlink.more.data.model.ObservationDataState;
 import io.redlink.more.data.model.ParticipantConsent;
+import io.redlink.more.data.model.ParticipantMilestone;
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.model.StudyParticipantUserDetails;
 import io.redlink.more.data.service.ApplicationAccessService;
 import io.redlink.more.data.service.DataHealthService;
 import io.redlink.more.data.service.ObservationExecutionService;
 import io.redlink.more.data.service.StudyService;
+import io.redlink.more.data.service.milestone.ParticipantMilestoneService;
 import io.redlink.more.data.util.ParticipantUtils;
 import io.redlink.more.data.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,6 +46,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 @Controller
 @RestController
@@ -56,16 +60,19 @@ public class ParticipantPortalController implements AuthorizationApi, Configurat
     private final StudyService studyService;
     private final DataHealthService dataHealthService;
     private final ObservationExecutionService observationExecutionService;
+    private final ParticipantMilestoneService participantMilestoneService;
 
     ParticipantPortalController(
             ApplicationAccessService applicationAccessService,
             StudyService studyService,
             DataHealthService dataHealthService,
-            ObservationExecutionService observationExecutionService) {
+            ObservationExecutionService observationExecutionService,
+            ParticipantMilestoneService participantMilestoneService) {
         this.applicationAccessService = applicationAccessService;
         this.studyService = studyService;
         this.dataHealthService = dataHealthService;
         this.observationExecutionService = observationExecutionService;
+        this.participantMilestoneService = participantMilestoneService;
     }
 
     @Override
@@ -154,7 +161,7 @@ public class ParticipantPortalController implements AuthorizationApi, Configurat
         var studyData = studyService.getStudy(routingInfo);
         return studyData
                 .map(studyListPair ->
-                        ResponseEntity.ok(ParticipantPortalTransformer.toDTO(studyListPair.getLeft(), studyListPair.getRight())))
+                        ResponseEntity.ok(ParticipantPortalTransformer.toDTO(studyListPair.getLeft(), studyListPair.getRight(), milestoneAnchorResolver(routingInfo))))
                 .orElseGet(() ->
                         ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
@@ -163,13 +170,16 @@ public class ParticipantPortalController implements AuthorizationApi, Configurat
     public ResponseEntity<StudyDTO> getStudyConfiguration() {
         RoutingInfo routingInfo = validateRoutingInfo()
                 .orElseThrow(NotAuthorizedException::new);
+        if (!applicationAccessService.hasConsent(routingInfo)) {
+            throw new ForbiddenException("Consent was not given");
+        }
 
         var studyData = studyService.getStudy(routingInfo)
                 .filter(sd -> sd.getLeft().active() || "paused".equals(sd.getLeft().studyState()));
         if (studyData.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        var studyDTO = ParticipantPortalTransformer.toDTO(studyData.get().getLeft(), studyData.get().getRight());
+        var studyDTO = ParticipantPortalTransformer.toDTO(studyData.get().getLeft(), studyData.get().getRight(), milestoneAnchorResolver(routingInfo));
 
         List<CompletedData> completedData = observationExecutionService.getCompletedData(routingInfo);
         //add the dataHealth information to the studyDTO (Not done in Transformer as this need calls to the dataHealthService)
@@ -208,6 +218,12 @@ public class ParticipantPortalController implements AuthorizationApi, Configurat
         return ResponseEntity.ok(studyDTO);
     }
 
+
+    private Function<Integer, Optional<Instant>> milestoneAnchorResolver(RoutingInfo routingInfo) {
+        return milestoneId -> participantMilestoneService
+                .findParticipantMilestone(routingInfo.studyId(), routingInfo.participantId(), milestoneId)
+                .map(ParticipantMilestone::dateTime);
+    }
 
     private Optional<RoutingInfo> validateRoutingInfo() {
         var studyParticipant = StudyParticipantUserDetails.getCurrent().getStudyParticipantReference();

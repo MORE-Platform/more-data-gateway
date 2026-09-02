@@ -25,6 +25,7 @@ import io.redlink.more.data.service.LoginTokenService;
 import io.redlink.more.data.service.ObservationExecutionService;
 import io.redlink.more.data.service.RegistrationService;
 import io.redlink.more.data.service.StudyService;
+import io.redlink.more.data.service.milestone.ParticipantMilestoneService;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,6 +102,9 @@ class ParticipantPortalControllerTest {
 
     @MockitoBean
     private ObservationExecutionService observationExecutionService;
+
+    @MockitoBean
+    private ParticipantMilestoneService participantMilestoneService;
 
     @MockitoBean
     private SchedulerProperties schedulerProperties;
@@ -367,6 +371,7 @@ class ParticipantPortalControllerTest {
 
         when(studyService.getRoutingInfo(studyId, participantId)).thenReturn(Optional.of(routingInfo));
         when(studyService.getStudyState(studyId)).thenReturn(Optional.of("active"));
+        when(applicationAccessService.hasConsent(routingInfo)).thenReturn(true);
         when(studyService.getStudy(routingInfo)).thenReturn(Optional.of(Pair.of(study, Collections.emptyList())));
         when(dataHealthService.checkDataHealth(studyId, participantId, observation1.observationId(), absStart)).thenReturn(
                 new DataHealth(true, ObservationDataState.COMPLETE)
@@ -486,11 +491,28 @@ class ParticipantPortalControllerTest {
 
         when(studyService.getRoutingInfo(studyId, participantId)).thenReturn(Optional.of(routingInfo));
         when(studyService.getStudyState(studyId)).thenReturn(Optional.of("active"));
+        when(applicationAccessService.hasConsent(routingInfo)).thenReturn(true);
         when(studyService.getStudy(routingInfo)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/participant-portal/api/v1/config/study")
                         .with(user(userDetails)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testGetStudyConfigurationNoConsent() throws Exception {
+        long studyId = 15L;
+        int participantId = 12;
+        RoutingInfo routingInfo = new RoutingInfo(studyId, participantId, OptionalInt.empty(), Set.of(), true, true);
+        StudyParticipantUserDetails userDetails = new StudyParticipantUserDetails(studyId, participantId, null);
+
+        when(studyService.getRoutingInfo(studyId, participantId)).thenReturn(Optional.of(routingInfo));
+        when(studyService.getStudyState(studyId)).thenReturn(Optional.of("active"));
+        when(applicationAccessService.hasConsent(routingInfo)).thenReturn(false);
+
+        mockMvc.perform(get("/participant-portal/api/v1/config/study")
+                        .with(user(userDetails)))
+                .andExpect(status().isForbidden());
     }
 
 }
