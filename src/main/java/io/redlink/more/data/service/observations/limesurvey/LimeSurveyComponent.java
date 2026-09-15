@@ -99,7 +99,7 @@ public class LimeSurveyComponent implements ObservationComponent {
             throw new IllegalArgumentException("Could not find RoutingInfo for LimeSurvey Component for provided parameters");
         }
 
-        if (storeAnswer(surveyId.get(), savedId, token, routingInfo, "observation_" + resolvedObservationId)) {
+        if (storeAnswer(surveyId.get(), savedId, token, routingInfo, resolvedObservationId.toString())) {
             LOG.debug("Stored LimeSurvey answer for survey {}, observation {}", surveyId.get(), resolvedObservationId);
             return Optional.of(new CallbackResult(routingInfo, resolvedObservationId));
         }
@@ -183,7 +183,7 @@ public class LimeSurveyComponent implements ObservationComponent {
      * @param properties the participant's observation properties, carrying the survey id and token
      * @return the number of answers stored, {@code 0} if there was nothing to store or LimeSurvey failed
      */
-    public int resync(RoutingInfo routingInfo, int observationId, Map<String, Object> properties) {
+    public int resync(RoutingInfo routingInfo, Integer observationId, Map<String, Object> properties) {
         int surveyId;
         try {
             surveyId = Integer.parseInt(asString(properties.get(LIME_SURVEY_ID_KEY)));
@@ -205,7 +205,7 @@ public class LimeSurveyComponent implements ObservationComponent {
         }
 
         List<DataPoint> dataPoints = answers.stream()
-                .map(answer -> toDataPoint(surveyId, 0, answer, "observation_" + observationId))
+                .map(answer -> toDataPoint(surveyId, 0, answer, observationId.toString()))
                 .toList();
 
         try {
@@ -227,7 +227,7 @@ public class LimeSurveyComponent implements ObservationComponent {
                 .map(obj -> DateTimeUtils.parseInstantWithOffset(obj, ZoneOffset.UTC))
                 .orElse(Instant.now());
         return new DataPoint(
-                datapointId(surveyId, saveId, answer),
+                datapointId(surveyId, saveId, answer, observationId),
                 observationId,
                 null,
                 getObservationType(),
@@ -238,16 +238,18 @@ public class LimeSurveyComponent implements ObservationComponent {
     }
 
     /**
-     * A stable id per LimeSurvey response, so re-processing a callback or re-syncing an answer overwrites
-     * the existing Elastic document instead of adding a duplicate.
+     * A stable id per LimeSurvey response and observation, so re-processing a callback or re-syncing an answer
+     * overwrites the existing Elastic document instead of adding a duplicate - while two observations pointing at
+     * the same survey stay separate. Study and participant are already part of the Elastic document id
+     * (see {@code ElasticService#generateUidPrefix}), so they are not repeated here.
      */
-    private static String datapointId(Integer surveyId, int saveId, Map<String, Object> answer) {
+    private static String datapointId(Integer surveyId, int saveId, Map<String, Object> answer, String observationId) {
         long responseId = LimeSurveyRequestService.responseIdOf(answer);
         if (responseId != Long.MIN_VALUE) {
-            return "limesurvey_" + surveyId + "_" + responseId;
+            return "limesurvey_" + observationId + "_" + surveyId + "_" + responseId;
         }
         if (saveId > 0) {
-            return "limesurvey_" + surveyId + "_" + saveId;
+            return "limesurvey_" + observationId + "_" + surveyId + "_" + saveId;
         }
         return UUID.randomUUID().toString();
     }

@@ -173,8 +173,36 @@ class LimeSurveyComponentTest {
 
         String first = captor.getAllValues().get(0).get(0).datapointId();
         String second = captor.getAllValues().get(1).get(0).datapointId();
-        assertEquals("limesurvey_100_42", first);
+        assertEquals("limesurvey_observation_1_100_42", first);
         assertEquals(first, second);
+    }
+
+    @Test
+    void testDatapointIdDiffersPerObservationOnSameSurvey() throws Exception {
+        Map<String, String> parameters = Map.of(
+                "token", "token123",
+                "saveId", "50",
+                "surveyId", "100",
+                "studyId", "1"
+        );
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+
+        when(studyService.getRoutingInfoByToken(1L, "token123"))
+                .thenReturn(Optional.of(new RoutingInfoWithObservation(routingInfo, 1)))
+                .thenReturn(Optional.of(new RoutingInfoWithObservation(routingInfo, 2)));
+        when(limeSurveyRequestService.getAnswer("token123", 100, 50))
+                .thenReturn(Optional.of(new java.util.HashMap<>(Map.of("id", "42", "some_key", "some_value"))))
+                .thenReturn(Optional.of(new java.util.HashMap<>(Map.of("id", "42", "some_key", "some_value"))));
+        when(elasticService.storeDataPoints(anyList(), eq(routingInfo))).thenReturn(List.of("stored"));
+
+        limeSurveyComponent.processCallback(parameters);
+        limeSurveyComponent.processCallback(parameters);
+
+        ArgumentCaptor<List<DataPoint>> captor = ArgumentCaptor.forClass(List.class);
+        verify(elasticService, times(2)).storeDataPoints(captor.capture(), eq(routingInfo));
+
+        assertEquals("limesurvey_observation_1_100_42", captor.getAllValues().get(0).get(0).datapointId());
+        assertEquals("limesurvey_observation_2_100_42", captor.getAllValues().get(1).get(0).datapointId());
     }
 
     @Test

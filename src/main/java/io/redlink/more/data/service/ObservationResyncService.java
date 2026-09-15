@@ -45,6 +45,7 @@ public class ObservationResyncService {
 
     @Scheduled(fixedDelay = 60_000, initialDelay = 30_000)
     public void processPendingRequests() {
+        LOG.info("Processing pending observation resync requests");
         final List<ObservationResyncRequest> pending;
         try {
             pending = resyncRepository.listPending();
@@ -57,6 +58,8 @@ public class ObservationResyncService {
         if (pending.isEmpty()) {
             return;
         }
+
+        LOG.info("Found {} pending observation resync requests", pending.size());
 
         Instant now = Instant.now();
         for (ObservationResyncRequest request : pending) {
