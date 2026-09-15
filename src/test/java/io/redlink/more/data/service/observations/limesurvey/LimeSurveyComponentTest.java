@@ -1,6 +1,7 @@
 package io.redlink.more.data.service.observations.limesurvey;
 
 import io.redlink.more.data.model.CallbackResult;
+import io.redlink.more.data.model.DataPoint;
 import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.model.RoutingInfoWithObservation;
@@ -8,11 +9,9 @@ import io.redlink.more.data.service.ElasticService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import io.redlink.more.data.model.DataPoint;
-import org.mockito.ArgumentCaptor;
 
 import java.time.Instant;
 import java.util.List;
@@ -173,7 +172,7 @@ class LimeSurveyComponentTest {
 
         String first = captor.getAllValues().get(0).get(0).datapointId();
         String second = captor.getAllValues().get(1).get(0).datapointId();
-        assertEquals("limesurvey_observation_1_100_42", first);
+        assertEquals("limesurvey_1_100_42", first);
         assertEquals(first, second);
     }
 
@@ -201,8 +200,8 @@ class LimeSurveyComponentTest {
         ArgumentCaptor<List<DataPoint>> captor = ArgumentCaptor.forClass(List.class);
         verify(elasticService, times(2)).storeDataPoints(captor.capture(), eq(routingInfo));
 
-        assertEquals("limesurvey_observation_1_100_42", captor.getAllValues().get(0).get(0).datapointId());
-        assertEquals("limesurvey_observation_2_100_42", captor.getAllValues().get(1).get(0).datapointId());
+        assertEquals("limesurvey_1_100_42", captor.getAllValues().get(0).get(0).datapointId());
+        assertEquals("limesurvey_2_100_42", captor.getAllValues().get(1).get(0).datapointId());
     }
 
     @Test
