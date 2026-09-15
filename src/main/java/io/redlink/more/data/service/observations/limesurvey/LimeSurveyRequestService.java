@@ -26,9 +26,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -205,19 +206,50 @@ public class LimeSurveyRequestService {
     }
 
     public Optional<Map<String, Object>> getAnswer(String token, int surveyId, int savedId) {
-        return getAnswer(token, surveyId, savedId, "code", "short");
+        return pickAnswer(getAnswers(token, surveyId), savedId);
     }
 
     public Optional<Map<String, Object>> getAnswerPlaintext(String token, int surveyId, int savedId) {
-        return getAnswer(token, surveyId, savedId, "full", "long");
+        return pickAnswer(getAnswers(token, surveyId, "full", "long"), savedId);
     }
 
-    private Optional<Map<String, Object>> getAnswer(String token, int surveyId, int savedId, String headingType, String responseType) {
-        if (token == null || token.isBlank() || surveyId <= 0 || savedId <= 0) {
-            LOGGER.warn("Invalid answer query parameters: surveyId={}, savedId={}", surveyId, savedId);
-            return Optional.empty();
+    /**
+     * All responses LimeSurvey currently holds for the given survey token, in export order.
+     * <p>
+     * Only the survey id and the token are required; a {@code savedId} is merely a client side filter
+     * (see {@link #getAnswer(String, int, int)}). Use this to re-sync answers of a participant whose
+     * callback never reached the gateway.
+     *
+     * @param token    the LimeSurvey participant token of the observation
+     * @param surveyId the LimeSurvey survey id
+     * @return the cleaned answers, or an empty list if none exist or LimeSurvey could not be queried
+     */
+    public List<Map<String, Object>> getAnswers(String token, int surveyId) {
+        return getAnswers(token, surveyId, "code", "short");
+    }
+
+    private List<Map<String, Object>> getAnswers(String token, int surveyId, String headingType, String responseType) {
+        if (token == null || token.isBlank() || surveyId <= 0) {
+            LOGGER.warn("Invalid answer query parameters: surveyId={}", surveyId);
+            return List.of();
         }
 
+        try {
+            return exportResponses(token, surveyId, headingType, responseType);
+        } catch (RuntimeException e) {
+            // A stale session key, a rate-limited login or a network blip is the common transient failure
+            // here, and the participant has no second chance - so give it one more try before giving up.
+            LOGGER.warn("Retrying LimeSurvey response export for survey {}: {}", surveyId, e.toString());
+            try {
+                return exportResponses(token, surveyId, headingType, responseType);
+            } catch (RuntimeException retryFailed) {
+                LOGGER.error("Could not export LimeSurvey responses for survey {}", surveyId, retryFailed);
+                return List.of();
+            }
+        }
+    }
+
+    private List<Map<String, Object>> exportResponses(String token, int surveyId, String headingType, String responseType) {
         String sessionKey = null;
         try {
             sessionKey = getSessionKey();
@@ -225,28 +257,27 @@ public class LimeSurveyRequestService {
             var apiResponse = limeSurveyRcApi.callMethod(createRequest(LimeSurveyMethod.EXPORT_RESPONSES_BY_TOKEN, sessionKey, surveyId, "json", token, lang, "all", headingType, responseType));
 
             if (apiResponse == null) {
-                LOGGER.warn("LimeSurvey returned null response for export_responses_by_token (surveyId={})", surveyId);
-                return Optional.empty();
+                throw new IllegalStateException("LimeSurvey returned null response for export_responses_by_token (surveyId=" + surveyId + ")");
             }
             if (apiResponse.getError() != null && !apiResponse.getError().isBlank()) {
-                LOGGER.warn("LimeSurvey returned error for export_responses_by_token (surveyId={}): {}", surveyId, apiResponse.getError());
-                return Optional.empty();
+                throw new IllegalStateException("LimeSurvey returned error for export_responses_by_token (surveyId=" + surveyId + "): " + apiResponse.getError());
             }
 
-            if (apiResponse.getResult() == null) {
-                LOGGER.warn("LimeSurvey returned null result for export_responses_by_token (surveyId={})", surveyId);
-                return Optional.empty();
+            Object result = apiResponse.getResult();
+            if (!(result instanceof String encoded) || encoded.isBlank()) {
+                // LimeSurvey reports "no responses for this token" as a status object instead of a payload
+                LOGGER.warn("LimeSurvey has no exportable responses for survey {}: {}", surveyId, result);
+                return List.of();
             }
-            JsonNode result = mapper.readTree(Base64.getDecoder().decode(apiResponse.getResult().toString()));
-            JsonNode responsesNode = result.path("responses");
+
+            JsonNode responsesNode = mapper.readTree(Base64.getDecoder().decode(encoded)).path("responses");
             if (!responsesNode.isArray()) {
-                LOGGER.warn("Limesurvey returned no responses (surveyId={}): {}", surveyId, result.asText());
-                return Optional.empty();
+                LOGGER.warn("Limesurvey returned no responses (surveyId={})", surveyId);
+                return List.of();
             }
 
-            Iterator<JsonNode> responses = responsesNode.elements();
-            while (responses.hasNext()) {
-                JsonNode response = responses.next();
+            List<Map<String, Object>> answers = new ArrayList<>();
+            for (JsonNode response : responsesNode) {
                 if (response == null || !response.isObject()) {
                     continue;
                 }
@@ -257,28 +288,44 @@ public class LimeSurveyRequestService {
                 answer.values().removeIf(obj -> Objects.isNull(obj) || obj.equals(token));
 
                 normalizeDateFields(answer);
-
-                Object responseId = answer.get("Response ID");
-                Object id = answer.get("id");
-                boolean matchesSavedId = Objects.equals(String.valueOf(savedId), String.valueOf(responseId))
-                        || Objects.equals(String.valueOf(savedId), String.valueOf(id));
-
-                if (matchesSavedId || responsesNode.size() == 1) {
-                    return Optional.of(new HashMap<>(answer));
-                }
+                answers.add(new HashMap<>(answer));
             }
-            return Optional.empty();
+            return answers;
         } catch (IllegalArgumentException e) {
-            LOGGER.error("Could not decode LimeSurvey response payload for survey {} and savedId {}", surveyId, savedId, e);
-            return Optional.empty();
-        } catch (RestClientException e) {
-            LOGGER.error("Error reading results for {}", surveyId, e);
-            return Optional.empty();
+            LOGGER.error("Could not decode LimeSurvey response payload for survey {}", surveyId, e);
+            return List.of();
         } catch (IOException e) {
-            LOGGER.error("Could not decode queried result data for survey {}, saveId {}", surveyId, savedId, e);
-            throw new RuntimeException(e);
+            LOGGER.error("Could not decode queried result data for survey {}", surveyId, e);
+            return List.of();
         } finally {
             releaseSessionKeyQuietly(sessionKey);
+        }
+    }
+
+    private Optional<Map<String, Object>> pickAnswer(List<Map<String, Object>> answers, int savedId) {
+        return answers.stream()
+                .filter(answer -> matchesSavedId(answer, savedId))
+                .findFirst()
+                .or(() -> answers.stream().max(Comparator.comparingLong(LimeSurveyRequestService::responseIdOf)));
+    }
+
+    private static boolean matchesSavedId(Map<String, Object> answer, int savedId) {
+        if (savedId <= 0) {
+            return false;
+        }
+        return Objects.equals(String.valueOf(savedId), String.valueOf(answer.get("Response ID")))
+                || Objects.equals(String.valueOf(savedId), String.valueOf(answer.get("id")));
+    }
+
+    /**
+     * The LimeSurvey response id of an exported answer, or {@link Long#MIN_VALUE} if it carries none.
+     */
+    public static long responseIdOf(Map<String, Object> answer) {
+        Object id = answer.get("id") != null ? answer.get("id") : answer.get("Response ID");
+        try {
+            return id == null ? Long.MIN_VALUE : Long.parseLong(String.valueOf(id));
+        } catch (NumberFormatException e) {
+            return Long.MIN_VALUE;
         }
     }
 

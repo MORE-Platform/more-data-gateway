@@ -72,10 +72,10 @@ public class ElasticService implements StorageService {
 
             // Log errors, if any
             if (LOG.isErrorEnabled() && result.errors()) {
-                LOG.error("Bulk had errors");
                 for (BulkResponseItem item : result.items()) {
                     if (item.error() != null) {
-                        LOG.error("{}: {}", item.id(), item.error().reason());
+                        LOG.error("Elastic rejected document {} in index {}: {} ({})",
+                                item.id(), indexName, item.error().reason(), item.error().type());
                     }
                 }
             }

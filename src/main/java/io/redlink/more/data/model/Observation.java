@@ -26,11 +26,19 @@ public record Observation(
         boolean hidden,
         boolean noSchedule,
         boolean reminder,
-        Set<Integer> observationGroupIds
+        Set<Integer> observationGroupIds,
+        Integer milestoneId
 ) {
+    public Observation(int observationId, Integer groupId, String title, String type, String participantInfo,
+                        Object properties, ScheduleEvent observationSchedule, Instant created, Instant modified,
+                        boolean hidden, boolean noSchedule, boolean reminder, Set<Integer> observationGroupIds) {
+        this(observationId, groupId, title, type, participantInfo, properties, observationSchedule, created,
+                modified, hidden, noSchedule, reminder, observationGroupIds, null);
+    }
+
     public Observation withProperties(Object properties) {
         return new Observation(
-                observationId, groupId, title, type, participantInfo, properties, observationSchedule, created, modified, hidden, noSchedule, reminder, observationGroupIds
+                observationId, groupId, title, type, participantInfo, properties, observationSchedule, created, modified, hidden, noSchedule, reminder, observationGroupIds, milestoneId
         );
     }
 }

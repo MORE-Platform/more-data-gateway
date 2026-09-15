@@ -21,13 +21,16 @@ import org.apache.commons.lang3.Range;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 public final class StudyTransformer {
 
     private StudyTransformer() {
     }
 
-    public static StudyDTO toDTO(Study study, List<ParticipantObservationSeed> seeds, List<CompletedData> completedData) {
+    public static StudyDTO toDTO(Study study, List<ParticipantObservationSeed> seeds, List<CompletedData> completedData,
+                                  Function<Integer, Optional<Instant>> milestoneAnchor) {
         return new StudyDTO()
                 .active(study.active())
                 .studyTitle(study.title())
@@ -39,7 +42,7 @@ public final class StudyTransformer {
                 .contact(toDTO(study.contact()))
                 .start(study.startDate())
                 .end(study.endDate())
-                .observations(toDTO(seeds, study.observations(), study.participant().start(), study.participant().end(), completedData))
+                .observations(toDTO(seeds, study.observations(), study.participant().start(), study.participant().end(), completedData, milestoneAnchor))
                 .version(BaseTransformers.toVersionTag(study.modified()))
                 ;
     }
@@ -70,17 +73,19 @@ public final class StudyTransformer {
                 ;
     }
 
-    public static List<ObservationDTO> toDTO(List<ParticipantObservationSeed> participantObservationSeeds, List<Observation> observations, Instant start, Instant end, List<CompletedData> completedData) {
+    public static List<ObservationDTO> toDTO(List<ParticipantObservationSeed> participantObservationSeeds, List<Observation> observations, Instant start, Instant end, List<CompletedData> completedData,
+                                              Function<Integer, Optional<Instant>> milestoneAnchor) {
         return observations.stream().map(o -> {
             var seed = participantObservationSeeds.stream()
                     .filter(s -> s.observationId() == o.observationId())
                     .findFirst()
                     .orElse(null);
-            return StudyTransformer.toDTO(seed, o, start, end, completedData.stream().filter(d -> d.observationId().equals(String.valueOf(o.observationId()))).toList());
+            return StudyTransformer.toDTO(seed, o, start, end, completedData.stream().filter(d -> d.observationId().equals(String.valueOf(o.observationId()))).toList(), milestoneAnchor);
         }).toList();
     }
 
-    public static ObservationDTO toDTO(ParticipantObservationSeed participantObservationSeed, Observation observation, Instant start, Instant end, List<CompletedData> completedData) {
+    public static ObservationDTO toDTO(ParticipantObservationSeed participantObservationSeed, Observation observation, Instant start, Instant end, List<CompletedData> completedData,
+                                        Function<Integer, Optional<Instant>> milestoneAnchor) {
         ObservationDTO dto = new ObservationDTO()
                 .observationId(String.valueOf(observation.observationId()))
                 .observationType(observation.type())
@@ -91,17 +96,28 @@ public final class StudyTransformer {
                 .hidden(observation.hidden())
                 .noSchedule(observation.noSchedule())
                 .reminder(observation.reminder());
-        if (observation.observationSchedule() != null && start != null) {
+
+        Instant anchor = start;
+        boolean isMilestoneAnchor = false;
+        if (observation.milestoneId() != null) {
+            Optional<Instant> resolved = milestoneAnchor.apply(observation.milestoneId());
+            anchor = resolved.orElse(null);
+            isMilestoneAnchor = resolved.isPresent();
+        }
+
+        if (observation.observationSchedule() != null && anchor != null) {
+            final Instant finalAnchor = anchor;
             dto.schedule(SchedulerUtils
                     .parseToObservationSchedules(
                             participantObservationSeed,
                             observation.observationSchedule(),
-                            start,
-                            end)
+                            anchor,
+                            end,
+                            isMilestoneAnchor)
                     .stream()
                     .map(StudyTransformer::toObservationScheduleDTO)
                     .filter(schedule -> completedData.stream().noneMatch(d -> {
-                        Instant scheduleStart = schedule.getStart() != null ? schedule.getStart() : start;
+                        Instant scheduleStart = schedule.getStart() != null ? schedule.getStart() : finalAnchor;
                         Instant scheduleEnd = schedule.getEnd() != null ? schedule.getEnd() : end;
 
                         return d.scheduleStart().compareTo(scheduleStart) == 0

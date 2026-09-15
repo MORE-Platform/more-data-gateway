@@ -36,13 +36,13 @@ import java.util.TimeZone;
 public class SchedulerUtils {
 
     public static List<Range<Instant>> parseToObservationSchedulesForRelativeEvent(
-            RelativeEvent event, Instant start) {
+            RelativeEvent event, Instant start, boolean isMilestoneAnchor) {
 
         final List<Range<Instant>> events = new ArrayList<>();
 
         Range<Instant> currentEvt = Range.of(
-                toInstantFrom(event.getDtstart(), start),
-                toInstantFrom(event.getDtend(), start)
+                toInstantFrom(event.getDtstart(), start, isMilestoneAnchor),
+                toInstantFrom(event.getDtend(), start, isMilestoneAnchor)
         );
 
         if (event.getRrrule() != null) {
@@ -62,12 +62,12 @@ public class SchedulerUtils {
         return List.copyOf(events);
     }
 
-    private static Instant toInstantFrom(RelativeDate date, Instant start) {
+    private static Instant toInstantFrom(RelativeDate date, Instant start, boolean isMilestoneAnchor) {
+        int offsetValue = isMilestoneAnchor
+                ? date.getOffset().getValue()
+                : date.getOffset().getValue() - 1;
         return start.atZone(ZoneId.systemDefault())
-                // FIXME: Hidden Offset-Correction
-                // Offset is 1-based, therefor we must "-1" here
-                // (fist day: 1, second day: 2, ... )
-                .plus(date.getOffset().getValue() - 1, date.getOffset().getUnit().toTemporalUnit())
+                .plus(offsetValue, date.getOffset().getUnit().toTemporalUnit())
                 .with(date.getTime())
                 .toInstant();
     }
@@ -90,13 +90,13 @@ public class SchedulerUtils {
         return List.copyOf(observationSchedules);
     }
 
-    public static List<Range<Instant>> parseToObservationSchedules(ParticipantObservationSeed participantObservationSeed, ScheduleEvent scheduleEvent, Instant start, Instant end) {
+    public static List<Range<Instant>> parseToObservationSchedules(ParticipantObservationSeed participantObservationSeed, ScheduleEvent scheduleEvent, Instant start, Instant end, boolean isMilestoneAnchor) {
         if (scheduleEvent == null) return Collections.emptyList();
         List<Range<Instant>> ranges = Collections.emptyList();
         if (scheduleEvent instanceof Event event) {
             ranges = parseToObservationSchedulesForEvent(event, start, end);
         } else if (scheduleEvent instanceof RelativeEvent relativeEvent) {
-            ranges = parseToObservationSchedulesForRelativeEvent(relativeEvent, start);
+            ranges = parseToObservationSchedulesForRelativeEvent(relativeEvent, start, isMilestoneAnchor);
         }
         return randomSchedule(participantObservationSeed, scheduleEvent, ranges);
     }
@@ -104,6 +104,7 @@ public class SchedulerUtils {
     public static Instant shiftStartIfObservationAlreadyEnded(Instant start, List<Observation> observations) {
         // returns start date, if now event ends before, otherwise start date + 1 day
         return observations.stream()
+                .filter(o -> o.milestoneId() == null)
                 .map(Observation::observationSchedule)
                 .filter(scheduleEvent -> scheduleEvent.getType().equals(RelativeEvent.TYPE))
                 .map(r -> ((RelativeEvent) r).getDtend())

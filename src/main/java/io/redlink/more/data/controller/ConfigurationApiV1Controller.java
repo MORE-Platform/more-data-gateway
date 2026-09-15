@@ -13,10 +13,12 @@ import io.redlink.more.data.controller.transformer.NotificationServiceTransforme
 import io.redlink.more.data.controller.transformer.StudyTransformer;
 import io.redlink.more.data.model.CompletedData;
 import io.redlink.more.data.model.GatewayUserDetails;
+import io.redlink.more.data.model.ParticipantMilestone;
 import io.redlink.more.data.service.GatewayUserDetailService;
 import io.redlink.more.data.service.ObservationExecutionService;
 import io.redlink.more.data.service.PushNotificationService;
 import io.redlink.more.data.service.StudyService;
+import io.redlink.more.data.service.milestone.ParticipantMilestoneService;
 import io.redlink.more.data.util.LoggingUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -39,11 +41,14 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
 
     private final ObservationExecutionService observationExecutionService;
 
-    public ConfigurationApiV1Controller(AuthenticationFacade authenticationFacade, PushNotificationService pushNotificationService, StudyService studyService, ObservationExecutionService observationExecutionService) {
+    private final ParticipantMilestoneService participantMilestoneService;
+
+    public ConfigurationApiV1Controller(AuthenticationFacade authenticationFacade, PushNotificationService pushNotificationService, StudyService studyService, ObservationExecutionService observationExecutionService, ParticipantMilestoneService participantMilestoneService) {
         this.authenticationFacade = authenticationFacade;
         this.pushNotificationService = pushNotificationService;
         this.studyService = studyService;
         this.observationExecutionService = observationExecutionService;
+        this.participantMilestoneService = participantMilestoneService;
     }
 
     @Override
@@ -53,7 +58,10 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
         try (LoggingUtils.LoggingContext ctx = LoggingUtils.createContext(userDetails.getRoutingInfo())) {
             var studyData = studyService.getStudy(userDetails.getRoutingInfo());
             List<CompletedData> completedData = observationExecutionService.getCompletedData(userDetails.getRoutingInfo());
-            return studyData.map(s -> StudyTransformer.toDTO(s.getLeft(), s.getRight(), completedData))
+            return studyData.map(s -> StudyTransformer.toDTO(s.getLeft(), s.getRight(), completedData,
+                            milestoneId -> participantMilestoneService.findParticipantMilestone(
+                                            userDetails.getRoutingInfo().studyId(), userDetails.getRoutingInfo().participantId(), milestoneId)
+                                    .map(ParticipantMilestone::dateTime)))
                     .map(ResponseEntity::ok)
                     .orElseGet(() -> ResponseEntity.notFound().build());
         }

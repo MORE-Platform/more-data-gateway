@@ -43,7 +43,7 @@ public class InMemoryObservationCallbackStore implements ObservationCallbackStor
         LOG.debug("Found {} external redirects for participant {}", observationWithRedirect.size(), routingInfo.participantRef());
         var lastActiveObservation = observationWithRedirect.keySet().stream()
                 .filter(ao -> Integer.parseInt(ao.observationId()) == observationId)
-                .findFirst();
+                .reduce((first, second) -> second);
         if (lastActiveObservation.isPresent()) {
             LOG.debug("Found redirect for observationId: {}", observationId);
             String externalRedirect = observationWithRedirect.remove(lastActiveObservation.get());

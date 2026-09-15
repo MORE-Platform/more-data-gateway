@@ -31,6 +31,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RestController
@@ -62,7 +63,7 @@ public class RegistrationApiV1Controller implements RegistrationApi {
         }
         List<ParticipantObservationSeed> seeds = study.get().active() ? studyService.getParticipantObservationSeeds(study.get().studyId(), study.get().participant().id()) : Collections.emptyList();
 
-        var studyDto = StudyTransformer.toDTO(study.get(), seeds, Collections.emptyList());
+        var studyDto = StudyTransformer.toDTO(study.get(), seeds, Collections.emptyList(), milestoneId -> Optional.empty());
         return ResponseEntity.ok()
                 // For better debugging: return the token for chaining
                 .header("More-Registration-Token", moreRegistrationToken)

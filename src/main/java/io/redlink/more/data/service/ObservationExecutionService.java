@@ -6,9 +6,11 @@ import io.redlink.more.data.model.ActiveObservation;
 import io.redlink.more.data.model.CallbackResult;
 import io.redlink.more.data.model.CompletedData;
 import io.redlink.more.data.model.Observation;
+import io.redlink.more.data.model.ParticipantMilestone;
 import io.redlink.more.data.model.ParticipantObservationSeed;
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.model.Study;
+import io.redlink.more.data.service.milestone.ParticipantMilestoneService;
 import io.redlink.more.data.service.observations.ObservationComponent;
 import io.redlink.more.data.store.observationCallback.ObservationCallbackStore;
 import io.redlink.more.data.util.SchedulerUtils;
@@ -24,6 +26,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,15 +39,18 @@ public class ObservationExecutionService {
     private final StudyService studyService;
     private final ObservationCallbackStore callbackStore;
     private final Map<String, ObservationComponent> observationComponents;
+    private final ParticipantMilestoneService participantMilestoneService;
 
     public ObservationExecutionService(
             StudyService studyService,
             ObservationCallbackStore callbackStore,
-            List<ObservationComponent> observationComponents) {
+            List<ObservationComponent> observationComponents,
+            ParticipantMilestoneService participantMilestoneService) {
         this.studyService = studyService;
         this.callbackStore = callbackStore;
         this.observationComponents = observationComponents.stream()
                 .collect(Collectors.toMap(ObservationComponent::getObservationType, c -> c));
+        this.participantMilestoneService = participantMilestoneService;
     }
 
     public Optional<URI> executeObservation(String observationId, Instant scheduleStart, Instant scheduleEnd, RoutingInfo routingInfo, String redirect) {
@@ -103,10 +109,18 @@ public class ObservationExecutionService {
                 .orElse(null);
 
         ZoneId zoneId = ZoneId.systemDefault();
-        Instant start = study.startDate() != null ? study.startDate().atStartOfDay(zoneId).toInstant() : scheduleStart.atZone(zoneId).toLocalDate().atStartOfDay(zoneId).toInstant();
         Instant end = study.endDate() != null ? study.endDate().plusDays(1).atStartOfDay(zoneId).toInstant() : scheduleEnd.atZone(zoneId).toLocalDate().plusDays(1).atStartOfDay(zoneId).toInstant();
 
-        List<Range<Instant>> validRanges = SchedulerUtils.parseToObservationSchedules(seed, observation.observationSchedule(), start, end);
+        List<Range<Instant>> validRanges;
+        if (observation.milestoneId() != null) {
+            Optional<ParticipantMilestone> milestone = participantMilestoneService.findParticipantMilestone(
+                    routingInfo.studyId(), routingInfo.participantId(), observation.milestoneId());
+            validRanges = milestone.isEmpty() ? Collections.emptyList() : SchedulerUtils.parseToObservationSchedules(
+                    seed, observation.observationSchedule(), milestone.get().dateTime(), end, true);
+        } else {
+            Instant start = study.startDate() != null ? study.startDate().atStartOfDay(zoneId).toInstant() : scheduleStart.atZone(zoneId).toLocalDate().atStartOfDay(zoneId).toInstant();
+            validRanges = SchedulerUtils.parseToObservationSchedules(seed, observation.observationSchedule(), start, end, false);
+        }
         boolean isValidSchedule = validRanges.stream()
                 .anyMatch(r -> (r.getMinimum().equals(scheduleStart) && r.getMaximum().equals(scheduleEnd))
                         || r.contains(scheduleStart) && r.contains(scheduleEnd));

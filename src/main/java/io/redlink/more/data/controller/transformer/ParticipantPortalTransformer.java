@@ -20,12 +20,13 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 public final class ParticipantPortalTransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(ParticipantPortalTransformer.class);
 
-    public static StudyDTO toDTO(Study study, List<ParticipantObservationSeed> seeds) {
+    public static StudyDTO toDTO(Study study, List<ParticipantObservationSeed> seeds, Function<Integer, Optional<Instant>> milestoneAnchor) {
         return new StudyDTO()
                 .active(study.active())
                 .studyTitle(study.title())
@@ -39,7 +40,8 @@ public final class ParticipantPortalTransformer {
                 .end(study.endDate())
                 .observations(toDTO(seeds, study.observations(),
                         Optional.ofNullable(study.participant()).map(SimpleParticipant::start).orElse(null),
-                        Optional.ofNullable(study.participant()).map(SimpleParticipant::end).orElse(null)))
+                        Optional.ofNullable(study.participant()).map(SimpleParticipant::end).orElse(null),
+                        milestoneAnchor))
                 .version(BaseTransformers.toVersionTag(study.modified()));
     }
 
@@ -74,17 +76,17 @@ public final class ParticipantPortalTransformer {
                 .phoneNumber(contact.phoneNumber());
     }
 
-    public static List<ObservationDTO> toDTO(List<ParticipantObservationSeed> participantObservationSeeds, List<Observation> observations, Instant start, Instant end) {
+    public static List<ObservationDTO> toDTO(List<ParticipantObservationSeed> participantObservationSeeds, List<Observation> observations, Instant start, Instant end, Function<Integer, Optional<Instant>> milestoneAnchor) {
         return observations.stream().map(o -> {
             var seed = participantObservationSeeds.stream()
                     .filter(s -> s.observationId() == o.observationId())
                     .findFirst()
                     .orElse(null);
-            return ParticipantPortalTransformer.toDTO(seed, o, start, end);
+            return ParticipantPortalTransformer.toDTO(seed, o, start, end, milestoneAnchor);
         }).toList();
     }
 
-    public static ObservationDTO toDTO(ParticipantObservationSeed participantObservationSeed, Observation observation, Instant start, Instant end) {
+    public static ObservationDTO toDTO(ParticipantObservationSeed participantObservationSeed, Observation observation, Instant start, Instant end, Function<Integer, Optional<Instant>> milestoneAnchor) {
         ObservationDTO dto = new ObservationDTO()
                 .observationId(String.valueOf(observation.observationId()))
                 .observationType(observation.type())
@@ -95,13 +97,23 @@ public final class ParticipantPortalTransformer {
                 .hidden(observation.hidden())
                 .noSchedule(observation.noSchedule())
                 .reminder(observation.reminder());
-        if (observation.observationSchedule() != null && start != null) {
+
+        Instant anchor = start;
+        boolean isMilestoneAnchor = false;
+        if (observation.milestoneId() != null) {
+            Optional<Instant> resolved = milestoneAnchor.apply(observation.milestoneId());
+            anchor = resolved.orElse(null);
+            isMilestoneAnchor = resolved.isPresent();
+        }
+
+        if (observation.observationSchedule() != null && anchor != null) {
             dto.schedule(SchedulerUtils
                     .parseToObservationSchedules(
                             participantObservationSeed,
                             observation.observationSchedule(),
-                            start,
-                            end)
+                            anchor,
+                            end,
+                            isMilestoneAnchor)
                     .stream()
                     .map(ParticipantPortalTransformer::toObservationScheduleDTO)
                     .toList());

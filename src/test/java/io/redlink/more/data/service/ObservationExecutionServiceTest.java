@@ -7,6 +7,7 @@ import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.model.Study;
 import io.redlink.more.data.model.scheduler.Event;
+import io.redlink.more.data.service.milestone.ParticipantMilestoneService;
 import io.redlink.more.data.service.observations.ObservationComponent;
 import io.redlink.more.data.store.observationCallback.ObservationCallbackStore;
 import org.apache.commons.lang3.tuple.Pair;
@@ -44,12 +45,15 @@ class ObservationExecutionServiceTest {
     @Mock
     ObservationCallbackStore callbackStore;
 
+    @Mock
+    private ParticipantMilestoneService participantMilestoneService;
+
     private ObservationExecutionService observationExecutionService;
 
     @BeforeEach
     void setUp() {
         when(observationComponent.getObservationType()).thenReturn("test-type");
-        observationExecutionService = new ObservationExecutionService(studyService, callbackStore, List.of(observationComponent));
+        observationExecutionService = new ObservationExecutionService(studyService, callbackStore, List.of(observationComponent), participantMilestoneService);
     }
 
     @Test
