@@ -231,6 +231,7 @@ public class LimeSurveyComponent implements ObservationComponent {
                 observationId,
                 null,
                 getObservationType(),
+                getObservationType(),
                 Instant.now(),
                 dateSubmitted,
                 answer
