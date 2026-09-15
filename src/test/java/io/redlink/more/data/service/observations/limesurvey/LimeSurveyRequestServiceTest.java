@@ -128,4 +128,97 @@ class LimeSurveyRequestServiceTest {
 
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void testGetAnswerFallsBackToNewestResponseWhenSavedIdIsUnknown() throws Exception {
+        // LimeSurvey reuses one token per observation, so a recurring survey accumulates responses.
+        // An unknown savedId must not throw the submission away.
+        stubExport(List.of(
+                Map.of("id", "11", "some_answer", "first"),
+                Map.of("id", "12", "some_answer", "second")
+        ));
+
+        Optional<Map<String, Object>> result = limeSurveyRequestService.getAnswer("token123", 100, 999);
+
+        assertTrue(result.isPresent());
+        assertEquals("second", result.get().get("some_answer"));
+    }
+
+    @Test
+    void testGetAnswerPrefersTheMatchingSavedId() throws Exception {
+        stubExport(List.of(
+                Map.of("id", "11", "some_answer", "first"),
+                Map.of("id", "12", "some_answer", "second")
+        ));
+
+        Optional<Map<String, Object>> result = limeSurveyRequestService.getAnswer("token123", 100, 11);
+
+        assertTrue(result.isPresent());
+        assertEquals("first", result.get().get("some_answer"));
+    }
+
+    @Test
+    void testGetAnswersReturnsEveryResponseForTokenAndSurveyId() throws Exception {
+        stubExport(List.of(
+                Map.of("id", "11", "token", "token123", "some_answer", "first"),
+                Map.of("id", "12", "token", "token123", "some_answer", "second")
+        ));
+
+        List<Map<String, Object>> answers = limeSurveyRequestService.getAnswers("token123", 100);
+
+        assertEquals(2, answers.size());
+        assertEquals("first", answers.get(0).get("some_answer"));
+        assertEquals("second", answers.get(1).get("some_answer"));
+        // the survey token must never be stored
+        assertFalse(answers.stream().anyMatch(a -> a.containsValue("token123")));
+    }
+
+    @Test
+    void testGetAnswersIsEmptyForBlankTokenOrSurveyId() {
+        assertTrue(limeSurveyRequestService.getAnswers("", 100).isEmpty());
+        assertTrue(limeSurveyRequestService.getAnswers("token123", 0).isEmpty());
+    }
+
+    @Test
+    void testGetAnswerRetriesOnceOnSessionFailure() throws Exception {
+        LimeSurveyObjectResponse failedSession = new LimeSurveyObjectResponse();
+        failedSession.setError("You have exceeded the number of maximum login attempts");
+
+        LimeSurveyObjectResponse sessionResponse = new LimeSurveyObjectResponse();
+        sessionResponse.setResult("session123");
+        LimeSurveyObjectResponse langResponse = new LimeSurveyObjectResponse();
+        langResponse.setResult(Map.of("surveyls_language", "en"));
+
+        when(limeSurveyRcApi.callMethod(any()))
+                .thenReturn(failedSession)   // 1st attempt: get_session_key fails
+                .thenReturn(sessionResponse) // retry: get_session_key
+                .thenReturn(langResponse)    // retry: getLanguage
+                .thenReturn(export(List.of(Map.of("id", "11", "some_answer", "first"))))
+                .thenReturn(new LimeSurveyObjectResponse());
+
+        Optional<Map<String, Object>> result = limeSurveyRequestService.getAnswer("token123", 100, 11);
+
+        assertTrue(result.isPresent());
+        assertEquals("first", result.get().get("some_answer"));
+    }
+
+    private void stubExport(List<Map<String, Object>> responses) throws Exception {
+        LimeSurveyObjectResponse sessionResponse = new LimeSurveyObjectResponse();
+        sessionResponse.setResult("session123");
+        LimeSurveyObjectResponse langResponse = new LimeSurveyObjectResponse();
+        langResponse.setResult(Map.of("surveyls_language", "en"));
+
+        when(limeSurveyRcApi.callMethod(any()))
+                .thenReturn(sessionResponse)
+                .thenReturn(langResponse)
+                .thenReturn(export(responses))
+                .thenReturn(new LimeSurveyObjectResponse()); // releaseSessionKey
+    }
+
+    private static LimeSurveyObjectResponse export(List<Map<String, Object>> responses) throws Exception {
+        LimeSurveyObjectResponse exportResponse = new LimeSurveyObjectResponse();
+        exportResponse.setResult(Base64.getEncoder().encodeToString(
+                new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(Map.of("responses", responses))));
+        return exportResponse;
+    }
 }

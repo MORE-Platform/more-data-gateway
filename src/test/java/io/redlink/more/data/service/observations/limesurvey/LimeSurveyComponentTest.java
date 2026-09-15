@@ -11,7 +11,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.redlink.more.data.model.DataPoint;
+import org.mockito.ArgumentCaptor;
+
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -75,6 +79,7 @@ class LimeSurveyComponentTest {
         when(studyService.getRoutingInfoByToken(1L, "token123")).thenReturn(Optional.of(new RoutingInfoWithObservation(routingInfo, 1)));
         when(limeSurveyRequestService.getAnswer("token123", 100, 50))
                 .thenReturn(Optional.of(new java.util.HashMap<>(Map.of("some_key", "some_value"))));
+        when(elasticService.storeDataPoints(anyList(), eq(routingInfo))).thenReturn(List.of("stored"));
 
         Optional<CallbackResult> result = limeSurveyComponent.processCallback(parameters);
         assertTrue(result.isPresent());
@@ -97,12 +102,79 @@ class LimeSurveyComponentTest {
         when(studyService.getRoutingInfoByToken(1L, "token123")).thenReturn(Optional.of(new RoutingInfoWithObservation(routingInfo, 1)));
         when(limeSurveyRequestService.getAnswer("token123", 100, 50))
                 .thenReturn(Optional.of(new java.util.HashMap<>(Map.of("some_key", "some_value"))));
+        when(elasticService.storeDataPoints(anyList(), eq(routingInfo))).thenReturn(List.of("stored"));
 
         Optional<CallbackResult> result = limeSurveyComponent.processCallback(parameters);
         assertTrue(result.isPresent());
         assertEquals(routingInfo, result.get().routingInfo());
         assertEquals(1, result.get().observationId());
         verify(elasticService).storeDataPoints(anyList(), eq(routingInfo));
+    }
+
+    @Test
+    void testProcessCallbackFailsWhenElasticRejectsTheAnswer() throws Exception {
+        Map<String, String> parameters = Map.of(
+                "token", "token123",
+                "saveId", "50",
+                "surveyId", "100",
+                "studyId", "1"
+        );
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+
+        when(studyService.getRoutingInfoByToken(1L, "token123")).thenReturn(Optional.of(new RoutingInfoWithObservation(routingInfo, 1)));
+        when(limeSurveyRequestService.getAnswer("token123", 100, 50))
+                .thenReturn(Optional.of(new java.util.HashMap<>(Map.of("some_key", "some_value"))));
+        // storeDataPoints only returns the ids it actually stored - an empty list means the bulk item was rejected
+        when(elasticService.storeDataPoints(anyList(), eq(routingInfo))).thenReturn(List.of());
+
+        assertTrue(limeSurveyComponent.processCallback(parameters).isEmpty());
+    }
+
+    @Test
+    void testProcessCallbackWithoutSavedId() throws Exception {
+        Map<String, String> parameters = Map.of(
+                "token", "token123",
+                "surveyId", "100",
+                "studyId", "1"
+        );
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+
+        assertTrue(limeSurveyComponent.necessaryCallbackParameters(parameters));
+
+        when(studyService.getRoutingInfoByToken(1L, "token123")).thenReturn(Optional.of(new RoutingInfoWithObservation(routingInfo, 1)));
+        when(limeSurveyRequestService.getAnswer("token123", 100, 0))
+                .thenReturn(Optional.of(new java.util.HashMap<>(Map.of("id", "7", "some_key", "some_value"))));
+        when(elasticService.storeDataPoints(anyList(), eq(routingInfo))).thenReturn(List.of("stored"));
+
+        assertTrue(limeSurveyComponent.processCallback(parameters).isPresent());
+    }
+
+    @Test
+    void testDatapointIdIsStablePerResponse() throws Exception {
+        Map<String, String> parameters = Map.of(
+                "token", "token123",
+                "saveId", "50",
+                "surveyId", "100",
+                "studyId", "1"
+        );
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+
+        when(studyService.getRoutingInfoByToken(1L, "token123")).thenReturn(Optional.of(new RoutingInfoWithObservation(routingInfo, 1)));
+        when(limeSurveyRequestService.getAnswer("token123", 100, 50))
+                .thenReturn(Optional.of(new java.util.HashMap<>(Map.of("id", "42", "some_key", "some_value"))))
+                .thenReturn(Optional.of(new java.util.HashMap<>(Map.of("id", "42", "some_key", "some_value"))));
+        when(elasticService.storeDataPoints(anyList(), eq(routingInfo))).thenReturn(List.of("stored"));
+
+        limeSurveyComponent.processCallback(parameters);
+        limeSurveyComponent.processCallback(parameters);
+
+        ArgumentCaptor<List<DataPoint>> captor = ArgumentCaptor.forClass(List.class);
+        verify(elasticService, times(2)).storeDataPoints(captor.capture(), eq(routingInfo));
+
+        String first = captor.getAllValues().get(0).get(0).datapointId();
+        String second = captor.getAllValues().get(1).get(0).datapointId();
+        assertEquals("limesurvey_100_42", first);
+        assertEquals(first, second);
     }
 
     @Test

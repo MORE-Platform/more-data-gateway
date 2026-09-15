@@ -6,7 +6,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.redlink.more.data.exception.BadRequestException;
 import io.redlink.more.data.model.Alias;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +74,6 @@ public class MapperUtils {
     }
 
     public static boolean containsParameter(Map<String, String> parameters, String... keys) {
-        return Arrays.stream(keys).anyMatch(parameters::containsKey);
+        return getParameter(parameters, keys) != null;
     }
 }

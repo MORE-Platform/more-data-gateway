@@ -72,4 +72,15 @@ class MapperUtilsTest {
         assertThat(MapperUtils.isPrimitiveLike(List.of(1, 2, 3))).isFalse();
         assertThat(MapperUtils.isPrimitiveLike(new Object())).isFalse();
     }
+
+    @Test
+    void containsParameterIgnoresCase() {
+        // must agree with getParameter, which already matches case-insensitively
+        Map<String, String> parameters = Map.of("Token", "abc", "SID", "100");
+
+        assertThat(MapperUtils.containsParameter(parameters, "token")).isTrue();
+        assertThat(MapperUtils.containsParameter(parameters, "surveyId", "sid")).isTrue();
+        assertThat(MapperUtils.containsParameter(parameters, "savedId")).isFalse();
+        assertThat(MapperUtils.getParameter(parameters, "token")).isEqualTo("abc");
+    }
 }

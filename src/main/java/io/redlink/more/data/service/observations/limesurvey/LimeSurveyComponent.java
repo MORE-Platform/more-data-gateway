@@ -38,7 +38,7 @@ public class LimeSurveyComponent implements ObservationComponent {
     private static final String LIME_SURVEY_TOKEN_KEY = "token";
     private static final String LIME_SURVEY_URL_KEY = "limeUrl";
 
-    private static final String[] LIME_SURVEY_ID_RESPONSE_KEYS = {"surveyId", "survey-id", "surveyid"};
+    private static final String[] LIME_SURVEY_ID_RESPONSE_KEYS = {"surveyId", "survey-id", "surveyid", "sid"};
     private static final String[] LIME_SURVEY_SAVE_ID_KEYS = {"savedId", "savedid", "saveId"};
     private static final String[] STUDY_ID_KEYS = {"studyId", "study-id", "studyid"};
 
@@ -66,8 +66,7 @@ public class LimeSurveyComponent implements ObservationComponent {
     public boolean necessaryCallbackParameters(Map<String, String> parameters) {
         return MapperUtils.containsParameter(parameters, STUDY_ID_KEYS)
                 && MapperUtils.containsParameter(parameters, LIME_SURVEY_TOKEN_KEY)
-                && MapperUtils.containsParameter(parameters, LIME_SURVEY_ID_RESPONSE_KEYS)
-                && MapperUtils.containsParameter(parameters, LIME_SURVEY_SAVE_ID_KEYS);
+                && MapperUtils.containsParameter(parameters, LIME_SURVEY_ID_RESPONSE_KEYS);
     }
 
     @Override
@@ -75,21 +74,20 @@ public class LimeSurveyComponent implements ObservationComponent {
         Optional<Long> studyIdParam = Optional.ofNullable(MapperUtils.getParameter(parameters, STUDY_ID_KEYS))
                 .map(Long::parseLong);
         String token = MapperUtils.getParameter(parameters, LIME_SURVEY_TOKEN_KEY);
-        Optional<Integer> savedId = Optional.ofNullable(MapperUtils.getParameter(parameters, LIME_SURVEY_SAVE_ID_KEYS))
-                .map(Integer::parseInt);
+        int savedId = parseSavedId(MapperUtils.getParameter(parameters, LIME_SURVEY_SAVE_ID_KEYS));
         Optional<Integer> surveyId = Optional.ofNullable(MapperUtils.getParameter(parameters, LIME_SURVEY_ID_RESPONSE_KEYS))
                 .map(Integer::parseInt);
 
-        if (studyIdParam.isEmpty() || token == null || savedId.isEmpty() || surveyId.isEmpty()) {
-            LOG.warn("Missing parameters for LimeSurvey Component: studyId={}, token={}, savedId={}, surveyId={}", studyIdParam, token, savedId, surveyId);
+        if (studyIdParam.isEmpty() || token == null || surveyId.isEmpty()) {
+            LOG.warn("Missing parameters for LimeSurvey Component: studyId={}, savedId={}, surveyId={}", studyIdParam, savedId, surveyId);
             throw new IllegalArgumentException("Necessary parameter not provided! Please provide all of these: studyID, observationId, token!");
         }
 
-        RoutingInfoWithObservation routingInfoAndObservationId = limeSurveyRequestService.getParticipant(token, surveyId.get())
-                .flatMap(this::lsParticipantToRoutingInfo)
-                .or(() -> studyService.getRoutingInfoByToken(studyIdParam.get(), token))
+        RoutingInfoWithObservation routingInfoAndObservationId = studyService.getRoutingInfoByToken(studyIdParam.get(), token)
+                .or(() -> limeSurveyRequestService.getParticipant(token, surveyId.get())
+                        .flatMap(this::lsParticipantToRoutingInfo))
                 .orElseThrow(() -> {
-                    LOG.warn("Could not find participant for LimeSurvey Component: studyId={}, token={}, savedId={}, surveyId={}", studyIdParam, token, savedId, surveyId);
+                    LOG.warn("Could not find participant for LimeSurvey Component: studyId={}, savedId={}, surveyId={}", studyIdParam, savedId, surveyId);
                     return new IllegalArgumentException("Could not find participant for LimeSurvey Component for provided parameters");
                 });
 
@@ -97,15 +95,15 @@ public class LimeSurveyComponent implements ObservationComponent {
         Integer resolvedObservationId = routingInfoAndObservationId.observationId();
 
         if (routingInfo == null || resolvedObservationId == null) {
-            LOG.warn("Could not find RoutingInfo for LimeSurvey Component: studyId={}, token={}, savedId={}, surveyId={}", studyIdParam, token, savedId, surveyId);
+            LOG.warn("Could not find RoutingInfo for LimeSurvey Component: studyId={}, savedId={}, surveyId={}", studyIdParam, savedId, surveyId);
             throw new IllegalArgumentException("Could not find RoutingInfo for LimeSurvey Component for provided parameters");
         }
 
-        if (storeAnswer(surveyId.get(), savedId.get(), token, routingInfo, Integer.toString(resolvedObservationId))) {
-            LOG.debug("Stored LimeSurvey answer for survey {}, token {}, observation {}", surveyId.get(), token, resolvedObservationId);
+        if (storeAnswer(surveyId.get(), savedId, token, routingInfo, "observation_" + resolvedObservationId)) {
+            LOG.debug("Stored LimeSurvey answer for survey {}, observation {}", surveyId.get(), resolvedObservationId);
             return Optional.of(new CallbackResult(routingInfo, resolvedObservationId));
         }
-        LOG.warn("Failed to store LimeSurvey answer for survey {}, token {}, observation {}", surveyId.get(), token, resolvedObservationId);
+        LOG.warn("Failed to store LimeSurvey answer for survey {}, savedId {}, observation {}", surveyId.get(), savedId, resolvedObservationId);
         return Optional.empty();
     }
 
@@ -155,38 +153,115 @@ public class LimeSurveyComponent implements ObservationComponent {
         }
     }
 
-    private boolean storeAnswer(Integer surveyId, Integer saveId, String token, RoutingInfo routingInfo, String observationId) {
+    private boolean storeAnswer(Integer surveyId, int saveId, String token, RoutingInfo routingInfo, String observationId) {
         Optional<Map<String, Object>> answerOpt = limeSurveyRequestService.getAnswer(token, surveyId, saveId);
-        if (answerOpt.isPresent() && !answerOpt.get().isEmpty()) {
-            LOG.info("Received answer for LimeSurvey survey {}, routingInfo {}, savedId {}", surveyId, routingInfo, saveId);
-            Map<String, Object> answer = answerOpt.get();
-            Object submitDateObj = answer.remove("submitdate");
-            Instant dateSubmitted = Optional
-                    .ofNullable(submitDateObj)
-                    .map(Object::toString)
-                    .map(obj -> DateTimeUtils.parseInstantWithOffset(obj, ZoneOffset.UTC))
-                    .orElse(Instant.now());
-            DataPoint dataPoint = new DataPoint(
-                    UUID.randomUUID().toString(),
-                    observationId,
-                    getObservationType(),
-                    getObservationType(),
-                    Instant.now(),
-                    dateSubmitted,
-                    answer
-            );
+        if (answerOpt.isEmpty() || answerOpt.get().isEmpty()) {
+            LOG.warn("Could not fetch answer for LimeSurvey survey {}, savedId {}, routingInfo {}", surveyId, saveId, routingInfo);
+            return false;
+        }
 
-            try {
-                elasticService.storeDataPoints(List.of(dataPoint), routingInfo);
-                LOG.info("Stored LimeSurvey answer for survey {}, token {}, observation {}", surveyId, token, observationId);
-                return true;
-            } catch (IOException e) {
-                LOG.error("Error storing LimeSurvey answers: {}", e.toString());
+        LOG.info("Received answer for LimeSurvey survey {}, routingInfo {}, savedId {}", surveyId, routingInfo, saveId);
+        DataPoint dataPoint = toDataPoint(surveyId, saveId, answerOpt.get(), observationId);
+
+        try {
+            if (elasticService.storeDataPoints(List.of(dataPoint), routingInfo).isEmpty()) {
+                LOG.error("Elastic rejected LimeSurvey answer for survey {}, savedId {}, observation {}", surveyId, saveId, observationId);
+                return false;
             }
-        } else {
-            LOG.warn("Could not fetch answer for LimeSurvey survey {}, token {}, savedId {}, routingInfo {}", surveyId, token, saveId, routingInfo);
+            LOG.info("Stored LimeSurvey answer for survey {}, observation {}", surveyId, observationId);
+            return true;
+        } catch (IOException e) {
+            LOG.error("Error storing LimeSurvey answers: {}", e.toString());
         }
         return false;
+    }
+
+    /**
+     * Re-collects every response LimeSurvey holds for this participant's survey and (re-)stores it.
+     * Used by the operator-triggered resync; safe to repeat, because the datapoint ids are stable.
+     *
+     * @param properties the participant's observation properties, carrying the survey id and token
+     * @return the number of answers stored, {@code 0} if there was nothing to store or LimeSurvey failed
+     */
+    public int resync(RoutingInfo routingInfo, int observationId, Map<String, Object> properties) {
+        int surveyId;
+        try {
+            surveyId = Integer.parseInt(asString(properties.get(LIME_SURVEY_ID_KEY)));
+        } catch (NumberFormatException | NullPointerException e) {
+            LOG.warn("Observation {} of participant {} has no usable {}", observationId, routingInfo.participantId(), LIME_SURVEY_ID_KEY);
+            return 0;
+        }
+        String token = asString(properties.get(LIME_SURVEY_TOKEN_KEY));
+        if (token == null || token.isBlank()) {
+            LOG.warn("Observation {} of participant {} has no LimeSurvey token", observationId, routingInfo.participantId());
+            return 0;
+        }
+
+        List<Map<String, Object>> answers = limeSurveyRequestService.getAnswers(token, surveyId);
+        if (answers.isEmpty()) {
+            LOG.info("No LimeSurvey answers to resync for survey {}, observation {}, participant {}",
+                    surveyId, observationId, routingInfo.participantId());
+            return 0;
+        }
+
+        List<DataPoint> dataPoints = answers.stream()
+                .map(answer -> toDataPoint(surveyId, 0, answer, "observation_" + observationId))
+                .toList();
+
+        try {
+            int stored = elasticService.storeDataPoints(dataPoints, routingInfo).size();
+            LOG.info("Resynced {} of {} LimeSurvey answers for survey {}, observation {}, participant {}",
+                    stored, dataPoints.size(), surveyId, observationId, routingInfo.participantId());
+            return stored;
+        } catch (IOException e) {
+            LOG.error("Error resyncing LimeSurvey answers for survey {}, observation {}: {}", surveyId, observationId, e.toString());
+            return 0;
+        }
+    }
+
+    private DataPoint toDataPoint(Integer surveyId, int saveId, Map<String, Object> answer, String observationId) {
+        Object submitDateObj = answer.remove("submitdate");
+        Instant dateSubmitted = Optional
+                .ofNullable(submitDateObj)
+                .map(Object::toString)
+                .map(obj -> DateTimeUtils.parseInstantWithOffset(obj, ZoneOffset.UTC))
+                .orElse(Instant.now());
+        return new DataPoint(
+                datapointId(surveyId, saveId, answer),
+                observationId,
+                null,
+                getObservationType(),
+                Instant.now(),
+                dateSubmitted,
+                answer
+        );
+    }
+
+    /**
+     * A stable id per LimeSurvey response, so re-processing a callback or re-syncing an answer overwrites
+     * the existing Elastic document instead of adding a duplicate.
+     */
+    private static String datapointId(Integer surveyId, int saveId, Map<String, Object> answer) {
+        long responseId = LimeSurveyRequestService.responseIdOf(answer);
+        if (responseId != Long.MIN_VALUE) {
+            return "limesurvey_" + surveyId + "_" + responseId;
+        }
+        if (saveId > 0) {
+            return "limesurvey_" + surveyId + "_" + saveId;
+        }
+        return UUID.randomUUID().toString();
+    }
+
+    private static int parseSavedId(String savedId) {
+        if (savedId == null || savedId.isBlank()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(savedId.trim());
+        } catch (NumberFormatException e) {
+            LOG.warn("Ignoring unparseable LimeSurvey savedId `{}`", savedId);
+            return 0;
+        }
     }
 
     private Optional<RoutingInfoWithObservation> lsParticipantToRoutingInfo(ParticipantData participantData) {
