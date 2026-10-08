@@ -80,7 +80,7 @@ class ObservationExecutionControllerTest {
 
         when(authenticationFacade.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(observationExecutionService.executeObservation(observationId, start, end, routingInfo, redirect)).thenReturn(Optional.of(URI.create("http://limesurvey.com")));
+        when(observationExecutionService.executeObservation(observationId, start, end, routingInfo, redirect, false)).thenReturn(Optional.of(URI.create("http://limesurvey.com")));
 
         ResponseEntity<Void> response = observationExecutionController.execObservation(observationId, start.toString(), end.toString(), redirect);
 
@@ -102,7 +102,7 @@ class ObservationExecutionControllerTest {
         when(authenticationFacade.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
 
-        when(observationExecutionService.executeObservation(eq(observationId), any(), any(), eq(routingInfo), any()))
+        when(observationExecutionService.executeObservation(eq(observationId), any(), any(), eq(routingInfo), any(), eq(false)))
                 .thenReturn(Optional.of(URI.create("http://redirect.com?status=200")));
 
         ResponseEntity<Void> response = observationExecutionController.execObservation(observationId, start.toString(), end.toString(), null);
@@ -125,7 +125,7 @@ class ObservationExecutionControllerTest {
         when(authenticationFacade.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
 
-        when(observationExecutionService.executeObservation(eq(observationId), any(), any(), eq(routingInfo), any()))
+        when(observationExecutionService.executeObservation(eq(observationId), any(), any(), eq(routingInfo), any(), eq(false)))
                 .thenReturn(Optional.empty());
         when(request.getContextPath()).thenReturn("");
 
@@ -146,7 +146,7 @@ class ObservationExecutionControllerTest {
 
         when(authenticationFacade.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(observationExecutionService.executeObservation(eq(observationId), any(), any(), eq(routingInfo), any())).thenReturn(Optional.of(URI.create("http://limesurvey.com")));
+        when(observationExecutionService.executeObservation(eq(observationId), any(), any(), eq(routingInfo), any(), eq(false))).thenReturn(Optional.of(URI.create("http://limesurvey.com")));
 
         org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder requestBuilder = org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/execution/observation/{observation-id}/", observationId)
                 .param("schedule-start", dateOnly)
@@ -181,7 +181,7 @@ class ObservationExecutionControllerTest {
 
         when(authenticationFacade.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(observationExecutionService.executeObservation(eq(observationId), any(), any(), eq(routingInfo), any())).thenThrow(new io.redlink.more.data.exception.ForbiddenException("Forbidden test"));
+        when(observationExecutionService.executeObservation(eq(observationId), any(), any(), eq(routingInfo), any(), eq(false))).thenThrow(new io.redlink.more.data.exception.ForbiddenException("Forbidden test"));
 
         org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder requestBuilder = org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/execution/observation/{observation-id}/", observationId)
                 .param("schedule-start", start.toString())

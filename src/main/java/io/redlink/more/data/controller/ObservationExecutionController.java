@@ -57,7 +57,10 @@ public class ObservationExecutionController implements ExecutionApi {
             final RoutingInfo routingInfo = getRoutingInfo()
                     .orElseThrow(() -> new AccessDeniedException("No credentials found!"));
 
-            var url = observationExecutionService.executeObservation(observationId, start, end, routingInfo, redirect);
+            final boolean fromPortal = authenticationFacade.getAuthentication() != null
+                    && authenticationFacade.getAuthentication().getPrincipal() instanceof StudyParticipantUserDetails;
+
+            var url = observationExecutionService.executeObservation(observationId, start, end, routingInfo, redirect, fromPortal);
 
             if (url.isEmpty()) {
                 url = Optional.of(UriComponentsBuilder.fromUriString(fallbackTarget())

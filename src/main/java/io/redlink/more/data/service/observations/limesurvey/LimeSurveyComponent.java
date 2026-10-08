@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -31,6 +32,7 @@ import java.util.regex.Pattern;
 
 @Component
 public class LimeSurveyComponent implements ObservationComponent {
+    public static final String OBSERVATION_TYPE = "lime-survey-observation";
     private static final String LIME_SURVEY_USER_TEMPLATE = "study_%s-observation_%s-participant_%s";
 
     private static final Logger LOG = LoggerFactory.getLogger(LimeSurveyComponent.class);
@@ -54,7 +56,7 @@ public class LimeSurveyComponent implements ObservationComponent {
 
     @Override
     public String getObservationType() {
-        return "lime-survey-observation";
+        return OBSERVATION_TYPE;
     }
 
     @Override
@@ -177,32 +179,49 @@ public class LimeSurveyComponent implements ObservationComponent {
     }
 
     /**
+     * The outcome of a {@link #resync}: how many answers were stored, and whether one of them was submitted
+     * at or after the requested point in time.
+     */
+    public record ResyncResult(int stored, boolean submittedSince) {
+        public static final ResyncResult NOTHING = new ResyncResult(0, false);
+    }
+
+    /**
      * Re-collects every response LimeSurvey holds for this participant's survey and (re-)stores it.
-     * Used by the operator-triggered resync; safe to repeat, because the datapoint ids are stable.
+     * Safe to repeat, because the datapoint ids are stable.
      *
      * @param properties the participant's observation properties, carrying the survey id and token
-     * @return the number of answers stored, {@code 0} if there was nothing to store or LimeSurvey failed
+     * @param since      a response submitted at or after this instant counts as newly collected - the token is
+     *                   reused across schedules, so older responses may already exist
+     * @return the stored answers, {@link ResyncResult#NOTHING} if there was nothing to store or LimeSurvey failed
      */
-    public int resync(RoutingInfo routingInfo, Integer observationId, Map<String, Object> properties) {
+    public ResyncResult resync(RoutingInfo routingInfo, Integer observationId, Map<String, Object> properties, Instant since) {
         int surveyId;
         try {
             surveyId = Integer.parseInt(asString(properties.get(LIME_SURVEY_ID_KEY)));
         } catch (NumberFormatException | NullPointerException e) {
             LOG.warn("Observation {} of participant {} has no usable {}", observationId, routingInfo.participantId(), LIME_SURVEY_ID_KEY);
-            return 0;
+            return ResyncResult.NOTHING;
         }
         String token = asString(properties.get(LIME_SURVEY_TOKEN_KEY));
         if (token == null || token.isBlank()) {
             LOG.warn("Observation {} of participant {} has no LimeSurvey token", observationId, routingInfo.participantId());
-            return 0;
+            return ResyncResult.NOTHING;
         }
 
         List<Map<String, Object>> answers = limeSurveyRequestService.getAnswers(token, surveyId);
         if (answers.isEmpty()) {
             LOG.info("No LimeSurvey answers to resync for survey {}, observation {}, participant {}",
                     surveyId, observationId, routingInfo.participantId());
-            return 0;
+            return ResyncResult.NOTHING;
         }
+
+        // incomplete responses carry no submitdate, so they never count as submitted
+        boolean submittedSince = answers.stream()
+                .map(answer -> answer.get("submitdate"))
+                .filter(Objects::nonNull)
+                .map(submitDate -> DateTimeUtils.parseInstantWithOffset(submitDate.toString(), ZoneOffset.UTC))
+                .anyMatch(submitted -> submitted != null && !submitted.isBefore(since));
 
         List<DataPoint> dataPoints = answers.stream()
                 .map(answer -> toDataPoint(surveyId, 0, answer, observationId.toString()))
@@ -210,12 +229,12 @@ public class LimeSurveyComponent implements ObservationComponent {
 
         try {
             int stored = elasticService.storeDataPoints(dataPoints, routingInfo).size();
-            LOG.info("Resynced {} of {} LimeSurvey answers for survey {}, observation {}, participant {}",
-                    stored, dataPoints.size(), surveyId, observationId, routingInfo.participantId());
-            return stored;
+            LOG.info("Resynced {} of {} LimeSurvey answers for survey {}, observation {}, participant {} (submitted since {}: {})",
+                    stored, dataPoints.size(), surveyId, observationId, routingInfo.participantId(), since, submittedSince);
+            return new ResyncResult(stored, stored > 0 && submittedSince);
         } catch (IOException e) {
             LOG.error("Error resyncing LimeSurvey answers for survey {}, observation {}: {}", surveyId, observationId, e.toString());
-            return 0;
+            return ResyncResult.NOTHING;
         }
     }
 

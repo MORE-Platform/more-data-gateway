@@ -210,4 +210,35 @@ class LimeSurveyComponentTest {
 
         assertThrows(IllegalArgumentException.class, () -> limeSurveyComponent.processCallback(parameters));
     }
+
+    @Test
+    void testResyncCountsOnlyAnswersSubmittedSinceTheRequestStarted() throws Exception {
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+        Map<String, Object> properties = Map.of("limeSurveyId", "100", "token", "token123");
+        Instant since = Instant.parse("2026-10-08T08:00:00Z");
+        when(elasticService.storeDataPoints(anyList(), eq(routingInfo))).thenReturn(List.of("stored"));
+
+        // an answer to an earlier schedule (same token) and an incomplete one without submitdate
+        when(limeSurveyRequestService.getAnswers("token123", 100)).thenReturn(List.of(
+                new java.util.HashMap<>(Map.of("id", "1", "submitdate", "2026-10-07T08:00:00Z")),
+                new java.util.HashMap<>(Map.of("id", "2"))));
+        assertEquals(new LimeSurveyComponent.ResyncResult(1, false),
+                limeSurveyComponent.resync(routingInfo, 3, properties, since));
+
+        when(limeSurveyRequestService.getAnswers("token123", 100)).thenReturn(List.of(
+                new java.util.HashMap<>(Map.of("id", "1", "submitdate", "2026-10-07T08:00:00Z")),
+                new java.util.HashMap<>(Map.of("id", "3", "submitdate", "2026-10-08T08:05:00Z"))));
+        assertEquals(new LimeSurveyComponent.ResyncResult(1, true),
+                limeSurveyComponent.resync(routingInfo, 3, properties, since));
+    }
+
+    @Test
+    void testResyncWithoutAnswersStoresNothing() throws Exception {
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+        when(limeSurveyRequestService.getAnswers("token123", 100)).thenReturn(List.of());
+
+        assertEquals(LimeSurveyComponent.ResyncResult.NOTHING, limeSurveyComponent.resync(
+                routingInfo, 3, Map.of("limeSurveyId", "100", "token", "token123"), Instant.now()));
+        verify(elasticService, never()).storeDataPoints(anyList(), any());
+    }
 }
