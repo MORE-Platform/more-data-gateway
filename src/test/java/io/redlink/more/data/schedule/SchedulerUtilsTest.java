@@ -16,6 +16,7 @@ import io.redlink.more.data.model.scheduler.RelativeDate;
 import io.redlink.more.data.model.scheduler.RelativeEvent;
 import io.redlink.more.data.model.scheduler.RelativeRecurrenceRule;
 import io.redlink.more.data.model.scheduler.ScheduleEvent;
+import io.redlink.more.data.model.scheduler.StudyWideEvent;
 import io.redlink.more.data.util.SchedulerUtils;
 import org.apache.commons.lang3.Range;
 import org.junit.jupiter.api.Assertions;
@@ -40,6 +41,39 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class SchedulerUtilsTest {
+
+    @Test
+    @DisplayName("A study-wide schedule expands to a single range covering the whole study")
+    void studyWideEventSpansTheWholeRange() {
+        final Instant start = Instant.parse("2024-05-10T00:00:00Z");
+        final Instant end = Instant.parse("2024-05-15T23:59:59Z");
+
+        Assertions.assertEquals(
+                List.of(Range.of(start, end)),
+                SchedulerUtils.parseToObservationSchedules(null, new StudyWideEvent(), start, end, false));
+    }
+
+    @Test
+    @DisplayName("A study-wide schedule anchored to a milestone starts at the milestone")
+    void studyWideEventAnchoredToMilestone() {
+        final Instant milestone = Instant.parse("2024-05-12T08:00:00Z");
+        final Instant end = Instant.parse("2024-05-15T23:59:59Z");
+
+        Assertions.assertEquals(
+                List.of(Range.of(milestone, end)),
+                SchedulerUtils.parseToObservationSchedules(null, new StudyWideEvent(), milestone, end, true));
+    }
+
+    @Test
+    @DisplayName("shiftStartIfObservationAlreadyEnded tolerates observations without a schedule")
+    void shiftStartToleratesMissingSchedule() {
+        final Instant start = Instant.parse("2024-05-10T09:30:00Z");
+        Observation noSchedule = mock(Observation.class);
+        when(noSchedule.milestoneId()).thenReturn(null);
+        when(noSchedule.observationSchedule()).thenReturn(null);
+
+        Assertions.assertEquals(start, SchedulerUtils.shiftStartIfObservationAlreadyEnded(start, List.of(noSchedule)));
+    }
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 

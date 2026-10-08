@@ -11,7 +11,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true, defaultImpl = Event.class)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = Event.class, name = Event.TYPE),
-        @JsonSubTypes.Type(value = RelativeEvent.class, name = RelativeEvent.TYPE)
+        @JsonSubTypes.Type(value = RelativeEvent.class, name = RelativeEvent.TYPE),
+        @JsonSubTypes.Type(value = StudyWideEvent.class, name = StudyWideEvent.TYPE)
 })
 public interface ScheduleEvent {
     String getType();

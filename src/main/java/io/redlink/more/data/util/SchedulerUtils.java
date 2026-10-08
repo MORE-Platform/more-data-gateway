@@ -21,6 +21,7 @@ import io.redlink.more.data.model.scheduler.RelativeDate;
 import io.redlink.more.data.model.scheduler.RelativeEvent;
 import io.redlink.more.data.model.scheduler.RelativeRecurrenceRule;
 import io.redlink.more.data.model.scheduler.ScheduleEvent;
+import io.redlink.more.data.model.scheduler.StudyWideEvent;
 import org.apache.commons.lang3.Range;
 
 import java.sql.Date;
@@ -92,6 +93,8 @@ public class SchedulerUtils {
 
     public static List<Range<Instant>> parseToObservationSchedules(ParticipantObservationSeed participantObservationSeed, ScheduleEvent scheduleEvent, Instant start, Instant end, boolean isMilestoneAnchor) {
         if (scheduleEvent == null) return Collections.emptyList();
+        // study-wide observations run continuously: one range covering everything
+        if (scheduleEvent instanceof StudyWideEvent) return List.of(Range.of(start, end));
         List<Range<Instant>> ranges = Collections.emptyList();
         if (scheduleEvent instanceof Event event) {
             ranges = parseToObservationSchedulesForEvent(event, start, end);
@@ -106,6 +109,7 @@ public class SchedulerUtils {
         return observations.stream()
                 .filter(o -> o.milestoneId() == null)
                 .map(Observation::observationSchedule)
+                .filter(Objects::nonNull)
                 .filter(scheduleEvent -> scheduleEvent.getType().equals(RelativeEvent.TYPE))
                 .map(r -> ((RelativeEvent) r).getDtend())
                 .filter(relativeDate -> relativeDate.getOffset().getValue() == 1)
