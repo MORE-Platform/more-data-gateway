@@ -3,6 +3,7 @@ package io.redlink.more.data.service.observations.limesurvey;
 import io.redlink.more.data.model.CallbackResult;
 import io.redlink.more.data.model.DataPoint;
 import io.redlink.more.data.model.Observation;
+import io.redlink.more.data.model.ObservationResyncRequest;
 import io.redlink.more.data.model.RoutingInfo;
 import io.redlink.more.data.model.RoutingInfoWithObservation;
 import io.redlink.more.data.service.ElasticService;
@@ -39,6 +40,8 @@ public class LimeSurveyComponent implements ObservationComponent {
     private static final String LIME_SURVEY_ID_KEY = "limeSurveyId";
     private static final String LIME_SURVEY_TOKEN_KEY = "token";
     private static final String LIME_SURVEY_URL_KEY = "limeUrl";
+    private static final String SUBMIT_DATE_KEY = "submitdate";
+    public static final String SUBMITTED_KEY = "submitted";
 
     private static final String[] LIME_SURVEY_ID_RESPONSE_KEYS = {"surveyId", "survey-id", "surveyid", "sid"};
     private static final String[] LIME_SURVEY_SAVE_ID_KEYS = {"savedId", "savedid", "saveId"};
@@ -180,7 +183,7 @@ public class LimeSurveyComponent implements ObservationComponent {
 
     /**
      * The outcome of a {@link #resync}: how many answers were stored, and whether one of them was submitted
-     * at or after the requested point in time.
+     * at or after the requested point in time, or backfilled the submitdate the request asked for.
      */
     public record ResyncResult(int stored, boolean submittedSince) {
         public static final ResyncResult NOTHING = new ResyncResult(0, false);
@@ -196,6 +199,17 @@ public class LimeSurveyComponent implements ObservationComponent {
      * @return the stored answers, {@link ResyncResult#NOTHING} if there was nothing to store or LimeSurvey failed
      */
     public ResyncResult resync(RoutingInfo routingInfo, Integer observationId, Map<String, Object> properties, Instant since) {
+        return resync(routingInfo, observationId, properties, since, Map.of());
+    }
+
+    /**
+     * @param requestProperties the resync request's properties: with {@link ObservationResyncRequest#MISSING_SUBMIT_DATE}
+     *                          the Studymanager's validation asks to backfill the submitdate of the stored answer
+     *                          {@link ObservationResyncRequest#DATA_ID} (any answer, if absent) - collecting it
+     *                          counts as new data, even though it was submitted before the request started
+     */
+    public ResyncResult resync(RoutingInfo routingInfo, Integer observationId, Map<String, Object> properties, Instant since,
+                               Map<String, Object> requestProperties) {
         int surveyId;
         try {
             surveyId = Integer.parseInt(asString(properties.get(LIME_SURVEY_ID_KEY)));
@@ -218,10 +232,14 @@ public class LimeSurveyComponent implements ObservationComponent {
 
         // incomplete responses carry no submitdate, so they never count as submitted
         boolean submittedSince = answers.stream()
-                .map(answer -> answer.get("submitdate"))
+                .map(answer -> answer.get(SUBMIT_DATE_KEY))
                 .filter(Objects::nonNull)
                 .map(submitDate -> DateTimeUtils.parseInstantWithOffset(submitDate.toString(), ZoneOffset.UTC))
                 .anyMatch(submitted -> submitted != null && !submitted.isBefore(since));
+
+        boolean submitDateBackfilled = Boolean.TRUE.equals(requestProperties.get(ObservationResyncRequest.MISSING_SUBMIT_DATE))
+                && answers.stream().anyMatch(answer -> answer.get(SUBMIT_DATE_KEY) != null
+                && matchesDataId(answer, requestProperties.get(ObservationResyncRequest.DATA_ID)));
 
         List<DataPoint> dataPoints = answers.stream()
                 .map(answer -> toDataPoint(surveyId, 0, answer, observationId.toString()))
@@ -229,17 +247,52 @@ public class LimeSurveyComponent implements ObservationComponent {
 
         try {
             int stored = elasticService.storeDataPoints(dataPoints, routingInfo).size();
-            LOG.info("Resynced {} of {} LimeSurvey answers for survey {}, observation {}, participant {} (submitted since {}: {})",
-                    stored, dataPoints.size(), surveyId, observationId, routingInfo.participantId(), since, submittedSince);
-            return new ResyncResult(stored, stored > 0 && submittedSince);
+            LOG.info("Resynced {} of {} LimeSurvey answers for survey {}, observation {}, participant {} (submitted since {}: {}, submitdate backfilled: {})",
+                    stored, dataPoints.size(), surveyId, observationId, routingInfo.participantId(), since, submittedSince, submitDateBackfilled);
+            return new ResyncResult(stored, stored > 0 && (submittedSince || submitDateBackfilled));
         } catch (IOException e) {
             LOG.error("Error resyncing LimeSurvey answers for survey {}, observation {}: {}", surveyId, observationId, e.toString());
             return ResyncResult.NOTHING;
         }
     }
 
+    /**
+     * Whether the participant submitted the survey within {@code [start, end]}. Answers stored before the
+     * {@link #SUBMITTED_KEY} marker existed are resynced from LimeSurvey once, so they carry it afterward.
+     *
+     * @return false only if the stored answer is known to be incomplete
+     */
+    public boolean isSubmitted(RoutingInfo routingInfo, Integer observationId, Map<String, Object> properties, Instant start, Instant end) {
+        try {
+            Optional<Boolean> submitted = elasticService.isSubmitted(routingInfo, observationId.toString(), start, end);
+            if (submitted.isPresent()) {
+                return submitted.get();
+            }
+            LOG.info("Answer of observation {} for participant {} predates the submitted marker, resyncing from LimeSurvey",
+                    observationId, routingInfo.participantId());
+            resync(routingInfo, observationId, properties, start);
+            return elasticService.isSubmitted(routingInfo, observationId.toString(), start, end).orElse(true);
+        } catch (IOException e) {
+            LOG.error("Could not check the submission of observation {} for participant {}", observationId, routingInfo.participantId(), e);
+            return true;
+        }
+    }
+
+    private static boolean matchesDataId(Map<String, Object> answer, Object dataId) {
+        if (dataId == null) {
+            return true;
+        }
+        try {
+            return LimeSurveyRequestService.responseIdOf(answer) == Long.parseLong(String.valueOf(dataId));
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
     private DataPoint toDataPoint(Integer surveyId, int saveId, Map<String, Object> answer, String observationId) {
-        Object submitDateObj = answer.remove("submitdate");
+        Object submitDateObj = answer.get(SUBMIT_DATE_KEY);
+        // a response closed early has no submitdate - the marker tells it apart from answers stored before it existed
+        answer.put(SUBMITTED_KEY, String.valueOf(submitDateObj != null));
         Instant dateSubmitted = Optional
                 .ofNullable(submitDateObj)
                 .map(Object::toString)

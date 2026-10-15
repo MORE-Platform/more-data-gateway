@@ -122,6 +122,6 @@ public class ObservationResyncService {
             return LimeSurveyComponent.ResyncResult.NOTHING;
         }
 
-        return limeSurveyComponent.resync(routingInfo.get(), request.observationId(), properties, request.start());
+        return limeSurveyComponent.resync(routingInfo.get(), request.observationId(), properties, request.start(), request.properties());
     }
 }

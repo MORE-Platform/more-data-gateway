@@ -36,10 +36,10 @@ class ObservationResyncServiceTest {
     private static final Instant START = Instant.now().minus(Duration.ofMinutes(30));
     // a portal request: every 10 minutes for 24 hours
     private static final ObservationResyncRequest RUNNING = new ObservationResyncRequest(
-            1L, 2, 3, "lime-survey-observation", ResyncInterval.NORMAL, START, START.plus(Duration.ofHours(24)));
+            1L, 2, 3, "lime-survey-observation", ResyncInterval.NORMAL, START, START.plus(Duration.ofHours(24)), Map.of());
     // a request that has reached its end (end = start)
     private static final ObservationResyncRequest ONCE = new ObservationResyncRequest(
-            1L, 2, 3, "lime-survey-observation", ResyncInterval.URGENT, START, START);
+            1L, 2, 3, "lime-survey-observation", ResyncInterval.URGENT, START, START, Map.of());
     private static final RoutingInfo ROUTING_INFO =
             new RoutingInfo(1L, 2, OptionalInt.empty(), Set.of(), true, true);
     // limeSurveyId comes from the observation, token from the participant - StudyRepository merges both
@@ -70,7 +70,7 @@ class ObservationResyncServiceTest {
 
         service.processPendingRequests();
 
-        verify(limeSurveyComponent).resync(ROUTING_INFO, 3, PROPERTIES, START);
+        verify(limeSurveyComponent).resync(ROUTING_INFO, 3, PROPERTIES, START, Map.of());
         verify(resyncRepository).markSynced(RUNNING);
         verify(resyncRepository, never()).delete(any());
     }
@@ -82,7 +82,7 @@ class ObservationResyncServiceTest {
         service.processPendingRequests();
         service.processPendingRequests(); // within the 10 minute interval
 
-        verify(limeSurveyComponent, times(1)).resync(any(), anyInt(), any(), any());
+        verify(limeSurveyComponent, times(1)).resync(any(), anyInt(), any(), any(), any());
         verify(resyncRepository, never()).markSynced(any());
         verify(resyncRepository, never()).delete(any());
     }
@@ -90,7 +90,7 @@ class ObservationResyncServiceTest {
     @Test
     void keepsARunningRequestWhenTheResyncThrows() {
         when(resyncRepository.listPending()).thenReturn(List.of(RUNNING));
-        when(limeSurveyComponent.resync(any(), anyInt(), any(), any())).thenThrow(new IllegalStateException("LimeSurvey down"));
+        when(limeSurveyComponent.resync(any(), anyInt(), any(), any(), any())).thenThrow(new IllegalStateException("LimeSurvey down"));
 
         service.processPendingRequests();
 
@@ -121,17 +121,17 @@ class ObservationResyncServiceTest {
     @Test
     void skipsObservationTypesOtherThanLimeSurveyAndDeletesThemAfterTheirEnd() {
         ObservationResyncRequest polar = new ObservationResyncRequest(
-                1L, 2, 3, "polar-verity-observation", ResyncInterval.URGENT, START, START);
+                1L, 2, 3, "polar-verity-observation", ResyncInterval.URGENT, START, START, Map.of());
         when(resyncRepository.listPending()).thenReturn(List.of(polar));
 
         service.processPendingRequests();
 
-        verify(limeSurveyComponent, never()).resync(any(), anyInt(), any(), any());
+        verify(limeSurveyComponent, never()).resync(any(), anyInt(), any(), any(), any());
         verify(resyncRepository).delete(polar);
     }
 
     private void givenPending(ObservationResyncRequest request, ResyncResult result) {
         when(resyncRepository.listPending()).thenReturn(List.of(request));
-        when(limeSurveyComponent.resync(ROUTING_INFO, 3, PROPERTIES, START)).thenReturn(result);
+        when(limeSurveyComponent.resync(ROUTING_INFO, 3, PROPERTIES, START, Map.of())).thenReturn(result);
     }
 }

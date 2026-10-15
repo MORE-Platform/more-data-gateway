@@ -24,6 +24,8 @@ public class ElasticUtils {
         public static final String PARTICIPANT_FIELD = "participant_";
         public static final String PARTICIPANT_KEYWORD_FIELD = "participant_id.keyword";
         public static final String EFFECTIVE_TIME_FRAME_FIELD = "effective_time_frame";
+        public static final String OBSERVATION_KEYWORD_FIELD = "observation_id.keyword";
+        public static final String LIME_SURVEY_SUBMITTED_DATA_FIELD = "data_submitted";
     }
 
     public static Query getStudyIdFilter(Long studyId) {
