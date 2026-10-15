@@ -26,6 +26,7 @@ import io.redlink.more.data.service.ObservationExecutionService;
 import io.redlink.more.data.service.RegistrationService;
 import io.redlink.more.data.service.StudyService;
 import io.redlink.more.data.service.milestone.ParticipantMilestoneService;
+import io.redlink.more.data.service.observations.limesurvey.LimeSurveyComponent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -58,7 +60,10 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -108,6 +113,9 @@ class ParticipantPortalControllerTest {
 
     @MockitoBean
     private SchedulerProperties schedulerProperties;
+
+    @MockitoBean
+    private LimeSurveyComponent limeSurveyComponent;
 
     @Test
     void testParticipantLoginSetsSession() throws Exception {
@@ -466,6 +474,51 @@ class ParticipantPortalControllerTest {
                 .andExpect(jsonPath("$.observations[1].schedule[7].start").value(absStart.plus(6, ChronoUnit.DAYS).toString()))
                 .andExpect(jsonPath("$.observations[1].schedule[7].end").value(absEnd.plus(6, ChronoUnit.DAYS).toString()))
                 .andExpect(jsonPath("$.observations[1].schedule[7].dataHealth").doesNotExist());
+    }
+
+    @Test
+    void testGetStudyConfigurationKeepsAnUnsubmittedLimeSurveyOpen() throws Exception {
+        Instant now = Instant.now().truncatedTo(ChronoUnit.HOURS);
+        long studyId = 13L;
+        int participantId = 9;
+        Instant start = now.minus(1, ChronoUnit.HOURS);
+        Instant end = now.plus(3, ChronoUnit.HOURS);
+        Map<String, Object> properties = Map.of("limeSurveyId", "100", "token", "token123");
+
+        RoutingInfo routingInfo = new RoutingInfo(studyId, participantId, OptionalInt.empty(), Set.of(), true, true);
+        StudyParticipantUserDetails userDetails = new StudyParticipantUserDetails(studyId, participantId, null);
+        var limeSurvey = new Observation(1, null, "survey", LimeSurveyComponent.OBSERVATION_TYPE, "participant info",
+                properties, new Event().setDateStart(start).setDateEnd(end),
+                null, null, false, false, false, Set.of());
+        var other = new Observation(2, null, "other", "type", "participant info",
+                null, new Event().setDateStart(start).setDateEnd(end),
+                null, null, false, false, false, Set.of());
+        Study study = new Study(studyId, "Title", true, "Info", "Finish", "active", "Consent",
+                new Contact("Inst", "Person", "email", "phone"),
+                LocalDate.now().minusDays(1), LocalDate.now().minusDays(1), LocalDate.now().plusDays(14),
+                List.of(limeSurvey, other), Instant.now(), Instant.now(),
+                new SimpleParticipant(participantId, "alias", now.minus(26, ChronoUnit.HOURS), now.plus(10, ChronoUnit.DAYS)));
+
+        when(studyService.getRoutingInfo(studyId, participantId)).thenReturn(Optional.of(routingInfo));
+        when(studyService.getStudyState(studyId)).thenReturn(Optional.of("active"));
+        when(applicationAccessService.hasConsent(routingInfo)).thenReturn(true);
+        when(studyService.getStudy(routingInfo)).thenReturn(Optional.of(Pair.of(study, Collections.emptyList())));
+        when(dataHealthService.checkDataHealth(eq(studyId), eq(participantId), anyInt(), eq(start)))
+                .thenReturn(new DataHealth(true, ObservationDataState.COMPLETE));
+
+        // a survey closed early: stored, but not submitted
+        when(limeSurveyComponent.isSubmitted(routingInfo, 1, properties, start, end)).thenReturn(false);
+        mockMvc.perform(get("/participant-portal/api/v1/config/study").with(user(userDetails)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.observations[0].schedule[0].dataHealth").value("incomplete"))
+                .andExpect(jsonPath("$.observations[1].schedule[0].dataHealth").value("completed"));
+
+        when(limeSurveyComponent.isSubmitted(routingInfo, 1, properties, start, end)).thenReturn(true);
+        mockMvc.perform(get("/participant-portal/api/v1/config/study").with(user(userDetails)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.observations[0].schedule[0].dataHealth").value("completed"));
+
+        verify(limeSurveyComponent, never()).isSubmitted(any(), eq(2), anyMap(), any(), any());
     }
 
     @Test

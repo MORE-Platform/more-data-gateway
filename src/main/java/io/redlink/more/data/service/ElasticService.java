@@ -15,7 +15,10 @@ import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.json.JsonData;
 import io.redlink.more.data.api.StorageService;
 import io.redlink.more.data.elastic.model.ElasticDataPoint;
 import io.redlink.more.data.model.DataPoint;
@@ -30,7 +33,11 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ElasticService implements StorageService {
@@ -171,6 +178,48 @@ public class ElasticService implements StorageService {
         }
     }
 
+
+    /**
+     * Whether a LimeSurvey answer stored within {@code [start, end]} was submitted, based on the
+     * {@code submitted} marker of the stored answers.
+     *
+     * @return empty if no stored answer carries the marker (stored before it existed, or none stored)
+     */
+    public Optional<Boolean> isSubmitted(RoutingInfo routingInfo, String observationId, Instant start, Instant end) throws IOException {
+        final String submittedField = ElasticUtils.Constants.LIME_SURVEY_SUBMITTED_DATA_FIELD;
+        try {
+            SearchResponse<Map> response = client.search(s -> s
+                            .index(ElasticUtils.getStudyIdString(routingInfo.studyId()))
+                            .size(10)
+                            .source(src -> src.filter(f -> f.includes(submittedField)))
+                            .query(q -> q.bool(b -> b
+                                    .filter(ElasticUtils.getStudyIdFilter(routingInfo.studyId()))
+                                    .filter(ElasticUtils.getParticipantIdFilter(routingInfo.participantId()))
+                                    .filter(f -> f.term(t -> t.field(ElasticUtils.Constants.OBSERVATION_KEYWORD_FIELD).value(observationId)))
+                                    .filter(f -> f.range(r -> r
+                                            .field(ElasticUtils.Constants.EFFECTIVE_TIME_FRAME_FIELD)
+                                            .gte(JsonData.of(start.toString()))
+                                            .lte(JsonData.of(end.toString()))))
+                            )),
+                    Map.class);
+            Set<String> markers = response.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(Objects::nonNull)
+                    .map(source -> source.get(submittedField))
+                    .filter(Objects::nonNull)
+                    .map(String::valueOf)
+                    .collect(Collectors.toSet());
+            if (markers.contains("true")) {
+                return Optional.of(true);
+            }
+            return markers.contains("false") ? Optional.of(false) : Optional.empty();
+        } catch (ElasticsearchException e) {
+            if ("index_not_found_exception".equals(e.error().type())) {
+                return Optional.empty();
+            }
+            throw new IOException("Could not query the submission of observation " + observationId, e);
+        }
+    }
 
     private String generateUidPrefix(RoutingInfo routingInfo) {
         return String.format("%s_%s_", routingInfo.studyId(), routingInfo.participantId());

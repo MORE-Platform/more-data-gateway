@@ -2,6 +2,7 @@ package io.redlink.more.data.repository;
 
 import io.redlink.more.data.model.ObservationResyncRequest;
 import io.redlink.more.data.model.ResyncInterval;
+import io.redlink.more.data.util.MapperUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
@@ -9,12 +10,13 @@ import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class ObservationResyncRepository {
 
     private static final String LIST_PENDING = """
-            SELECT r.study_id, r.participant_id, r.observation_id, o.type, r.resync_interval, r.resync_start, r.resync_end
+            SELECT r.study_id, r.participant_id, r.observation_id, o.type, r.resync_interval, r.resync_start, r.resync_end, r.properties
             FROM observation_resync_requests r
                 INNER JOIN observations o ON (o.study_id = r.study_id AND o.observation_id = r.observation_id)
             WHERE NOT r.synced
@@ -91,7 +93,14 @@ public class ObservationResyncRepository {
                 rs.getString("type"),
                 ResyncInterval.fromDb(rs.getString("resync_interval")),
                 rs.getTimestamp("resync_start").toInstant(),
-                rs.getTimestamp("resync_end").toInstant()
+                rs.getTimestamp("resync_end").toInstant(),
+                readProperties(rs.getString("properties"))
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> readProperties(String json) {
+        Map<String, Object> properties = json == null ? null : MapperUtils.readValue(json, Map.class);
+        return properties == null ? Map.of() : properties;
     }
 }

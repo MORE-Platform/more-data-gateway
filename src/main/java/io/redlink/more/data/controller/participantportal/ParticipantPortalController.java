@@ -9,16 +9,19 @@ import io.redlink.more.data.exception.ForbiddenException;
 import io.redlink.more.data.exception.NotAuthorizedException;
 import io.redlink.more.data.model.CompletedData;
 import io.redlink.more.data.model.DataHealth;
+import io.redlink.more.data.model.Observation;
 import io.redlink.more.data.model.ObservationDataState;
 import io.redlink.more.data.model.ParticipantConsent;
 import io.redlink.more.data.model.ParticipantMilestone;
 import io.redlink.more.data.model.RoutingInfo;
+import io.redlink.more.data.model.Study;
 import io.redlink.more.data.model.StudyParticipantUserDetails;
 import io.redlink.more.data.service.ApplicationAccessService;
 import io.redlink.more.data.service.DataHealthService;
 import io.redlink.more.data.service.ObservationExecutionService;
 import io.redlink.more.data.service.StudyService;
 import io.redlink.more.data.service.milestone.ParticipantMilestoneService;
+import io.redlink.more.data.service.observations.limesurvey.LimeSurveyComponent;
 import io.redlink.more.data.util.ParticipantUtils;
 import io.redlink.more.data.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,6 +46,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -61,18 +65,21 @@ public class ParticipantPortalController implements AuthorizationApi, Configurat
     private final DataHealthService dataHealthService;
     private final ObservationExecutionService observationExecutionService;
     private final ParticipantMilestoneService participantMilestoneService;
+    private final LimeSurveyComponent limeSurveyComponent;
 
     ParticipantPortalController(
             ApplicationAccessService applicationAccessService,
             StudyService studyService,
             DataHealthService dataHealthService,
             ObservationExecutionService observationExecutionService,
-            ParticipantMilestoneService participantMilestoneService) {
+            ParticipantMilestoneService participantMilestoneService,
+            LimeSurveyComponent limeSurveyComponent) {
         this.applicationAccessService = applicationAccessService;
         this.studyService = studyService;
         this.dataHealthService = dataHealthService;
         this.observationExecutionService = observationExecutionService;
         this.participantMilestoneService = participantMilestoneService;
+        this.limeSurveyComponent = limeSurveyComponent;
     }
 
     @Override
@@ -201,6 +208,15 @@ public class ParticipantPortalController implements AuthorizationApi, Configurat
                             routingInfo.participantId(),
                             Integer.parseInt(observation.getObservationId()), //ObservationId in the API is a String :(
                             observationSchedule.getStart());
+                    if (dataHealth != null && dataHealth.state() == ObservationDataState.COMPLETE
+                            && LimeSurveyComponent.OBSERVATION_TYPE.equals(observation.getObservationType())
+                            && observationSchedule.getEnd() != null
+                            && observationSchedule.getEnd().isAfter(Instant.now())
+                            && !isLimeSurveySubmitted(routingInfo, studyData.get().getLeft(), observation.getObservationId(),
+                            observationSchedule.getStart(), observationSchedule.getEnd())) {
+                        // a survey closed early stores an answer, but it stays open until it is submitted
+                        dataHealth = new DataHealth(true, ObservationDataState.INCOMPLETE);
+                    }
                     LOG.debug(
                             "check dataHealth[study:{}, participant:{}, observation:{}, start:{}] -> {}",
                             routingInfo.studyId(),
@@ -218,6 +234,17 @@ public class ParticipantPortalController implements AuthorizationApi, Configurat
         return ResponseEntity.ok(studyDTO);
     }
 
+
+    private boolean isLimeSurveySubmitted(RoutingInfo routingInfo, Study study, String observationId, Instant start, Instant end) {
+        int id = Integer.parseInt(observationId);
+        return study.observations().stream()
+                .filter(o -> o.observationId() == id)
+                .findFirst()
+                .map(Observation::properties)
+                .filter(Map.class::isInstance)
+                .map(props -> limeSurveyComponent.isSubmitted(routingInfo, id, (Map<String, Object>) props, start, end))
+                .orElse(true);
+    }
 
     private Function<Integer, Optional<Instant>> milestoneAnchorResolver(RoutingInfo routingInfo) {
         return milestoneId -> participantMilestoneService

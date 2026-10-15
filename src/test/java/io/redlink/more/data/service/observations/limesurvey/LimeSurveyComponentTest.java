@@ -233,6 +233,81 @@ class LimeSurveyComponentTest {
     }
 
     @Test
+    void testResyncStoresSubmitDateAndSubmittedMarker() throws Exception {
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+        when(limeSurveyRequestService.getAnswers("token123", 100)).thenReturn(List.of(
+                new java.util.HashMap<>(Map.of("id", "1", "submitdate", "2026-10-07T08:00:00Z")),
+                new java.util.HashMap<>(Map.of("id", "2"))));
+        ArgumentCaptor<List<DataPoint>> captor = ArgumentCaptor.forClass(List.class);
+        when(elasticService.storeDataPoints(captor.capture(), eq(routingInfo))).thenReturn(List.of("a", "b"));
+
+        limeSurveyComponent.resync(routingInfo, 3, Map.of("limeSurveyId", "100", "token", "token123"), Instant.now());
+
+        Map<String, Object> submitted = captor.getValue().get(0).data();
+        assertEquals("2026-10-07T08:00:00Z", submitted.get("submitdate"));
+        assertEquals("true", submitted.get("submitted"));
+        Map<String, Object> incomplete = captor.getValue().get(1).data();
+        assertFalse(incomplete.containsKey("submitdate"));
+        assertEquals("false", incomplete.get("submitted"));
+    }
+
+    @Test
+    void testIsSubmittedUsesTheStoredMarkerWithoutAskingLimeSurvey() throws Exception {
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+        Instant start = Instant.parse("2026-10-08T08:00:00Z");
+        Instant end = start.plusSeconds(3600);
+        when(elasticService.isSubmitted(routingInfo, "3", start, end)).thenReturn(Optional.of(false));
+
+        assertFalse(limeSurveyComponent.isSubmitted(routingInfo, 3, Map.of("limeSurveyId", "100", "token", "token123"), start, end));
+        verifyNoInteractions(limeSurveyRequestService);
+    }
+
+    @Test
+    void testIsSubmittedResyncsAnswersStoredBeforeTheMarker() throws Exception {
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+        Instant start = Instant.parse("2026-10-08T08:00:00Z");
+        Instant end = start.plusSeconds(3600);
+        when(elasticService.isSubmitted(routingInfo, "3", start, end)).thenReturn(Optional.empty(), Optional.of(true));
+        when(limeSurveyRequestService.getAnswers("token123", 100)).thenReturn(List.of(
+                new java.util.HashMap<>(Map.of("id", "1", "submitdate", "2026-10-08T08:05:00Z"))));
+        when(elasticService.storeDataPoints(anyList(), eq(routingInfo))).thenReturn(List.of("stored"));
+
+        assertTrue(limeSurveyComponent.isSubmitted(routingInfo, 3, Map.of("limeSurveyId", "100", "token", "token123"), start, end));
+        verify(elasticService).storeDataPoints(anyList(), eq(routingInfo));
+    }
+
+    @Test
+    void testIsSubmittedKeepsTheStateWhenElasticFails() throws Exception {
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+        Instant start = Instant.parse("2026-10-08T08:00:00Z");
+        when(elasticService.isSubmitted(any(), any(), any(), any())).thenThrow(new java.io.IOException("down"));
+
+        assertTrue(limeSurveyComponent.isSubmitted(routingInfo, 3, Map.of(), start, start.plusSeconds(3600)));
+    }
+
+    @Test
+    void testResyncCountsTheRequestedSubmitDateBackfill() throws Exception {
+        RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
+        Map<String, Object> properties = Map.of("limeSurveyId", "100", "token", "token123");
+        Instant since = Instant.parse("2026-10-08T08:00:00Z");
+        when(elasticService.storeDataPoints(anyList(), eq(routingInfo))).thenReturn(List.of("stored"));
+        // submitted before the request started: only the Studymanager's backfill request makes it count
+        when(limeSurveyRequestService.getAnswers("token123", 100)).thenAnswer(i -> List.of(
+                new java.util.HashMap<>(Map.of("id", "1", "submitdate", "2026-10-07T08:00:00Z")),
+                new java.util.HashMap<>(Map.of("id", "2"))));
+
+        assertEquals(new LimeSurveyComponent.ResyncResult(1, false),
+                limeSurveyComponent.resync(routingInfo, 3, properties, since, Map.of()));
+        assertEquals(new LimeSurveyComponent.ResyncResult(1, true),
+                limeSurveyComponent.resync(routingInfo, 3, properties, since, Map.of("missingSubmitDate", true, "dataId", 1)));
+        assertEquals(new LimeSurveyComponent.ResyncResult(1, true),
+                limeSurveyComponent.resync(routingInfo, 3, properties, since, Map.of("missingSubmitDate", true)));
+        // response 2 is still incomplete in LimeSurvey - nothing to backfill yet
+        assertEquals(new LimeSurveyComponent.ResyncResult(1, false),
+                limeSurveyComponent.resync(routingInfo, 3, properties, since, Map.of("missingSubmitDate", true, "dataId", 2)));
+    }
+
+    @Test
     void testResyncWithoutAnswersStoresNothing() throws Exception {
         RoutingInfo routingInfo = new RoutingInfo(1L, 1, OptionalInt.empty(), Set.of(), true, true);
         when(limeSurveyRequestService.getAnswers("token123", 100)).thenReturn(List.of());

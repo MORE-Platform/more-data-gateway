@@ -49,7 +49,7 @@ class ObservationResyncRepositoryIT {
         jdbcTemplate.execute("DROP TABLE IF EXISTS observations");
         jdbcTemplate.execute("CREATE TABLE observations (study_id BIGINT NOT NULL, observation_id INT NOT NULL, type VARCHAR NOT NULL, " +
                 "PRIMARY KEY (study_id, observation_id))");
-        // as created by the Studymanager migrations V1_27_0 and V1_28_0
+        // as created by the Studymanager migrations V1_27_0, V1_28_0 and the properties column
         jdbcTemplate.execute("""
                 CREATE TABLE observation_resync_requests (
                     study_id BIGINT NOT NULL,
@@ -60,6 +60,7 @@ class ObservationResyncRepositoryIT {
                     resync_start TIMESTAMPTZ NOT NULL DEFAULT now(),
                     resync_end TIMESTAMPTZ NOT NULL DEFAULT now(),
                     synced BOOLEAN NOT NULL DEFAULT FALSE,
+                    properties JSONB NOT NULL DEFAULT '{}'::jsonb,
                     PRIMARY KEY (study_id, participant_id, observation_id)
                 )""");
         jdbcTemplate.update("INSERT INTO observations VALUES (1, 3, 'lime-survey-observation')");
@@ -87,6 +88,20 @@ class ObservationResyncRepositoryIT {
         ObservationResyncRequest request = repository.listPending().get(0);
         assertThat(request.interval()).isEqualTo(ResyncInterval.URGENT);
         assertThat(Duration.between(request.start(), request.end())).isGreaterThan(Duration.ofHours(23));
+    }
+
+    @Test
+    void listPendingReadsTheRequestProperties() {
+        jdbcTemplate.update("""
+                INSERT INTO observation_resync_requests (study_id, participant_id, observation_id, properties)
+                VALUES (1, 2, 3, '{"missingSubmitDate": true, "dataId": 4}')""");
+        repository.upsert(1L, 5, 3, ResyncInterval.NORMAL, Duration.ofHours(24));
+
+        List<ObservationResyncRequest> pending = repository.listPending();
+        assertThat(pending.get(0).properties())
+                .containsEntry(ObservationResyncRequest.MISSING_SUBMIT_DATE, true)
+                .containsEntry(ObservationResyncRequest.DATA_ID, 4);
+        assertThat(pending.get(1).properties()).isEmpty();
     }
 
     @Test
