@@ -307,6 +307,7 @@
                 </executions>
                 <configuration>
                     <from>
+                        <!-- CVE-2026-114938 (Java4Shell): rebuild pulls patched Temurin 17.0.21.1+ -->
                         <image>eclipse-temurin:${java.version}-jre</image>
                     </from>
                     <to>
